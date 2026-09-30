@@ -1,0 +1,641 @@
+{
+  "_meta": {
+    "beschreibung": "Variablen-Pools für den Ereignis-Generator. Ein Pool ist entweder eine Liste (list), ein Produkt aus Teil-Listen (product) oder ein Zahlenbereich (range). Objekt-Einträge tragen Kasusformen {n,a,d} für grammatisch korrekte Sätze.",
+    "hinweis": "Alle Namen sind fiktiv. Ähnlichkeiten mit lebenden Personen sind zufällig und unerwünscht."
+  },
+  "pools": {
+    "ort": {
+      "kind": "product",
+      "join": "",
+      "parts": [
+        [
+          "",
+          "",
+          "Nieder",
+          "Ober",
+          "Klein",
+          "Groß",
+          "Alt",
+          "Neu",
+          "Bad ",
+          "Sankt ",
+          "Hohen",
+          "Burg"
+        ],
+        [
+          "Hütt",
+          "Bach",
+          "Wald",
+          "Feld",
+          "Berg",
+          "Stein",
+          "Brück",
+          "Lind",
+          "Eich",
+          "Buch",
+          "Rot",
+          "Schwarz",
+          "Mühl",
+          "Kirch",
+          "Wies",
+          "Tann",
+          "Forst",
+          "Holz",
+          "Moos",
+          "Aue"
+        ],
+        [
+          "ingen",
+          "hausen",
+          "dorf",
+          "bach",
+          "heim",
+          "stadt",
+          "kirchen",
+          "brunn",
+          "burg",
+          "feld",
+          "au",
+          "rode"
+        ]
+      ]
+    },
+    "person": {
+      "kind": "product",
+      "join": " ",
+      "parts": [
+        [
+          "Anna",
+          "Bernd",
+          "Claudia",
+          "Dieter",
+          "Elke",
+          "Frank",
+          "Gisela",
+          "Hannes",
+          "Ingrid",
+          "Jürgen",
+          "Katrin",
+          "Lars",
+          "Monika",
+          "Nils",
+          "Petra",
+          "Rainer",
+          "Sabine",
+          "Thorsten",
+          "Ulrike",
+          "Volker",
+          "Wiebke",
+          "Yasemin",
+          "Zeynep",
+          "Mehmet",
+          "Aylin",
+          "Dragan",
+          "Tomasz",
+          "Lena",
+          "Jonas",
+          "Emre",
+          "Sven",
+          "Tanja",
+          "Uwe",
+          "Heike",
+          "Jens",
+          "Kerstin",
+          "Marcel",
+          "Nadine",
+          "Oliver",
+          "Patrizia",
+          "Ralf",
+          "Silke",
+          "Timo",
+          "Ute",
+          "Vera",
+          "Wolfgang",
+          "Fatma",
+          "Dimitri",
+          "Corinna",
+          "Heiko"
+        ],
+        [
+          "Abendroth",
+          "Bäumler",
+          "Clausnitzer",
+          "Dörrbecker",
+          "Eschenbach",
+          "Fuchsloch",
+          "Gänsewein",
+          "Hagedorn",
+          "Immenhof",
+          "Jungbluth",
+          "Kaltenbach",
+          "Leuthäuser",
+          "Mönkemöller",
+          "Niehaus",
+          "Oberdorfer",
+          "Pankratz",
+          "Quast",
+          "Rübsamen",
+          "Schrumpf",
+          "Tiedemann",
+          "Uhlenbrock",
+          "Vollmer",
+          "Wendelin",
+          "Zirbel",
+          "Hollweg",
+          "Brandtner",
+          "Kowalczyk",
+          "Pfeifer",
+          "Lohmeyer",
+          "Stüwe",
+          "Ostermann",
+          "Fleischhauer",
+          "Ackermann-Weiß",
+          "Bonhoff",
+          "Cordes",
+          "Duvenbeck",
+          "Engelhardt",
+          "Feuerstein",
+          "Grotjahn",
+          "Heidkamp",
+          "Ilgner",
+          "Jablonski",
+          "Knoblauch",
+          "Lindemann",
+          "Mergenthaler",
+          "Nowotny",
+          "Özdemir-Kraus",
+          "Pützstück",
+          "Rademacher",
+          "Sieverding",
+          "Thalhammer",
+          "Ulbricht-Meyer",
+          "Vogelsang",
+          "Wedekind",
+          "Yilmaz",
+          "Ziegenbein",
+          "Amsel",
+          "Brehmer",
+          "Czerny",
+          "Dallmann",
+          "Eberle",
+          "Fröhlich"
+        ]
+      ]
+    },
+    "firma": {
+      "kind": "product",
+      "join": " ",
+      "parts": [
+        [
+          "Abendroth",
+          "Bäumler",
+          "Clausnitzer",
+          "Dörrbecker",
+          "Eschenbach",
+          "Gänsewein",
+          "Hagedorn",
+          "Jungbluth",
+          "Kaltenbach",
+          "Leuthäuser",
+          "Niehaus",
+          "Oberdorfer",
+          "Pankratz",
+          "Rübsamen",
+          "Tiedemann",
+          "Uhlenbrock",
+          "Vollmer",
+          "Wendelin",
+          "Hollweg",
+          "Brandtner",
+          "Kowalczyk",
+          "Pfeifer",
+          "Ostermann",
+          "Cordes",
+          "Engelhardt",
+          "Feuerstein",
+          "Heidkamp",
+          "Lindemann",
+          "Nowotny",
+          "Rademacher"
+        ],
+        [
+          "Logistik",
+          "Metallbau",
+          "Brauerei",
+          "Maschinenbau",
+          "Sanitär",
+          "Elektrotechnik",
+          "Backwaren",
+          "Software",
+          "Textil",
+          "Fleischwaren",
+          "Spedition",
+          "Landtechnik",
+          "Druck",
+          "Holzbau",
+          "Pflegedienste",
+          "Energie",
+          "Verpackung",
+          "Automobil",
+          "Getränke",
+          "Stahlbau"
+        ],
+        [
+          "GmbH",
+          "AG",
+          "KG",
+          "& Söhne",
+          "GmbH & Co. KG"
+        ]
+      ]
+    },
+    "projekt": {
+      "kind": "product",
+      "join": " ",
+      "parts": [
+        [
+          "Zukunftsquartier",
+          "Smart-City",
+          "Mobilitätsdrehscheibe",
+          "Kulturforum",
+          "Marktplatz-Umbau",
+          "Hafencity",
+          "Innenstadt-Offensive",
+          "Bahnhofsviertel",
+          "Stadtpark-Erweiterung",
+          "Gewerbeachse",
+          "Bürgercampus",
+          "Wasserstoffpark"
+        ],
+        [
+          "2030",
+          "Plus",
+          "Neu",
+          "Nord",
+          "Süd",
+          "Reloaded",
+          "2.0",
+          "Mitte"
+        ]
+      ]
+    },
+    "branche": {
+      "kind": "list",
+      "items": [
+        "Maschinenbau",
+        "Pflege",
+        "Landwirtschaft",
+        "Gastronomie",
+        "Logistik",
+        "Chemie",
+        "Autozulieferer",
+        "IT und Software",
+        "Handwerk",
+        "Einzelhandel",
+        "Tourismus",
+        "Brauwesen",
+        "Windkraft",
+        "Bauwirtschaft",
+        "Textilindustrie",
+        "Medienbranche",
+        "Bahnverkehr",
+        "Bildungswesen",
+        "Gesundheitswesen",
+        "Stahlindustrie",
+        "Papierindustrie",
+        "Holzwirtschaft",
+        "Energieversorgung",
+        "Bankwesen",
+        "Fischerei",
+        "Weinbau",
+        "Spielzeugherstellung",
+        "Hafenwirtschaft",
+        "Rüstungsindustrie",
+        "Start-ups"
+      ]
+    },
+    "medium": {
+      "kind": "list",
+      "items": [
+        "Hüttinger Tageblatt",
+        "Abendblatt am Rhein",
+        "Kreisblatt",
+        "Stadtmagazin Klartext",
+        "Morgenmagazin",
+        "Lokalradio Nordwest",
+        "Sonntagsblatt",
+        "Regionalfernsehen Mitte",
+        "Wochenblatt",
+        "Nachrichtenportal Klartext24"
+      ]
+    },
+    "medium_nat": {
+      "kind": "list",
+      "items": [
+        "Berliner Abendblatt",
+        "Politikjournal",
+        "Nachrichtenmagazin Zeitlupe",
+        "Tagesblatt",
+        "Hauptstadtjournal",
+        "Republik-Magazin",
+        "Morgenjournal",
+        "Wochenjournal",
+        "Nachrichtenportal Politik Pur",
+        "Abendjournal"
+      ]
+    },
+    "gesetz": {
+      "kind": "list",
+      "items": [
+        "Gebäude-Wärmewende-Gesetz",
+        "Mietpreisbremse-Reform",
+        "Digitalisierungsbeschleunigungsgesetz",
+        "Pflegepersonal-Stärkungsgesetz",
+        "Planungsbeschleunigungsgesetz",
+        "Bürokratieentlastungsgesetz",
+        "Rentenstabilisierungsgesetz",
+        "Wehrdienst-Modernisierungsgesetz",
+        "Klimaanpassungsgesetz",
+        "Staatsangehörigkeits-Reform",
+        "Schuldenregel-Reformgesetz",
+        "Datenschutz-Vereinfachungsgesetz",
+        "Bahnnetz-Ausbaugesetz",
+        "Fachkräfteeinwanderungs-Ergänzung",
+        "Bildungsförderungsgesetz",
+        "Krankenhaus-Strukturgesetz",
+        "Energiepreis-Entlastungsgesetz",
+        "Agrarsubventions-Anpassung",
+        "Steuervereinfachungsgesetz",
+        "Cybersicherheits-Stärkungsgesetz",
+        "Wohngeld-Plus-Gesetz",
+        "Mobilitätswendegesetz",
+        "Transparenzregister-Ausweitung",
+        "Lieferketten-Sorgfaltsgesetz"
+      ]
+    },
+    "ministerium": {
+      "kind": "list",
+      "items": [
+        "Finanzministerium",
+        "Innenministerium",
+        "Verkehrsministerium",
+        "Wirtschaftsministerium",
+        "Gesundheitsministerium",
+        "Bildungsministerium",
+        "Umweltministerium",
+        "Verteidigungsministerium",
+        "Außenministerium",
+        "Arbeits- und Sozialministerium",
+        "Justizministerium",
+        "Bauministerium",
+        "Digitalministerium",
+        "Landwirtschaftsministerium"
+      ]
+    },
+    "verband": {
+      "kind": "list",
+      "items": [
+        "der Mieterverein",
+        "der Bauernverband",
+        "die Handwerkskammer",
+        "die Bürgerinitiative „Pro Ort“",
+        "der Elternbeirat",
+        "die Industrie- und Handelskammer",
+        "die Gewerkschaft",
+        "der Sportverein 1898",
+        "der Heimatverein",
+        "die Freiwillige Feuerwehr",
+        "der Seniorenbeirat",
+        "der Naturschutzbund",
+        "der Taxiverband",
+        "der Kleingartenverein",
+        "die Schützenbruderschaft",
+        "der Stammtisch „Klare Kante“"
+      ]
+    },
+    "stimmung": {
+      "kind": "list",
+      "items": [
+        "gereizt",
+        "aufgekratzt",
+        "müde",
+        "misstrauisch",
+        "erwartungsvoll",
+        "schlecht gelaunt",
+        "euphorisch",
+        "fatalistisch"
+      ]
+    },
+    "wetter": {
+      "kind": "list",
+      "items": [
+        "Dauerregen",
+        "Hitzewelle",
+        "Nebel",
+        "Sturm",
+        "Schneechaos",
+        "Dürre",
+        "Frühlingssonne",
+        "Hagel",
+        "Glatteis",
+        "Schwüle"
+      ]
+    },
+    "jahreszeit": {
+      "kind": "list",
+      "items": [
+        "im Frühling",
+        "im Sommer",
+        "im Herbst",
+        "im Winter"
+      ]
+    },
+    "thema": {
+      "kind": "list",
+      "items": [
+        "Wirtschaft",
+        "Migration",
+        "Klima",
+        "Rente",
+        "Bildung",
+        "Sicherheit",
+        "Wohnen",
+        "Digitalisierung",
+        "Gesundheit",
+        "Verkehr",
+        "Außenpolitik"
+      ]
+    },
+    "fest": {
+      "kind": "list",
+      "items": [
+        "das Schützenfest",
+        "das Stadtfest",
+        "das Erntedankfest",
+        "das Bierzelt-Wochenende",
+        "der Karnevalsumzug",
+        "das Weinfest",
+        "das Feuerwehrfest",
+        "die Kirmes",
+        "das Dorffest",
+        "der Weihnachtsmarkt"
+      ]
+    },
+    "tier": {
+      "kind": "list",
+      "items": [
+        "ein Waschbär",
+        "eine Ziegenherde",
+        "ein entlaufener Alpaka-Hengst",
+        "ein Biber",
+        "eine Horde Wildschweine",
+        "ein Storchenpaar",
+        "ein überforderter Kampfhahn",
+        "eine Gänseschar",
+        "ein Nandu auf Wanderschaft",
+        "ein Mops mit Ambitionen"
+      ]
+    },
+    "land": {
+      "kind": "list",
+      "items": [
+        "Niedersachsen",
+        "Hessen",
+        "Sachsen",
+        "Nordrhein-Westfalen",
+        "Baden-Württemberg",
+        "Thüringen",
+        "Brandenburg",
+        "Schleswig-Holstein",
+        "Rheinland-Pfalz",
+        "Saarland",
+        "Mecklenburg-Vorpommern",
+        "Sachsen-Anhalt"
+      ]
+    },
+    "bauwerk": {
+      "kind": "list",
+      "items": [
+        {
+          "n": "die Stadthalle",
+          "a": "die Stadthalle",
+          "d": "der Stadthalle"
+        },
+        {
+          "n": "die Flussbrücke",
+          "a": "die Flussbrücke",
+          "d": "der Flussbrücke"
+        },
+        {
+          "n": "das Hallenbad",
+          "a": "das Hallenbad",
+          "d": "dem Hallenbad"
+        },
+        {
+          "n": "die Schulturnhalle",
+          "a": "die Schulturnhalle",
+          "d": "der Schulturnhalle"
+        },
+        {
+          "n": "die Bahnunterführung",
+          "a": "die Bahnunterführung",
+          "d": "der Bahnunterführung"
+        },
+        {
+          "n": "das Feuerwehrhaus",
+          "a": "das Feuerwehrhaus",
+          "d": "dem Feuerwehrhaus"
+        },
+        {
+          "n": "die Stadtbibliothek",
+          "a": "die Stadtbibliothek",
+          "d": "der Stadtbibliothek"
+        },
+        {
+          "n": "das Bürgerhaus",
+          "a": "das Bürgerhaus",
+          "d": "dem Bürgerhaus"
+        },
+        {
+          "n": "der Bahnhofsvorplatz",
+          "a": "den Bahnhofsvorplatz",
+          "d": "dem Bahnhofsvorplatz"
+        },
+        {
+          "n": "die Kläranlage",
+          "a": "die Kläranlage",
+          "d": "der Kläranlage"
+        }
+      ]
+    },
+    "sum_k": {
+      "kind": "list",
+      "items": [
+        "120.000 Euro",
+        "180.000 Euro",
+        "240.000 Euro",
+        "350.000 Euro",
+        "480.000 Euro",
+        "650.000 Euro",
+        "900.000 Euro",
+        "1,2 Millionen Euro",
+        "1,8 Millionen Euro",
+        "2,4 Millionen Euro",
+        "3,1 Millionen Euro",
+        "4,5 Millionen Euro"
+      ]
+    },
+    "sum_m": {
+      "kind": "list",
+      "items": [
+        "12 Millionen Euro",
+        "18 Millionen Euro",
+        "25 Millionen Euro",
+        "40 Millionen Euro",
+        "65 Millionen Euro",
+        "90 Millionen Euro",
+        "140 Millionen Euro",
+        "210 Millionen Euro",
+        "320 Millionen Euro",
+        "450 Millionen Euro",
+        "700 Millionen Euro",
+        "1,1 Milliarden Euro"
+      ]
+    },
+    "sum_g": {
+      "kind": "list",
+      "items": [
+        "2 Milliarden Euro",
+        "3,5 Milliarden Euro",
+        "5 Milliarden Euro",
+        "8 Milliarden Euro",
+        "12 Milliarden Euro",
+        "17 Milliarden Euro",
+        "24 Milliarden Euro",
+        "31 Milliarden Euro",
+        "45 Milliarden Euro",
+        "60 Milliarden Euro",
+        "85 Milliarden Euro",
+        "110 Milliarden Euro"
+      ]
+    },
+    "zahl_j": {
+      "kind": "range",
+      "min": 3,
+      "max": 42,
+      "step": 1
+    },
+    "zahl_s": {
+      "kind": "range",
+      "min": 40,
+      "max": 2400,
+      "step": 20
+    },
+    "zahl_p": {
+      "kind": "range",
+      "min": 4,
+      "max": 38,
+      "step": 1
+    }
+  }
+}

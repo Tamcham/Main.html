@@ -1,0 +1,2186 @@
+<!doctype html>
+<html lang="de" data-hc="0" data-rm="0">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=yes">
+<meta name="theme-color" content="#060a15">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Macht &amp; Mandat – Vom Rathaus ins Kanzleramt</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#060a15; --bg2:#0c1530; --navy:#13224d; --navy2:#1b2f66;
+  --gold:#d6b16c; --gold2:#f3d99b; --gold3:#8f7238;
+  --ink:#eef1f8; --mut:#9ba7c6; --line:rgba(214,177,108,.30); --glass:rgba(255,255,255,.065); --glass2:rgba(255,255,255,.11);
+  --good:#72d39b; --bad:#ff7b7b; --warn:#f3c25c;
+  --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Palatino,"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --fs:16px; --r:18px;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+html[data-hc="1"]{--bg:#000;--bg2:#050505;--ink:#fff;--mut:#d7deef;--line:rgba(255,217,138,.85);--glass:rgba(255,255,255,.14);--glass2:rgba(255,255,255,.22);--gold:#ffd98a;--gold2:#fff0c4}
+html{font-size:var(--fs);-webkit-text-size-adjust:100%}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#02040a;color:var(--ink);font-family:var(--sans);overscroll-behavior:none;min-height:100vh}
+#app{position:relative;max-width:520px;height:100vh;height:100dvh;margin:0 auto;display:flex;flex-direction:column;overflow:hidden;
+  background:radial-gradient(120% 70% at 50% -10%,var(--navy2) 0%,var(--bg2) 38%,var(--bg) 100%);box-shadow:0 0 80px rgba(0,0,0,.6)}
+#app::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:radial-gradient(1px 1px at 20% 30%,rgba(243,217,155,.5),transparent),radial-gradient(1px 1px at 70% 60%,rgba(243,217,155,.35),transparent),radial-gradient(1.5px 1.5px at 40% 85%,rgba(243,217,155,.3),transparent)}
+#topbar{position:relative;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:calc(6px + var(--safe-t)) 14px 0 18px;min-height:calc(46px + var(--safe-t))}
+#topbar .logo{font-size:.72rem;letter-spacing:.3em;color:var(--gold);opacity:.85}
+#screen{position:relative;flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 16px 20px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+#screen.noscroll{overflow:hidden;display:flex;flex-direction:column;padding-bottom:8px}
+#nav{display:none;padding:8px 10px calc(8px + var(--safe-b));background:linear-gradient(180deg,rgba(6,10,21,.3),rgba(6,10,21,.92));backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);gap:6px}
+#nav.on{display:flex}
+#nav button{flex:1;min-height:54px;border:0;border-radius:14px;background:transparent;color:var(--mut);font:600 .72rem var(--sans);letter-spacing:.04em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+#nav button span{font-size:1.25rem;line-height:1}
+#nav button.act{color:var(--gold2);background:var(--glass)}
+h1,h2,h3{font-family:var(--serif);font-weight:600;margin:0;letter-spacing:.01em}
+h1{font-size:2rem;line-height:1.1}h2{font-size:1.45rem;line-height:1.2}h3{font-size:1.1rem}
+p{line-height:1.5;margin:.4em 0}
+.gold{color:var(--gold2)} .mut{color:var(--mut)} .small{font-size:.82rem} .tiny{font-size:.7rem}
+.serif{font-family:var(--serif)} .caps{text-transform:uppercase;letter-spacing:.14em;font-size:.68rem;color:var(--gold)}
+.center{text-align:center} .row{display:flex;gap:10px;align-items:center} .sp{justify-content:space-between} .wrap{flex-wrap:wrap}
+.grow{flex:1} .mt{margin-top:14px} .mt2{margin-top:24px} .mb{margin-bottom:12px}
+.glass{background:var(--glass);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:14px}
+.glass.tight{padding:10px}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border:0;margin:14px 0;opacity:.7}
+.btn{appearance:none;border:0;min-height:52px;width:100%;padding:12px 18px;border-radius:16px;font:700 1rem var(--sans);letter-spacing:.02em;color:#1a1204;
+  background:linear-gradient(180deg,var(--gold2),var(--gold) 55%,var(--gold3));box-shadow:0 6px 22px rgba(214,177,108,.25),inset 0 1px 0 rgba(255,255,255,.5);transition:transform .12s,filter .12s}
+.btn:active{transform:scale(.97);filter:brightness(.95)}
+.btn.ghost{background:var(--glass);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.small{min-height:44px;width:auto;padding:8px 14px;font-size:.88rem}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--glass);border:1px solid var(--line);font-size:.75rem;color:var(--mut)}
+.chip.on{background:rgba(214,177,108,.18);color:var(--gold2);border-color:var(--gold)}
+.logo{font-family:var(--serif);letter-spacing:.06em}
+/* Start */
+.hero{min-height:calc(100dvh - 120px);display:flex;flex-direction:column;justify-content:center;gap:18px;text-align:center}
+.hero .crest{width:96px;height:96px;margin:0 auto;filter:drop-shadow(0 6px 24px rgba(214,177,108,.4))}
+.hero h1{font-size:2.35rem;background:linear-gradient(180deg,#fff3cf,var(--gold) 60%,var(--gold3));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .sub{font-family:var(--serif);font-style:italic;color:var(--mut);font-size:1.05rem}
+.fadein{animation:fadein .6s ease both}@keyframes fadein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* Party cards */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pcard{position:relative;text-align:left;padding:12px;border-radius:16px;border:1px solid var(--line);background:linear-gradient(160deg,var(--glass2),var(--glass));min-height:112px;color:var(--ink);font-family:var(--sans);overflow:hidden}
+.pcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--pc)}
+.pcard .pn{font:700 1.25rem var(--serif);margin-left:6px}
+.pcard .ps{font-size:.72rem;color:var(--mut);margin:2px 0 6px 6px;line-height:1.3}
+.pcard .stars{margin-left:6px;color:var(--gold);letter-spacing:2px;font-size:.8rem}
+.pcard.sel{outline:2px solid var(--gold2);box-shadow:0 0 28px rgba(214,177,108,.3)}
+.badge{display:inline-flex;min-width:34px;height:30px;padding:0 5px;border-radius:9px;align-items:center;justify-content:center;font:800 .68rem var(--sans);letter-spacing:-.02em;flex:none;color:#0a0a0a;background:var(--pc);border:1px solid rgba(255,255,255,.35)}
+.badge.lg{min-width:54px;height:54px;border-radius:15px;font-size:.95rem}
+/* inputs */
+label.f{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:14px 0 6px}
+input[type=text],select,textarea{width:100%;min-height:48px;padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.35);color:var(--ink);font:1rem var(--sans)}
+input[type=range]{width:100%;height:36px;accent-color:var(--gold)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{min-height:44px;padding:8px 14px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--ink);font:600 .85rem var(--sans)}
+.opt.on{background:linear-gradient(180deg,rgba(243,217,155,.3),rgba(214,177,108,.2));border-color:var(--gold2);color:var(--gold2)}
+.sw{width:44px;height:44px;border-radius:50%;border:2px solid transparent;padding:0}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--gold)}
+/* stats */
+.meter{display:flex;flex-direction:column;gap:4px}
+.meter .lab{display:flex;justify-content:space-between;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+.bar{height:9px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden;position:relative}
+.bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gold3),var(--gold2));transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.bar.g i{background:linear-gradient(90deg,#3a9d6c,var(--good))}
+.bar.r i{background:linear-gradient(90deg,#b34a4a,var(--bad))}
+.bar.tall{height:16px}
+.statrow{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.delta{font-weight:700}.delta.up{color:var(--good)}.delta.dn{color:var(--bad)}
+/* decision card */
+.cardscreen{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+.stage{position:relative;flex:1 1 auto;min-height:150px;touch-action:pan-y}
+.dcard{position:absolute;inset:0;border-radius:24px;padding:14px 16px 12px;display:flex;flex-direction:column;
+  background:linear-gradient(170deg,rgba(255,255,255,.14),rgba(255,255,255,.04));border:1px solid var(--line);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 20px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s;will-change:transform;user-select:none;-webkit-user-select:none}
+.dcard.behind{transform:scale(.94) translateY(16px);opacity:.5;pointer-events:none}
+.dcard .ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.45rem;flex:none;background:linear-gradient(145deg,var(--navy2),var(--navy));border:1px solid var(--gold3)}
+.dcard h2{margin:8px 0 4px;font-size:1.3rem}
+.dcard .body{flex:1;overflow-y:auto;font-size:.94rem;line-height:1.45;color:#dfe5f5}
+.dcard .body .q{font-family:var(--serif);font-style:italic;color:var(--gold2);margin-top:10px;font-size:1.05rem}
+.swl{position:absolute;top:16px;padding:6px 12px;border:2px solid;border-radius:10px;font:800 .8rem var(--sans);letter-spacing:.1em;opacity:0;text-transform:uppercase;background:rgba(0,0,0,.4)}
+.swl.l{left:14px;border-color:var(--bad);color:var(--bad);transform:rotate(-8deg)}
+.swl.r{right:14px;border-color:var(--good);color:var(--good);transform:rotate(8deg)}
+.ochoices{display:flex;flex-direction:column;gap:7px;margin-top:2px;flex:none}
+.noscroll .ochoices{max-height:48vh;overflow-y:auto}
+.oc{position:relative;text-align:left;min-height:54px;padding:9px 13px;border-radius:14px;border:1px solid var(--line);background:rgba(0,0,0,.28);color:var(--ink);font:600 .92rem/1.25 var(--sans)}
+.oc:active{transform:scale(.98);background:rgba(214,177,108,.15)}
+.oc .pv{display:flex;gap:5px;flex-wrap:nowrap;overflow-x:auto;margin-top:5px;font-size:.66rem;font-weight:700;scrollbar-width:none}
+.oc .pv::-webkit-scrollbar{display:none}
+.pv b{white-space:nowrap}
+.pv b{padding:1px 7px;border-radius:999px;background:rgba(255,255,255,.08);font-weight:700}
+.pv b.u{color:var(--good)}.pv b.d{color:var(--bad)}.pv b.q{color:var(--mut)}
+.risk{font-size:.68rem;color:var(--warn);margin-top:4px;letter-spacing:.04em}
+.oc[disabled]{opacity:.4}
+/* result */
+.resbox{animation:fadein .4s ease both}
+.hl{padding:10px 12px;border-radius:12px;background:rgba(0,0,0,.35);border-left:3px solid var(--gold);margin:8px 0;font-size:.9rem;line-height:1.35}
+.hl .src{display:block;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);margin-bottom:2px}
+.hl.b{border-left-color:var(--bad)} .hl.s{border-left-color:#6aa7ff}
+.hl.pos{border-left-color:var(--good)}
+/* poll */
+.tabs{display:flex;gap:6px;margin:6px 0 12px}
+.tab{flex:1;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--mut);font:700 .82rem var(--sans)}
+.tab.on{background:rgba(214,177,108,.2);color:var(--gold2);border-color:var(--gold)}
+.brow{display:grid;grid-template-columns:66px 1fr 62px;gap:8px;align-items:center;margin:7px 0}
+.brow .nm{font:700 .82rem var(--sans);display:flex;align-items:center;gap:6px}
+.brow .track{height:22px;border-radius:7px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}
+.brow .fill{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:var(--pc);transition:width .9s cubic-bezier(.2,.8,.2,1);min-width:2px}
+.brow .err{position:absolute;top:50%;height:2px;background:#fff;opacity:.75;transform:translateY(-50%)}
+.brow .val{text-align:right;font:700 .9rem var(--sans);font-variant-numeric:tabular-nums}
+.brow .val small{display:block;font-size:.62rem;color:var(--mut);font-weight:500}
+.hurdle{position:absolute;top:-2px;bottom:-2px;width:0;border-left:2px dashed var(--bad)}
+.cb .fill{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.28) 0 4px,transparent 4px 9px)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:.7rem;color:var(--mut)}
+svg text{font-family:var(--sans)}
+/* cutscene */
+.cut{position:absolute;inset:0;z-index:40;background:#000;display:flex;flex-direction:column}
+.cut .view{position:relative;flex:1;overflow:hidden;margin:7% 0}
+.cut .scene svg{width:100%;height:100%;display:block}
+.cut .scene{position:absolute;inset:-5%;transition:transform 5.5s cubic-bezier(.3,.1,.3,1),filter 1s}
+.cut .lb{position:absolute;left:0;right:0;height:8%;background:#000;z-index:3}
+.cut .lb.t{top:0}.cut .lb.b{bottom:0}
+.cut .sub{position:absolute;left:0;right:0;bottom:0;z-index:5;padding:16px 18px calc(18px + var(--safe-b));background:linear-gradient(0deg,rgba(0,0,0,.9),transparent);min-height:120px}
+.cut .sub .who{font:700 .7rem var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.cut .sub .txt{font:1.12rem/1.45 var(--serif);margin-top:4px;min-height:3em}
+.cut .skip{position:absolute;top:calc(10px + var(--safe-t));right:12px;z-index:6;min-height:40px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.5);color:var(--ink);font:600 .78rem var(--sans)}
+.cut .tick{position:absolute;left:0;right:0;top:12%;z-index:4;background:rgba(150,20,20,.92);color:#fff;font:700 .78rem var(--sans);letter-spacing:.05em;padding:6px 10px;white-space:nowrap;overflow:hidden;text-transform:uppercase}
+.cut .tick span{display:inline-block;animation:tick 14s linear infinite;padding-left:100%}
+@keyframes tick{to{transform:translateX(-100%)}}
+.cut .chars{position:absolute;left:0;right:0;bottom:92px;display:flex;justify-content:center;align-items:flex-end;gap:0;z-index:2}
+.cut .chars svg{width:46%;max-width:230px;height:auto;filter:drop-shadow(0 10px 20px rgba(0,0,0,.7));transition:transform .5s}
+.cut .chars svg.speak{transform:translateY(-8px) scale(1.04)}
+.cut .chars svg.dim{filter:brightness(.55) drop-shadow(0 10px 20px rgba(0,0,0,.7))}
+.cut .hint{position:absolute;right:16px;bottom:6px;z-index:6;font-size:.68rem;color:var(--mut);animation:blink 1.4s infinite}
+@keyframes blink{50%{opacity:.25}}
+.flash{animation:flash .5s}@keyframes flash{from{filter:brightness(2.4)}to{filter:none}}
+/* election */
+.clock{font:800 2.4rem var(--serif);letter-spacing:.05em;color:var(--gold2);text-align:center}
+.tvframe{border:1px solid var(--line);border-radius:18px;padding:12px;background:linear-gradient(180deg,rgba(10,20,60,.9),rgba(5,10,30,.95));box-shadow:inset 0 0 40px rgba(60,100,255,.15)}
+.tvframe .tvh{display:flex;justify-content:space-between;align-items:center;font:700 .68rem var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#9cc0ff;margin-bottom:6px}
+.live{display:inline-flex;align-items:center;gap:5px;color:#ff6b6b}.live::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff4b4b;animation:blink 1s infinite}
+.dgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:8px}
+.dgrid div{aspect-ratio:1;border-radius:6px;background:rgba(255,255,255,.08);transition:background .5s,transform .3s;display:flex;align-items:center;justify-content:center;font:700 .55rem var(--sans);color:rgba(0,0,0,.6)}
+.dgrid div.on{transform:scale(1.04)}
+.ticker{font-size:.78rem;color:#cfd8f6;background:rgba(0,0,0,.35);border-radius:10px;padding:8px 10px;margin-top:8px;min-height:2.6em}
+/* speech */
+.plenum{width:100%;height:auto;display:block}
+.plenum circle{transition:r .2s,opacity .2s}
+.plenum .pulse{animation:pulse .7s ease 1}
+@keyframes pulse{50%{opacity:.25}}
+.timer{height:6px;border-radius:99px;background:rgba(255,255,255,.1);overflow:hidden}
+.timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--bad),var(--warn));transform-origin:left}
+.zw{border:1px solid var(--bad);background:rgba(120,20,20,.25);border-radius:14px;padding:10px 12px;margin:8px 0;animation:fadein .25s both}
+.banner{position:absolute;left:14px;right:14px;top:58px;z-index:60;padding:10px 16px;border-radius:14px;background:rgba(0,0,0,.88);border:1px solid var(--gold);color:var(--gold2);font:700 .88rem var(--sans);animation:fadein .3s both;text-align:center;pointer-events:none}
+/* sheet & toast */
+#sheetbg{position:absolute;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-end}
+#sheetbg.on{display:flex}
+#sheet{width:100%;max-height:88%;overflow-y:auto;background:linear-gradient(180deg,#14214a,#0a1128);border-top:1px solid var(--gold);border-radius:24px 24px 0 0;padding:18px 16px calc(20px + var(--safe-b));animation:up .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+#toast{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);z-index:70;background:rgba(0,0,0,.88);border:1px solid var(--gold);color:var(--gold2);padding:10px 16px;border-radius:14px;font:600 .85rem var(--sans);opacity:0;pointer-events:none;transition:opacity .3s;max-width:88%;text-align:center}
+#toast.on{opacity:1}
+.gear{width:44px;height:44px;flex:none;border-radius:50%;background:var(--glass);border:1px solid var(--line);color:var(--gold2);font-size:1.2rem}
+.avwrap{background:radial-gradient(circle at 50% 30%,#22386e,#0a1330);border:1px solid var(--line);border-radius:22px;padding:6px;display:flex;justify-content:center}
+.avwrap svg{width:min(62%,250px);height:auto}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.88rem}
+.kv:last-child{border-bottom:0}
+ul.clean{margin:.3em 0;padding-left:1.1em}ul.clean li{margin:.2em 0;line-height:1.4}
+.stepper{display:flex;gap:4px;margin-bottom:10px}.stepper i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.12)}.stepper i.on{background:var(--gold)}
+.pts{font:700 1rem var(--serif);color:var(--gold2)}
+.attr{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:8px 0}
+.attr .pm{display:flex;gap:6px;align-items:center}
+.attr .pm button{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:var(--ink);font:700 1.2rem var(--sans)}
+.attr .pm span{min-width:30px;text-align:center;font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+html[data-rm="1"] *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+
+.opts.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.opts.scroll::-webkit-scrollbar{display:none}.opts.scroll .opt{white-space:nowrap}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <header id="topbar"><span class="logo">MACHT &amp; MANDAT</span><button class="gear" id="gear" aria-label="Einstellungen" data-act="settings">⚙</button></header>
+  <main id="screen" aria-live="polite"></main>
+  <nav id="nav" aria-label="Hauptnavigation"></nav>
+  <div id="sheetbg"><div id="sheet" role="dialog" aria-modal="true"></div></div>
+  <div id="toast" role="status"></div>
+</div>
+<script>
+/* ===== 00-util.js ===== */
+'use strict';
+/* ---------- Helfer ---------- */
+const $ = (s, r) => (r || document).querySelector(s);
+const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const rnd = () => Math.random();
+const pick = a => a[Math.floor(rnd() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const gauss = () => { let u = 0; while (!u) u = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * rnd()); };
+const f1 = x => (Math.round(x * 10) / 10).toLocaleString('de-DE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const f0 = x => Math.round(x).toLocaleString('de-DE');
+const sgn = x => (x > 0 ? '+' : x < 0 ? '−' : '±') + Math.abs(x);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const seeded = seed => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+
+/* ---------- Einstellungen (Barrierefreiheit) ---------- */
+const SET_KEY = 'mum.settings.v1', SAVE_KEY = 'mum.save.v1';
+const SET = Object.assign({ fs: 16, hc: 0, cb: 0, haptic: 1, voice: 0, rm: 0 }, (() => { try { return JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (e) { return {}; } })());
+function applySettings() {
+  const r = document.documentElement;
+  r.style.setProperty('--fs', SET.fs + 'px');
+  r.dataset.hc = SET.hc; r.dataset.rm = SET.rm;
+  document.body.classList.toggle('cb', !!SET.cb);
+  try { localStorage.setItem(SET_KEY, JSON.stringify(SET)); } catch (e) {}
+}
+function buzz(ms) { if (SET.haptic && navigator.vibrate) try { navigator.vibrate(ms || 12); } catch (e) {} }
+function speak(t) {
+  if (!SET.voice || !window.speechSynthesis) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(t); u.lang = 'de-DE'; u.rate = 1.02; speechSynthesis.speak(u); } catch (e) {}
+}
+
+/* ---------- Toast / Sheet ---------- */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2400); }
+function openSheet(html) { $('#sheet').innerHTML = html; $('#sheetbg').classList.add('on'); $('#sheet').scrollTop = 0; }
+function closeSheet() { $('#sheetbg').classList.remove('on'); }
+
+/* ---------- Spielstand ---------- */
+let G = null;
+function save() { if (!G) return; try { localStorage.setItem(SAVE_KEY, JSON.stringify(G)); } catch (e) {} }
+function loadSave() { try { const s = JSON.parse(localStorage.getItem(SAVE_KEY)); return s && s.v === 1 ? s : null; } catch (e) { return null; } }
+function wipeSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+
+/* ===== 10-data-parties.js ===== */
+/* ---------- Parteien (Spielwerte – stilisiert, satirisch überhöht, nicht als Wahlempfehlung gedacht) ---------- */
+const THEMES = [
+  { id: 'wirt', n: 'Wirtschaft' }, { id: 'wohn', n: 'Wohnen' }, { id: 'verk', n: 'Verkehr' },
+  { id: 'klim', n: 'Klima' }, { id: 'sich', n: 'Sicherheit' }, { id: 'soz', n: 'Soziales & Bildung' }
+];
+const TH = THEMES.map(t => t.id);
+
+const PARTIES = {
+  CDU: {
+    id: 'CDU', abk: 'CDU', name: 'CDU', voll: 'Christlich Demokratische Union', color: '#8d96a8', cb: '#999999', diff: 2,
+    slogan: 'Stabil. Solide. Seit jeher.', motto: 'Damit es bleibt, wie es sein sollte – nur ein bisschen besser.',
+    kern: ['Wirtschaft', 'Sicherheit', 'Haushaltsdisziplin'], waehler: 'Mittelstand, Senior:innen, ländlicher Raum, Familien',
+    staerken: ['Regierungserfahrung: Wirtschafts- und Verwaltungskompetenz', 'Dichtes Netz an Ortsverbänden', 'Hohe Kampagnenkasse'],
+    schwaechen: ['Wirkt bei Zukunftsthemen behäbig', 'Flügelstreit: Wirtschaft vs. Soziales vs. Junge Union', 'Junge Wähler:innen schwer erreichbar'],
+    fluegel: 'Wirtschaftsflügel · Sozialausschüsse · Junge Union', konflikt: 'Die K-Frage: Wer darf eigentlich Kanzler:in werden – und wer hat das schon zugesagt?',
+    mech: { n: 'Stabilitätsanker', t: 'Schäden bei Wirtschaft und Gesellschaftsklima werden halbiert. Dafür bringen Klima-Vorstöße nur halb so viel Beliebtheit.' },
+    bud: 30, par: 62, bel: 38, recog: .30, prof: [.65, .40, .45, .25, .65, .40], aff: [-.3, .2, .5, .7, .4, -.1], pers: 0
+  },
+  CSU: {
+    id: 'CSU', abk: 'CSU', name: 'CSU', voll: 'Christlich-Soziale Union', color: '#3f86e0', cb: '#0072B2', diff: 2,
+    slogan: 'Mia san mia. Und Sie auch, wenn’s passt.', motto: 'Bayern first – der Rest folgt mit Abstand.',
+    kern: ['Heimat', 'Sicherheit', 'Landwirtschaft'], waehler: 'Dorf- und Kleinstadtbevölkerung, Mittelstand, Katholik:innen',
+    staerken: ['Sonderrolle im Bund: Fraktionsgemeinschaft mit der CDU', 'Dominanz in Dorf und Bierzelt', 'Sehr hohe Kampagnenkasse'],
+    schwaechen: ['Nur in Bayern wählbar – bundesweit kleiner Hebel', 'Reibt sich gern an der Schwesterpartei', 'Modernisierungsimage mau'],
+    fluegel: 'Landesgruppe · Christlich-Soziale Arbeitnehmer · Junge Union Bayern', konflikt: 'Das Schwesterverhältnis: Drohen oder bitten, je nach Umfrage.',
+    mech: { n: 'Mia-san-mia-Bonus', t: 'Dörfliche Ortsteile stehen fest hinter dir, Festauftritte im Bierzelt gelingen leichter (Trachtenbonus). Dafür bist du im Stadtzentrum fremd.' },
+    bud: 34, par: 70, bel: 40, recog: .34, prof: [.65, .40, .45, .25, .70, .45], aff: [-.3, .3, .5, .6, .7, .0], pers: 0
+  },
+  SPD: {
+    id: 'SPD', abk: 'SPD', name: 'SPD', voll: 'Sozialdemokratische Partei Deutschlands', color: '#e3404b', cb: '#D55E00', diff: 3,
+    slogan: 'Respekt. Gerechtigkeit. Zusammenhalt.', motto: 'Wer arbeitet, soll sich auch was leisten können – und Urlaub.',
+    kern: ['Soziales', 'Rente', 'Arbeit & Löhne'], waehler: 'Arbeitnehmer:innen, Gewerkschaftsmitglieder, Pflege und Bildung',
+    staerken: ['Gewerkschafts-Netzwerk', 'Sozialkompetenz', 'Regierungs- und Kommunalerfahrung'],
+    schwaechen: ['Streit zwischen Seeheimern, Parteilinken und Jusos', 'Kanzlerbonus schwer zu erreichen', 'Junge Wähler:innen wandern zu Grünen und Linken'],
+    fluegel: 'Seeheimer Kreis · Parteilinke · Jusos', konflikt: 'Die Basis will mehr links, die Regierung will mehr Kompromiss.',
+    mech: { n: 'Gewerkschafts-Netz', t: 'Schichtarbeit & Pflege stehen hinter dir, Tarif- und Streikthemen laufen besser. Sparmaßnahmen und Hinterzimmerdeals kosten doppelt Parteiloyalität.' },
+    bud: 24, par: 58, bel: 36, recog: .28, prof: [.40, .60, .40, .35, .40, .70], aff: [.0, .2, .3, -.3, .0, .6], pers: 0
+  },
+  AFD: {
+    id: 'AFD', abk: 'AfD', name: 'AfD', voll: 'Alternative für Deutschland', color: '#58b4ee', cb: '#56B4E9', diff: 5,
+    slogan: 'Mut zur Wahrheit. Oder zumindest zur Lautstärke.', motto: 'Die da oben – wir hier unten. Schon wieder.',
+    kern: ['Migration', 'Energiepreise', 'Sicherheit'], waehler: 'Protestwähler:innen, Ost- und ländliche Regionen, Schichtarbeit',
+    staerken: ['Hohe Mobilisierung und emotionale Bindung der Kernwählerschaft', 'Dominanz in sozialen Medien', 'Starke Regionalhochburgen'],
+    schwaechen: ['Andere Parteien schließen eine Zusammenarbeit aus (Kooperationssperre)', 'Hohes Skandal- und Beobachtungsrisiko', 'Schwache Verwaltungs- und Regierungserfahrung'],
+    fluegel: 'Nationalkonservative · Wirtschaftsliberale · Radikale Flanke', konflikt: 'Wie viel Provokation darf sein, wie viel Regierungsfähigkeit muss sein?',
+    mech: { n: 'Protest-Dynamik', t: 'Medienecho schlägt doppelt aus (nach oben wie unten), Skandalrisiko ×1,5. Schichtarbeit und Dörfer mobilisieren stärker. In der Stichwahl geben Mitbewerber-Wähler:innen seltener an dich weiter (Kooperationssperre).' },
+    bud: 14, par: 66, bel: 34, recog: .30, prof: [.35, .30, .40, .10, .65, .30], aff: [-.5, -.1, .0, -.1, .3, .3], pers: 0
+  },
+  GRUENE: {
+    id: 'GRUENE', abk: 'GRÜ', name: 'Grüne', voll: 'Bündnis 90/Die Grünen', color: '#46b762', cb: '#009E73', diff: 3,
+    slogan: 'Veränderung ist das neue Normal.', motto: 'Wir retten die Welt – möglichst in 10 Punkten und ohne Dienstwagen.',
+    kern: ['Klima', 'Verkehrswende', 'Bürgerrechte'], waehler: 'Junge, Studierende, urbane Akademiker:innen, Familien in der Stadt',
+    staerken: ['Klimakompetenz', 'Starke Innenstadt- und Jugendbasis', 'Engagierte Mitglieder'],
+    schwaechen: ['Realo/Fundi-Konflikt', 'Gegenwind auf dem Land', 'Zielkonflikt: Regieren vs. Prinzipien'],
+    fluegel: 'Realos · Fundis · Parteilinke', konflikt: 'Kompromiss oder Prinzip – Delegierte entscheiden, Twitter kommentiert.',
+    mech: { n: 'Realo/Fundi-Regler', t: 'Pragmatische Optionen bringen Beliebtheit, kosten aber Parteiloyalität – prinzipientreue Optionen umgekehrt. Dein Kurs wird im Profil angezeigt.' },
+    bud: 20, par: 60, bel: 37, recog: .28, prof: [.35, .45, .55, .80, .30, .50], aff: [.8, .3, -.2, -.4, -.4, -.2], pers: 0
+  },
+  FDP: {
+    id: 'FDP', abk: 'FDP', name: 'FDP', voll: 'Freie Demokratische Partei', color: '#f5c72e', cb: '#F0E442', diff: 4,
+    slogan: 'Freiheit. Fortschritt. Finanzen im Griff.', motto: 'Weniger Staat, mehr Du – auch beim Steuerformular.',
+    kern: ['Steuern', 'Digitalisierung', 'Bürgerfreiheit'], waehler: 'Selbstständige, Gründer:innen, Gewerbe, urbane Liberale',
+    staerken: ['Wirtschafts- und Steuerprofil', 'Gute Spendenlage', 'Starke Stimme für Mittelstand und Gewerbe'],
+    schwaechen: ['Bundesweit an der 5-%-Hürde', 'Koalitionsrisiko: Sollbruchstellen sind Markenzeichen', 'Wenig Kompetenz in Sozialthemen'],
+    fluegel: 'Wirtschaftsliberale · Bürgerrechtsliberale', konflikt: 'Regieren und liefern – oder lieber nicht regieren, als schlecht zu regieren?',
+    mech: { n: 'Freiheitsindex', t: 'Sparen und Entbürokratisieren bringen Zusatz-Beliebtheit, Spenden fließen um 50 % stärker. Sozialthemen wirken schwächer.' },
+    bud: 22, par: 56, bel: 36, recog: .26, prof: [.70, .35, .50, .25, .35, .25], aff: [.0, .0, -.2, .6, -.1, -.4], pers: 0
+  },
+  LINKE: {
+    id: 'LINKE', abk: 'LINKE', name: 'Die Linke', voll: 'Die Linke', color: '#d13f9b', cb: '#CC79A7', diff: 4,
+    slogan: 'Für die Vielen, nicht für die Wenigen.', motto: 'Mieten runter, Löhne rauf, Laune bleibt.',
+    kern: ['Mieten', 'Soziales', 'Umverteilung'], waehler: 'Jüngere Städter:innen, Geringverdienende, soziale Bewegungen',
+    staerken: ['Starke Straßen- und Haustürpräsenz', 'Sozial- und Mietenkompetenz', 'Mobilisierte Basis'],
+    schwaechen: ['Sehr kleine Kasse', 'Koalitionen schwierig', 'Flügelstreit Reformer vs. Bewegungslinke'],
+    fluegel: 'Reformer · Bewegungslinke · Sozialistische Linke', konflikt: 'Regieren oder Protest – und wer trägt die Verantwortung für die Mieten?',
+    mech: { n: 'Bewegung & Straße', t: 'Straßen- und Haustürwahlkampf wirken 1,5-fach, die Basis mobilisiert extra. Dafür ist die Kampagnenkasse klein.' },
+    bud: 10, par: 64, bel: 33, recog: .22, prof: [.25, .65, .45, .45, .20, .70], aff: [.4, -.1, -.1, -.6, -.4, .3], pers: 0
+  },
+  BSW: {
+    id: 'BSW', abk: 'BSW', name: 'BSW', voll: 'Bündnis für Soziale Wahrheit', color: '#a66be3', cb: '#E69F00', diff: 4,
+    slogan: 'Vernunft. Gerechtigkeit. Ruhe im Karton.', motto: 'Links bei Löhnen, konservativ bei Kaffeefahrten.',
+    kern: ['Soziales', 'Frieden', 'Migration'], waehler: 'Enttäuschte aller Lager, Ost- und ältere Wähler:innen, Geringverdienende',
+    staerken: ['Sehr hohe Bekanntheit der Gründerfigur', 'Starke Medienpräsenz', 'Frische Marke'],
+    schwaechen: ['Dünne Parteistruktur, wenige Ortsverbände', 'Abhängigkeit von der Gründerfigur', 'Programm noch in Arbeit'],
+    fluegel: 'Gründerkreis · Quereinsteiger · Sozialpolitiker', konflikt: 'Wer darf beitreten – und wer darf widersprechen?',
+    mech: { n: 'Gründerfigur', t: 'Charisma und Beliebtheit zählen 1,6-fach, die Parteistruktur dagegen fast nichts. Schwächere Mobilisierung am Wahltag.' },
+    bud: 8, par: 44, bel: 40, recog: .42, prof: [.35, .30, .40, .15, .40, .65], aff: [-.2, -.1, .1, -.3, .1, .4], pers: 0
+  },
+  EIGEN: {
+    id: 'EIGEN', name: 'Eigene Partei', voll: 'Neu gegründet', color: '#d6b16c', cb: '#FFFFFF', diff: 5,
+    slogan: 'Neu. Anders. Ungetestet.', motto: '', kern: [], waehler: 'Noch niemand – genau das ist die Chance',
+    staerken: ['Maximale Freiheit im Programm', 'Sehr hohes Wachstumspotenzial', 'Keine Altlasten'],
+    schwaechen: ['Kaum Geld', 'Kaum Bekanntheit', 'Kinderkrankheiten: Mitglieder, Satzung, Schatzmeister'],
+    fluegel: 'Gründungsmitglieder', konflikt: 'Wer ist hier eigentlich der Vorstand – und wo ist der Kugelschreiber?',
+    mech: { n: 'Wachstumsspirale', t: 'Positive Medienberichte erzeugen Momentum: bis zu +10 Punkte Beliebtheit und Bekanntheit. Dafür fehlen Kasse und Struktur, und Kinderkrankheiten drohen.' },
+    bud: 4, par: 50, bel: 30, recog: .08, prof: [.45, .45, .45, .45, .45, .45], aff: [0, 0, 0, 0, 0, 0], pers: 0
+  }
+};
+const PARTY_ORDER = ['CDU', 'CSU', 'SPD', 'AFD', 'GRUENE', 'FDP', 'LINKE', 'BSW', 'EIGEN'];
+function pcolor(id) { const p = PARTIES[id]; if (!p) return '#888'; return SET.cb ? p.cb : (id === 'EIGEN' && G && G.own ? G.own.color : p.color); }
+function pname(id) { return id === 'EIGEN' && G && G.own && G.own.abk ? G.own.abk : (PARTIES[id] ? PARTIES[id].name : id); }
+
+/* ---------- Hintergründe, Herkunft, Dialekte ---------- */
+const STATS = [
+  { id: 'cha', n: 'Charisma', d: 'Wirkung auf Menschen, Bierzelt, Bühne' },
+  { id: 'iq', n: 'Intelligenz', d: 'Faktenwissen, Gesetze, Haushalte' },
+  { id: 'dur', n: 'Durchsetzung', d: 'Macht, Verhandlungen, Fraktion' },
+  { id: 'ehr', n: 'Integrität', d: 'Glaubwürdigkeit, Skandalfestigkeit' },
+  { id: 'med', n: 'Medienwirkung', d: 'Schlagzeilen, Social Media, TV' },
+  { id: 'res', n: 'Belastbarkeit', d: 'Stress, Nachtsitzungen, Krisen' },
+  { id: 'net', n: 'Netzwerk', d: 'Kontakte, Berater:innen, Vorschau-Qualität' }
+];
+const BACKGROUNDS = {
+  lehrer: { n: 'Lehrer:in', e: '📚', t: 'Erklären kannst du. Dass dir dabei keiner zuhört, kennst du aus der 9b.', st: { iq: 6, cha: 4 }, prof: { soz: .10 }, mil: { fam: .06 }, bud: 0, npc: 'Elternbeirat ist wohlgesonnen' },
+  handwerk: { n: 'Handwerker:in', e: '🔧', t: 'Mit der Wasserwaage im Wahlkampf: Was schief ist, sieht man sofort.', st: { dur: 6, res: 5, net: 4 }, prof: { wirt: .06, wohn: .04 }, mil: { gew: .10 }, bud: 2, npc: 'Kreishandwerkerschaft hilft mit Plakaten' },
+  jurist: { n: 'Jurist:in', e: '⚖️', t: 'Du liest das Kleingedruckte – und sogar das Kleingedruckte vom Kleingedruckten.', st: { iq: 8, ehr: 4 }, prof: { sich: .08 }, mil: {}, bud: 3, npc: 'Gutes Gespür für rechtssichere Formulierungen' },
+  unternehmer: { n: 'Unternehmer:in', e: '🏭', t: 'Du hast Leute eingestellt und entlassen. Beides kommt im Wahlkampf gleich gut an.', st: { dur: 6, net: 6, ehr: -4 }, prof: { wirt: .12 }, mil: { gew: .14 }, bud: 8, npc: 'Spendenbereitschaft im Bekanntenkreis' },
+  pflege: { n: 'Pflegekraft', e: '🩺', t: 'Schichtdienst, Nächte, Verantwortung – ein Wahlkampf ist dagegen fast Wellness.', st: { res: 8, ehr: 6 }, prof: { soz: .12 }, mil: { arb: .15, sen: .05 }, bud: 0, npc: 'Hohe Glaubwürdigkeit bei Gesundheitsthemen' },
+  landwirt: { n: 'Landwirt:in', e: '🌾', t: 'Du stehst früh auf. Politik beginnt immerhin erst um zehn.', st: { res: 6, cha: 3 }, prof: { wirt: .04, verk: .06 }, mil: { dorf: .18 }, bud: 1, npc: 'Bauernverband unterstützt dich' },
+  polizei: { n: 'Polizist:in', e: '🛡️', t: 'Du hast schon Schlimmeres gesehen als einen Gemeinderat. Knapp.', st: { dur: 6, ehr: 4, res: 4 }, prof: { sich: .12 }, mil: { sen: .08 }, bud: 0, npc: 'Vertrauen bei Sicherheitsthemen' },
+  journalist: { n: 'Journalist:in', e: '🎙️', t: 'Du weißt, wie Schlagzeilen entstehen. Und wie man sie wieder loswird. Meistens.', st: { med: 8, cha: 4, net: 4 }, prof: {}, mil: {}, bud: 0, recog: .10, npc: 'Lokalreporter Lohmeyer ist dein Ex-Kollege (+20)' }
+};
+const HERKUNFT = {
+  alt: { n: 'Alteingesessen', t: 'Dein Opa kannte schon den Vorvorgänger des Bürgermeisters.', recog: .12, st: { ehr: -2 } },
+  zug: { n: 'Zugezogen', t: 'Frischer Blick, aber auch die Frage: „Woher kommen Sie eigentlich?“', recog: -.04, st: { iq: 3, med: 2 } },
+  land: { n: 'Dorfkind', t: 'Die Ortsteile kennen dich vom Kindergarten.', mil: { dorf: .10 }, st: { res: 2 } },
+  stadt: { n: 'Stadtkind', t: 'Altbau, Altglas und Ahnung von Nahverkehr.', mil: { jung: .08 }, st: { med: 2 } },
+  mig: { n: 'Mit Migrationsgeschichte', t: 'Du baust Brücken – manchmal im wörtlichen Sinn, oft im Gespräch.', mil: { arb: .05, fam: .04 }, st: { cha: 2, net: 2 } },
+  nachbar: { n: 'Aus der Nachbarstadt', t: 'Man kennt dich halb. Immerhin die bessere Hälfte.', recog: .04, st: { net: 3 } }
+};
+const DIALEKTE = {
+  hoch: { n: 'Hochdeutsch', t: 'Tagesschau-Niveau. Ohne Tagesschau-Budget.' },
+  bair: { n: 'Bairisch', t: 'Servus, Grüß Gott und „Des passt scho“.', bierzelt: 8, dorf: .05 },
+  nord: { n: 'Norddeutsch', t: 'Moin. Das reicht als Rede.', dorf: .03 },
+  saechs: { n: 'Sächsisch', t: 'Nu klar – Bürgernähe per Akzent.', dorf: .04 },
+  rhein: { n: 'Rheinisch', t: 'Kölsch-Laune, Karnevals-Charme.', bierzelt: 8 },
+  schwab: { n: 'Schwäbisch', t: 'Schaffe, schaffe – und Haushalte mit Kehrwoche.', dorf: .03 }
+};
+const FACES = [{ id: 'oval', n: 'Oval' }, { id: 'rund', n: 'Rund' }, { id: 'kantig', n: 'Kantig' }];
+const HAIRS = [{ id: 'kurz', n: 'Kurz' }, { id: 'seit', n: 'Seitenscheitel' }, { id: 'lang', n: 'Lang' }, { id: 'bob', n: 'Bob' }, { id: 'dutt', n: 'Dutt' }, { id: 'glatze', n: 'Glatze' }, { id: 'locken', n: 'Locken' }];
+const OUTFITS = [{ id: 'anzug', n: 'Anzug' }, { id: 'blazer', n: 'Blazer' }, { id: 'strick', n: 'Strickjacke' }, { id: 'tracht', n: 'Trachtenjanker' }, { id: 'hemd', n: 'Hemd, offen' }];
+const ACCS = [{ id: 'none', n: 'Keins' }, { id: 'brille', n: 'Brille' }, { id: 'schal', n: 'Schal' }, { id: 'pin', n: 'Anstecker' }, { id: 'krawatte', n: 'Krawatte' }];
+const SKINS = ['#f6dcc4', '#ecc39c', '#d9a47a', '#b97c56', '#8d5a3a', '#5e3a25'];
+const HAIRC = ['#1d1a18', '#4a3426', '#8a5a34', '#c9a46a', '#b8b8b8', '#b5452a'];
+
+/* Kampagnen-Slogans mit Zielgruppen-Wirkung auf Milieus (jung, fam, sen, gew, dorf, arb) */
+const SLOGANS = [
+  { t: 'Niederhüttingen: Mach was draus.', m: [.10, .05, -.04, .05, -.02, .02] },
+  { t: 'Sicher. Sauber. Ehrlich.', m: [-.04, .05, .10, .04, .05, .02] },
+  { t: 'Gutes Leben für alle Ortsteile.', m: [.02, .06, .04, .00, .10, .04] },
+  { t: 'Bezahlbar wohnen. Bequem ankommen.', m: [.08, .10, .02, .00, .02, .08] },
+  { t: 'Anpacken statt aussitzen.', m: [.03, .04, .03, .09, .04, .06] }
+];
+
+/* ===== 11-data-world.js ===== */
+/* ---------- Niederhüttingen: Milieus, Bezirke, Gegner ---------- */
+const TOWN = { name: 'Niederhüttingen', ew: 38400, turnout: .56 };
+const MILIEUS = [
+  { id: 'jung', n: 'Innenstadt & Studis', share: .14, sal: [.10, .30, .20, .25, .05, .10] },
+  { id: 'fam', n: 'Familien im Neubaugebiet', share: .20, sal: [.15, .20, .15, .10, .10, .30] },
+  { id: 'sen', n: 'Senior:innen', share: .24, sal: [.10, .10, .10, .05, .30, .35] },
+  { id: 'gew', n: 'Gewerbe & Mittelstand', share: .12, sal: [.40, .10, .20, .05, .15, .10] },
+  { id: 'dorf', n: 'Dörfliche Ortsteile', share: .18, sal: [.15, .10, .25, .10, .20, .20] },
+  { id: 'arb', n: 'Schichtarbeit & Pflege', share: .12, sal: [.20, .25, .10, .05, .10, .30] }
+];
+const MI = MILIEUS.map(m => m.id);
+/* 24 Stimmbezirke: Typ = dominantes Milieu, Größe (Wahlberechtigte in Hundert) */
+const DISTRICT_DEFS = [
+  ['Altstadt Nord', 'jung', 16], ['Altstadt Süd', 'jung', 15], ['Bahnhofsviertel', 'jung', 14], ['Campus West', 'jung', 12], ['Hüttle-Ufer', 'fam', 18], ['Am Sonnenhang', 'fam', 20],
+  ['Neubaugebiet Ost', 'fam', 22], ['Lindenallee', 'fam', 17], ['Stadtpark', 'sen', 19], ['Seniorenresidenz', 'sen', 14], ['Kirchplatz', 'sen', 18], ['Rathausviertel', 'sen', 17],
+  ['Gewerbegebiet Nord', 'gew', 12], ['Gewerbegebiet Süd', 'gew', 14], ['Werksiedlung', 'arb', 16], ['Klinikviertel', 'arb', 15], ['Oberhüttingen', 'dorf', 9], ['Kleinbach', 'dorf', 6],
+  ['Waldfeld', 'dorf', 7], ['Steinbrück', 'dorf', 8], ['Hohenau', 'dorf', 7], ['Tannrode', 'dorf', 5], ['Mühlheim-Nord', 'dorf', 8], ['Linden-Mitte', 'fam', 16]
+];
+function districtMix(type, idx) {
+  const r = seeded(hashStr(type + idx));
+  const w = MILIEUS.map(m => m.share * (m.id === type ? 4.2 : 0.55) * (0.8 + r() * .5));
+  const s = w.reduce((a, b) => a + b, 0);
+  return w.map(x => x / s);
+}
+const DISTRICTS = DISTRICT_DEFS.map((d, i) => ({ n: d[0], type: d[1], size: d[2], mix: districtMix(d[1], i) }));
+
+/* Gegnerfeld: passende Parteien zur Spielerpartei (keine Doppelung, CSU/CDU nach Region) */
+const OPP_NAMES = {
+  inc: ['Dr. Ulf Brandtner', 'Dr. Ingrid Thalhammer', 'Dr. Volker Amsel'], unab: 'Gerda Pfeifer', o1: ['Jens Ostermann', 'Nadine Rademacher'], o2: ['Mehmet Yilmaz-Kraus', 'Tanja Duvenbeck']
+};
+const OPP_PARTY_POOL = ['SPD', 'CDU', 'GRUENE', 'FDP', 'LINKE', 'AFD', 'BSW'];
+
+/* ---------- NPCs ---------- */
+const NPC0 = {
+  kaem: { n: 'Brigitte Kowalczyk', r: 'Stadtkämmerin', e: '🧮', v: 45, d: 'Hütet die Kasse wie den Familienschmuck.' },
+  press: { n: 'Kevin Lohmeyer', r: 'Reporter, Hüttinger Tageblatt', e: '📰', v: 40, d: 'Stellt Fragen, die man nicht beantworten will.' },
+  party: { n: 'Gisela Hagedorn', r: 'Vorsitzende des Ortsverbands', e: '🤝', v: 55, d: 'Kennt jeden Stuhl im Parteiheim persönlich.' },
+  fam: { n: 'Sam', r: 'Partner:in', e: '🏡', v: 70, d: 'Fragt sich, ob du Termine oder Familie gewählt hast.' }
+};
+
+/* ---------- Medien: Frames, Parteihaltung, Schlagzeilen ---------- */
+/* Haltung der Parteien zu Entscheidungs-Frames (−1 = lehnt ab, +1 = begrüßt). Reihenfolge: CDU CSU SPD AFD GRUENE FDP LINKE BSW EIGEN */
+const PIDX = { CDU: 0, CSU: 1, SPD: 2, AFD: 3, GRUENE: 4, FDP: 5, LINKE: 6, BSW: 7, EIGEN: 8 };
+const FRAMES = {
+  ausgaben: { n: 'Mehr Geld in die Hand nehmen', st: [-.2, -.2, .6, -.3, .4, -.8, .7, .3, 0] },
+  sparen: { n: 'Sparen und Konsolidieren', st: [.6, .6, -.5, .0, -.3, .8, -.8, -.2, 0] },
+  dialog: { n: 'Dialog und Beteiligung', st: [.2, .2, .5, -.2, .6, .1, .6, .1, .3] },
+  ordnung: { n: 'Härte und Ordnung', st: [.6, .7, -.1, .6, -.5, .3, -.6, .3, -.2] },
+  klima: { n: 'Klima und Umwelt', st: [-.2, -.2, .3, -.8, .9, -.3, .5, -.5, .1] },
+  wirtschaft: { n: 'Standort und Wirtschaft', st: [.7, .7, .0, .1, -.2, .8, -.6, .0, .1] },
+  sozial: { n: 'Sozialer Ausgleich', st: [.0, .2, .8, .2, .4, -.5, .9, .7, .1] },
+  populismus: { n: 'Gefälligkeit und Show', st: [-.3, -.1, -.4, .5, -.5, -.3, -.2, .3, -.2] },
+  transparenz: { n: 'Transparenz und Ehrlichkeit', st: [.2, .2, .4, .0, .6, .5, .4, .3, .5] },
+  humor: { n: 'Humor und Nähe', st: [.3, .4, .3, .3, .2, .2, .2, .3, .5] },
+  deal: { n: 'Hinterzimmer-Deal', st: [.0, .1, -.3, -.4, -.7, -.2, -.6, -.4, -.5] },
+  aussitzen: { n: 'Aussitzen', st: [-.3, -.2, -.5, -.4, -.5, -.6, -.5, -.3, -.5] },
+  angriff: { n: 'Angriff auf den Gegner', st: [.2, .3, .0, .6, -.2, .4, .2, .5, -.1] },
+  einsatz: { n: 'Persönlicher Einsatz', st: [.4, .4, .5, .3, .5, .3, .5, .4, .5] }
+};
+/* Schlagzeilen: {n}=Nachname der Kandidatur, {o}=Ort */
+const HL = {
+  ausgaben: { pos: ['{n} investiert: „Endlich passiert was in {o}“', 'Mut zur Investition: {n} macht Geld locker'], neg: ['Schuldenkönig {n}? Die Rechnung zahlen wir alle', '{n} verteilt Geld, das {o} gar nicht hat'], neu: ['{n} kündigt Investitionen an – Zahlen folgen', 'Mehr Geld für {o}: Fachleute rechnen nach'] },
+  sparen: { pos: ['{n} hält die Kasse zusammen: „Solide Politik“', 'Haushaltsdisziplin: {n} überzeugt die Kämmerei'], neg: ['Kahlschlag in {o}: {n} spart am falschen Ende', '{n} kürzt – und nennt es „Verantwortung“'], neu: ['{n} legt Sparliste vor', 'Haushalt: {n} bleibt vorsichtig'] },
+  dialog: { pos: ['{n} hört zu: Bürgergespräch kommt gut an', 'Dialog statt Dekret: Lob für {n}'], neg: ['Noch ein Runder Tisch? {n} redet, {o} wartet', '{n} moderiert – entscheidet aber nicht'], neu: ['{n} lädt zum Bürgerdialog', 'Beteiligung in {o}: {n} setzt auf Gespräche'] },
+  ordnung: { pos: ['{n} greift durch: „Sicherheit ist kein Luxus“', 'Klare Ansage von {n} – Anwohner:innen atmen auf'], neg: ['{n} setzt auf Härte – Kritik wächst', 'Law-and-Order in {o}: Zu viel, zu schnell?'], neu: ['{n} kündigt Kontrollen an', 'Ordnungsdienst in {o}: Stadtrat diskutiert'] },
+  klima: { pos: ['{n} macht {o} klimafit – Applaus aus vielen Ecken', 'Grüne Wende mit Augenmaß: {n} setzt Zeichen'], neg: ['Klima-Kurs: {n} überfordert {o}', 'Ideologie statt Infrastruktur? Kritik an {n}'], neu: ['{n} legt Klimakonzept vor', 'Windräder, Wärme, Widerstand: {n} im Fokus'] },
+  wirtschaft: { pos: ['{n} sichert Arbeitsplätze in {o}', 'Wirtschaft lobt {n}: „Endlich Planungssicherheit“'], neg: ['{n} hofiert die Wirtschaft – Kritik von links', 'Standortpolitik à la {n}: Wer zahlt die Zeche?'], neu: ['{n} trifft Unternehmer:innen', 'Gewerbe in {o}: {n} kündigt Runde an'] },
+  sozial: { pos: ['{n} stärkt den Zusammenhalt in {o}', 'Sozial und machbar: {n} findet Zustimmung'], neg: ['Soziale Wohltaten? {n} verteilt, {o} zahlt', '{n} zementiert Verwaltungsaufwand'], neu: ['{n} kündigt Sozialpaket an', 'Zuschüsse für Familien: Details offen'] },
+  populismus: { pos: ['{n} trifft den Nerv der Leute', 'Volksnah: {n} erntet Jubel'], neg: ['Show statt Substanz: {n} auf Stimmenfang', '{n} klatscht Beifall – und die Quittung kommt später'], neu: ['{n} gibt sich volksnah', 'Auftritt von {n} sorgt für Gesprächsstoff'] },
+  transparenz: { pos: ['{n} legt alles offen – Respekt', 'Ehrlich währt am längsten: Lob für {n}'], neg: ['{n} räumt Fehler ein – und wird doch kritisiert', 'Offenheit wird zur Angriffsfläche'], neu: ['{n} veröffentlicht Unterlagen', 'Transparenz-Offensive von {n}'] },
+  humor: { pos: ['{n} kann auch lustig: Video geht durch die Decke', 'Selbstironie gelungen: {o} lacht mit {n}'], neg: ['Cringe-Alarm: {n} bemüht sich zu sehr um Lacher', 'Humor? {n} verwechselt Wahlkampf mit Kabarett'], neu: ['{n} zeigt Humor – Reaktionen gemischt', 'Lockerer Auftritt von {n}'] },
+  deal: { pos: ['{n} kann Politik: Einigung ohne Streit', 'Pragmatismus zahlt sich aus: {n} holt Ergebnis'], neg: ['Klüngel in {o}? {n} unter Verdacht', 'Hinterzimmer-Deal: {n} in Erklärungsnot'], neu: ['{n} verhandelt hinter verschlossenen Türen', 'Gespräche im Hinterzimmer: Niemand sagt was'] },
+  angriff: { pos: ['{n} trifft den wunden Punkt – Publikum applaudiert', 'Scharfe Bilanz: {n} stellt den Amtsinhaber'], neg: ['{n} poltert – und verliert den Ton', 'Angriff im Affekt: {n} schießt übers Ziel'], neu: ['{n} geht den Amtsinhaber hart an', 'Wahlkampf wird rauer: {n} teilt aus'] },
+  einsatz: { pos: ['{n} packt mit an – Bilder gehen durch {o}', 'Ärmel hoch: {n} zeigt Einsatz'], neg: ['Fototermin statt Hilfe? Kritik an {n}', '{n} inszeniert sich – {o} bleibt skeptisch'], neu: ['{n} hilft vor Ort', 'Einsatz von {n} in {o} – Stimmen gemischt'] },
+  aussitzen: { pos: ['{n} bleibt gelassen – Lage beruhigt sich', 'Nichtstun gelungen: {n} hatte recht'], neg: ['{n} taucht ab, das Problem nicht', 'Aussitzen bis zum Wahltag? {o} verliert Geduld'], neu: ['{n} äußert sich nicht', 'Zurückhaltung von {n}: Was steckt dahinter?'] }
+};
+const OUTLETS = [
+  { id: 'lok', n: 'Hüttinger Tageblatt', c: '', bias: 0, amp: 1, wrap: s => `„${s}“` },
+  { id: 'bou', n: 'Kurier am Mittag', c: 'b', bias: -.15, amp: 1.5, wrap: s => s.toUpperCase().replace(/[„“]/g, '') + '!' },
+  { id: 'soc', n: 'Social Media', c: 's', bias: 0, amp: 1.2, wrap: s => `💬 ${s} #Niederhüttingen` }
+];
+function mediaReaction(frame, party, risky, opts) {
+  // Jede Redaktion bewertet denselben Frame je nach Parteihaltung, Tonlage und Skandalrisiko unterschiedlich
+  const st = FRAMES[frame].st[PIDX[party]];
+  const out = []; let score = 0;
+  OUTLETS.forEach(o => {
+    const x = (st + o.bias + (risky ? -.25 : 0) + gauss() * .18) * o.amp;
+    const tone = x > .22 ? 'pos' : x < -.22 ? 'neg' : 'neu';
+    const line = pick(HL[frame][tone]).replace(/\{n\}/g, G.nn).replace(/\{o\}/g, TOWN.name);
+    out.push({ outlet: o, tone, text: o.wrap(line) });
+    score += tone === 'pos' ? 1 : tone === 'neg' ? -1 : 0;
+  });
+  return { out, score, st };
+}
+
+/* ---------- Bund: Ausgangslage (fiktiv) und Institute ---------- */
+const BUND0 = { CDU: 20.5, CSU: 5.5, SPD: 16.5, AFD: 21.0, GRUENE: 12.0, FDP: 4.5, LINKE: 6.5, BSW: 4.0, SONST: 9.5 };
+const BUND_PARTIES = ['CDU', 'CSU', 'SPD', 'AFD', 'GRUENE', 'FDP', 'LINKE', 'BSW'];
+const INSTITUTES = [
+  { id: 'kom', n: 'Kompass-Institut', nn: 1500, bias: { CDU: .6, CSU: .1, SPD: -.3, AFD: -.4, GRUENE: .2, FDP: .1, LINKE: -.2, BSW: -.1 } },
+  { id: 'elb', n: 'Elbe Forschungsgruppe', nn: 2400, bias: { CDU: -.3, CSU: .0, SPD: .4, AFD: .3, GRUENE: -.4, FDP: -.2, LINKE: .3, BSW: .2 } },
+  { id: 'mei', n: 'Meinungsraum', nn: 1000, bias: { CDU: .1, CSU: .2, SPD: .0, AFD: -.2, GRUENE: .5, FDP: .3, LINKE: -.1, BSW: -.4 } }
+];
+const FRAKTIONEN = ['LINKE', 'SPD', 'GRUENE', 'FDP', 'BSW', 'UNION', 'AFD']; // Sitzordnung von links nach rechts
+const FRK = {
+  LINKE: { n: 'Linke', pos: [-.9, -.7] }, SPD: { n: 'SPD', pos: [-.5, -.3] }, GRUENE: { n: 'Grüne', pos: [-.3, -.85] },
+  FDP: { n: 'FDP', pos: [.85, -.2] }, BSW: { n: 'BSW', pos: [-.4, .5] }, UNION: { n: 'Union', pos: [.5, .5] }, AFD: { n: 'AfD', pos: [.35, .9] }
+};
+function frkColor(f) { return f === 'UNION' ? pcolor('CDU') : pcolor(f); }
+function frkAbbr(f) { return f === 'UNION' ? 'CDU/CSU' : f === 'GRUENE' ? 'Grüne' : f === 'LINKE' ? 'Linke' : f === 'AFD' ? 'AfD' : f; }
+
+/* ===== 12-data-cards.js ===== */
+/* ---------- Entscheidungskarten (handgeschriebene Kern-Events, Teil des 20er-Katalogs in docs/03) ----------
+ * Effekte: b Beliebtheit, p Parteiloyalität, d Kasse (k€), m Medienecho, w Wirtschaft, u Umwelt, g Gesellschaftsklima, s Stress
+ * pf = Profilgewinn je Thema, ml = Stimmung je Milieu, chk = Wagnis (Attributsprobe), later = verzögerte Folge (Schmetterlingseffekt)
+ */
+const V_FIRMA = ['Hollweg Metallbau GmbH', 'Brandtner Logistik KG', 'Kaltenbach Energie AG', 'Niehaus Landtechnik GmbH', 'Wendelin Verpackung & Söhne', 'Oberdorfer Brauerei AG', 'Rademacher Software GmbH'];
+const V_PERSON = ['Sabine Hollweg', 'Dieter Kaltenbach', 'Ulrike Niehaus', 'Jürgen Abendroth', 'Heike Pfeifer', 'Thorsten Vollmer', 'Aylin Cordes', 'Bernd Lindemann'];
+const V_VERBAND = ['vom Mieterverein', 'vom Heimatverein', 'von der Bürgerinitiative „Pro Hüttle“', 'vom Seniorenbeirat', 'vom Sportverein 1898'];
+
+const O = (t, fr, fx, x) => Object.assign({ t, fr, fx }, x || {});
+
+const CARDS = {
+  'EV-001': {
+    kat: 'Kommunal', e: '🌉', th: 'verk', w: 1.0, title: 'Die Brücke über die Hüttle',
+    vars: () => ({ per: pick(V_PERSON), vb: pick(V_VERBAND) }),
+    text: v => `Der Prüfbericht zur Hüttle-Brücke liest sich wie ein Gruselroman: „Tragfähigkeit: optimistisch.“ Seit gestern dürfen nur noch Fahrräder, Fußgänger und sehr mutige Traktoren rüber. ${v.per} ${v.vb} hat die Umleitungsschilder schon selbst gemalt.`,
+    q: 'Wie positionierst du dich?',
+    opts: [
+      O('Sanierung versprechen – Finanzierung: Haushaltsumbau', 'ausgaben', { b: 3, p: 1, m: 1, w: 2, g: 1, s: 1 }, { pf: { verk: .08 }, promise: 'Hüttle-Brücke sanieren', ml: { dorf: .05, gew: .04 } }),
+      O('Bürgerversammlung: Was ist uns die Brücke wert?', 'dialog', { b: 1, p: 1, d: -2, m: 1, g: 2, s: 1 }, { pf: { verk: .04 }, later: { after: 3, chance: .5, hl: 'Bürgerversammlung zur Brücke: 300 Leute, 40 Meinungen, eine Mehrheit für „irgendwas mit Sanieren“.', fx: { b: 1, g: 1 } } }),
+      O('Sperren und neu denken: Rad- und Fußbrücke statt Lkw-Verkehr', 'klima', { b: 0, m: 1, w: -2, u: 3, g: 0 }, { pf: { klim: .06, verk: .03 }, ml: { jung: .07, gew: -.08, dorf: -.04 }, ideal: 1 })
+    ]
+  },
+  'EV-002': {
+    kat: 'Kommunal', e: '🌬️', th: 'klim', w: 1.0, title: 'Windrad am Waldrand',
+    vars: () => ({ per: pick(V_PERSON) }),
+    text: v => `Zwischen Kleinbach und dem Wald soll ein Windrad entstehen. ${v.per} sammelt Unterschriften („Nicht vor meiner Haustür, aber gern vor der von Steinbrück“), die Stadtwerke sprechen von „Zukunft“ und die Schafe von gar nichts.`,
+    q: 'Wofür stehst du?',
+    opts: [
+      O('Genehmigen – mit Bürgerenergie-Beteiligung', 'klima', { b: 1, p: 1, m: 1, w: 1, u: 4, g: 0 }, { pf: { klim: .08, wirt: .02 }, promise: 'Bürgerenergie-Windrad', ml: { jung: .07, dorf: -.07 }, ideal: 1 }),
+      O('Ablehnen – der Wald bleibt, wie er ist', 'populismus', { b: 2, m: 0, w: -1, u: -3, g: -1 }, { pf: { klim: -.04 }, ml: { dorf: .09, jung: -.07 }, ideal: -1 }),
+      O('Bürgerentscheid ansetzen', 'dialog', { b: 1, p: 0, d: -1, m: 1, g: 2 }, { later: { after: 3, chance: .8, hl: 'Bürgerentscheid zum Windrad: 52 zu 48 – knapp, laut, demokratisch.', fx: { b: 1, g: 2, m: 1 } } })
+    ]
+  },
+  'EV-003': {
+    kat: 'Gesellschaft', e: '🍺', th: 'soz', w: 1.1, title: 'Schützenfest: Der Fassanstich',
+    vars: () => ({ per: pick(V_PERSON) }),
+    text: v => `Im Festzelt reicht dir ${v.per} den Holzhammer: „Jetzt zeigen Sie mal, was Sie können.“ 300 Leute schweigen, die Blaskapelle hält den Atem an, in der ersten Reihe filmt jemand. Das Fass sieht aus, als wüsste es mehr als du.`,
+    q: 'Wie trittst du auf?',
+    opts: [
+      O('Selbst anzapfen – Volle Show', 'populismus', { b: 0 }, { ml: { dorf: .06 }, chk: { s: 'cha', dc: 52, bierzelt: true, ok: { fx: { b: 5, m: 4, p: 1, s: -1 }, t: 'Zwei Schläge, null Spritzer – das Zelt tobt.' }, bad: { fx: { b: -2, m: -3, s: 2 }, t: 'Bierdusche für die erste Reihe. Das Video hat schon 40.000 Aufrufe.' } } }),
+      O('Der Wirtin den Vortritt lassen und Alkoholfreies bestellen', 'humor', { b: 1, m: 1, g: 1, s: -1 }, { ml: { fam: .04, sen: .03, dorf: -.02 } }),
+      O('Kurze Rede halten, Hände schütteln', 'dialog', { b: 1, p: 1, s: 0 }, { ml: { dorf: .03 } })
+    ]
+  },
+  'EV-004': {
+    kat: 'Wirtschaft', e: '🏭', th: 'wirt', w: 1.1, title: 'Die Firma droht mit Abwanderung',
+    vars: () => ({ firma: pick(V_FIRMA), per: pick(V_PERSON), zs: pick([60, 80, 120, 180, 240]) }),
+    text: v => `${v.firma} droht mit Verlagerung: ${v.zs} Arbeitsplätze stehen auf dem Spiel, sagt ${v.per}. Die Nachbarstadt lockt schon mit Rabatten und einem Werbefilm mit Drohnenflug. Die Gewerbesteuer ist der halbe Haushalt – den der Amtsinhaber gern weiter verwalten würde.`,
+    q: 'Wie hältst du die Firma im Ort?',
+    opts: [
+      O('Steuerrabatt im Hinterzimmer aushandeln', 'deal', { b: 1, p: 2, d: 4, m: -2, w: 3, g: -1 }, { pf: { wirt: .05 }, ml: { gew: .08, arb: .03 }, later: { after: 3, chance: .4, hl: 'Hinterzimmer-Deal mit {firma} wird im Stadtrat bekannt: „Wer wusste was?“', fx: { b: -3, m: -4, p: -1 } } }),
+      O('Standortoffensive: Gewerbefläche, Glasfaser, feste Ansprechperson', 'wirtschaft', { b: 2, p: 1, m: 1, w: 3 }, { pf: { wirt: .08 }, promise: 'Standortoffensive Gewerbegebiet', ml: { gew: .10 } }),
+      O('Nicht erpressbar sein – abwarten', 'aussitzen', { b: -1, m: -2, w: -2, s: -1 }, { later: { after: 4, chance: .6, hl: '{firma} verlagert einen Teilbetrieb: 80 Stellen fallen weg. Du schaust zu, der Amtsinhaber schweigt.', fx: { b: -2, w: -5, g: -2 } } })
+    ]
+  },
+  'EV-005': {
+    kat: 'Medien', e: '📰', th: 'med', w: .55, title: 'Der Lokalreporter hat Fragen',
+    vars: () => ({ firma: pick(V_FIRMA) }),
+    text: v => `Kevin Lohmeyer vom Hüttinger Tageblatt legt dir einen Zettel hin: Dein Ortsverband hat eine Spende von ${v.firma} erhalten – „völlig korrekt“, sagt der Schatzmeister und schwitzt dabei erstaunlich viel. Lohmeyer will bis Redaktionsschluss eine Antwort.`,
+    q: 'Wie reagierst du?',
+    opts: [
+      O('Alle Unterlagen offenlegen', 'transparenz', { b: 0 }, { chk: { s: 'ehr', dc: 44, ok: { fx: { b: 3, m: 3, g: 1, s: 1 }, t: 'Du legst alles auf den Tisch – und es gibt nichts zu finden. Respekt.' }, bad: { fx: { b: -1, m: -2, s: 2 }, t: 'Bei der Durchsicht fällt eine Quittung auf, die keiner erklären kann.' } }, n: { press: 6 } }),
+      O('Gegenangriff: Was ist mit dem Amtsinhaber und seinen Dienstreisen?', 'angriff', { b: 1, p: 1, m: -1, g: -2 }, { n: { press: -8 }, later: { after: 3, chance: .5, hl: 'Dienstreisen-Konter: Lohmeyer prüft nun beide Seiten – und macht daraus eine Serie.', fx: { m: -2, b: -1 } } }),
+      O('Dementieren und abwarten', 'aussitzen', { b: -1, m: -2, s: 1 }, { n: { press: -5 } })
+    ]
+  },
+  'EV-006': {
+    kat: 'Kommunal', e: '🧸', th: 'soz', w: 1.1, title: 'Kita-Notstand',
+    vars: () => ({ zs: pick([60, 90, 140, 210]) }),
+    text: v => `${v.zs} Kinder, null Plätze: Der Elternbeirat demonstriert mit Kinderwagen vor dem Rathaus, die Sprechchöre sind überraschend rhythmisch. Eine Erzieherin hat per offenem Brief gekündigt – und der Brief geht viral.`,
+    q: 'Was versprichst du?',
+    opts: [
+      O('Kita-Neubau und Erzieher:innen-Zuschlag', 'ausgaben', { b: 3, p: 1, m: 1, w: -1, g: 2 }, { pf: { soz: .09 }, promise: 'Kita-Neubau', ml: { fam: .10 } }),
+      O('Bündnis mit Firmen: Betriebskitas und Tagesmütter', 'wirtschaft', { b: 2, m: 1, w: 1, g: 1, d: -1 }, { pf: { soz: .05, wirt: .03 }, ml: { fam: .06, gew: .04 } }),
+      O('Notgruppen in bestehenden Räumen einrichten', 'sparen', { b: -1, m: -1, g: -1 }, { ml: { fam: -.07 } })
+    ]
+  },
+  'EV-007': {
+    kat: 'Krise', e: '🌊', th: 'sich', w: .9, title: 'Hochwasseralarm',
+    vars: () => ({}),
+    text: () => `Nach drei Tagen Dauerregen steigt die Hüttle. Die Feuerwehr bittet um Sandsäcke, die Kameras um Bilder. In Kleinbach laufen die ersten Keller voll, und der Amtsinhaber ist „auf Fortbildung“.`,
+    q: 'Wie führst du?',
+    opts: [
+      O('Selbst mit Gummistiefeln anpacken', 'einsatz', { b: 1 }, { chk: { s: 'res', dc: 48, ok: { fx: { b: 5, m: 4, g: 2, s: 3 }, t: 'Vier Stunden Sandsäcke – dein Foto geht durch die Regionalpresse.' }, bad: { fx: { b: 2, m: 1, s: 8 }, t: 'Nach zwei Stunden schlappgemacht – aber du warst da. Das zählt.' } }, ml: { dorf: .07 } }),
+      O('Krisenstab unterstützen und Ortsteile durchtelefonieren', 'dialog', { b: 2, p: 1, m: 1, g: 1, s: 2 }, { pf: { sich: .05 } }),
+      O('Zuständigkeit bei Kreis und Land anmahnen', 'populismus', { b: -2, m: -2, g: -1 })
+    ]
+  },
+  'EV-008': {
+    kat: 'Medien', e: '🎤', th: 'med', w: 1.0, title: 'Podium: Du gegen den Amtsinhaber',
+    vars: () => ({}),
+    text: () => `In der Stadthalle steht das Podium: du gegen ${G.opp[0].name}. Die Moderatorin kündigt an, „nicht locker zu lassen“. Der Amtsinhaber hat Zahlen, Anekdoten und vermutlich Pfefferminzbonbons.`,
+    q: 'Wie gehst du ins Duell?',
+    opts: [
+      O('Angriffslustig: Bilanz der letzten zwölf Jahre', 'angriff', { b: 0 }, { chk: { s: 'dur', dc: 54, ok: { fx: { b: 4, m: 3, p: 1 }, t: 'Du stellst die Frage, auf die er keine Antwort hat. Applaus.' }, bad: { fx: { b: -2, m: -2, p: -1 }, t: 'Er kontert mit einer Zahl von 2019. Dein Timing war schlechter als die Bahn.' } } }),
+      O('Sachlich mit Faktenwissen', 'transparenz', { b: 0 }, { chk: { s: 'iq', dc: 48, ok: { fx: { b: 3, m: 2, g: 1 }, t: 'Du nennst Zahlen, Quellen und Fußnoten. Sogar die Moderation nickt.' }, bad: { fx: { b: 0, m: -1 }, t: 'Bei der Kita-Statistik verwechselst du Kinder mit Plätzen. Peinlich, aber lehrreich.' } } }),
+      O('Charmant mit Humor', 'humor', { b: 0 }, { chk: { s: 'cha', dc: 50, ok: { fx: { b: 3, m: 3 }, t: 'Dein Witz über die Umgehungsstraße sitzt – selbst die erste Reihe lacht.' }, bad: { fx: { b: -1, m: -2 }, t: 'Der Gag landet im Niemandsland. Es hustet jemand.' } } })
+    ]
+  },
+  'EV-009': {
+    kat: 'Persönliches', e: '💶', th: 'wirt', w: .9, title: 'Eine großzügige Spende',
+    vars: () => ({ firma: pick(V_FIRMA), per: pick(V_PERSON), sum: pick([12, 15, 18, 22]) }),
+    text: v => `${v.firma} möchte deinen Wahlkampf mit ${v.sum}.000 Euro unterstützen – „weil Niederhüttingen Weitblick verdient“. Geschäftsführer:in ${v.per} lächelt, als hätte er schon einen Termin im Bürgermeisterbüro eingetragen.`,
+    q: 'Was machst du mit der Spende?',
+    opts: [
+      O('Annehmen und sofort veröffentlichen', 'transparenz', { b: 1, p: 1, m: 1, g: 1 }, { fxf: v => ({ d: v.sum }), donation: true }),
+      O('Annehmen – nicht zu laut darüber reden', 'deal', { p: 1, m: -1 }, { fxf: v => ({ d: v.sum }), donation: true, flag: 'spendeGeheim', later: { after: 2, chance: .75, card: 'EV-005' } }),
+      O('Ablehnen und das öffentlich betonen', 'transparenz', { b: 2, p: -1, m: 2, g: 1, s: 1 }, { ideal: 1 })
+    ]
+  },
+  'EV-010': {
+    kat: 'Partei', e: '♟️', th: 'par', w: 1.0, title: 'Intrige im Ortsverband',
+    vars: () => ({ per: pick(V_PERSON) }),
+    text: v => `${v.per} aus dem Ortsverband sägt an deinem Stuhl: „Wir brauchen frischen Wind.“ Gemeint ist er/sie selbst. Gisela Hagedorn rät zu einem Gespräch. Das Parteiheim riecht nach Verschwörung und Filterkaffee.`,
+    q: 'Wie begegnest du der Intrige?',
+    opts: [
+      O('Offene Konfrontation auf der Mitgliederversammlung', 'angriff', { b: 0 }, { ideal: 1, chk: { s: 'dur', dc: 52, ok: { fx: { p: 4, b: 1, m: 1 }, t: 'Du zählst Namen und Stimmen auf – der Saal rückt hinter dich.' }, bad: { fx: { p: -4, b: -1, m: -1, s: 3 }, t: 'Die Versammlung kippt. „Frischer Wind“ hat plötzlich Applaus.' } } }),
+      O('Posten anbieten und den Rivalen einbinden', 'deal', { p: 2, m: 0, s: 0 }, { n: { party: 5 }, ideal: -1 }),
+      O('Stillhalten und Mehrheiten zählen', 'aussitzen', { p: -1, s: -1 }, { later: { after: 3, chance: .45, hl: 'Interview der Rivalin: „Diese Kandidatur ist ein Fehler.“ Die Partei verschluckt sich am Filterkaffee.', fx: { p: -3, m: -2 } } })
+    ]
+  },
+  'EV-011': {
+    kat: 'Kommunal', e: '🏠', th: 'wohn', w: 1.1, title: 'Wohnungsnot vs. Streuobstwiese',
+    vars: () => ({ firma: pick(V_FIRMA) }),
+    text: v => `Niederhüttingen wächst, Wohnungen fehlen. Die Stadt besitzt eine Streuobstwiese am Hang: 140 Wohneinheiten möglich, 60 Bäume im Weg. Der Naturschutzbund hat schon Banner, der Bauträger ${v.firma} hat Pläne.`,
+    q: 'Wofür entscheidest du dich?',
+    opts: [
+      O('Bauen – mit Ausgleichsflächen', 'wirtschaft', { b: 2, w: 3, u: -3, g: 1 }, { pf: { wohn: .10 }, promise: 'Neubaugebiet am Hang', ml: { fam: .08, jung: .05, dorf: .0 } }),
+      O('Nachverdichten im Zentrum statt auf der Wiese', 'klima', { b: 1, p: 1, m: 1, w: 1, u: 2, g: 1 }, { pf: { wohn: .07, klim: .04 }, ml: { sen: -.04 } }),
+      O('Wiese schützen, Mietendeckel fordern', 'sozial', { b: 1, m: 1, w: -2, u: 3, g: 1 }, { pf: { wohn: .05 }, ml: { jung: .06, gew: -.06 }, ideal: 1 })
+    ]
+  },
+  'EV-012': {
+    kat: 'Gesellschaft', e: '🎶', th: 'soz', w: 1.0, swipe: true, title: 'Clubsterben und Nachtruhe',
+    vars: () => ({}),
+    text: () => `Nach einer Lärmbeschwerde steht das „Kellerloch“ vor dem Aus, der letzte Club der Stadt. Die Senior:innen der Altstadt fordern Nachtruhe ab 22 Uhr, die Jungen Musik bis zum Morgengrauen. Beide haben Unterschriftenlisten – und Zeit.`,
+    q: 'Links wischen: Sperrstunde · Rechts wischen: Nachtbürgermeister',
+    opts: [
+      O('Sperrstunde 22 Uhr', 'ordnung', { b: 1, m: -1, g: -1 }, { ml: { sen: .10, jung: -.12 } }),
+      O('Nachtbürgermeister und Lärmschutzfonds', 'dialog', { b: 1, m: 2, d: -2, g: 2 }, { ml: { jung: .08, sen: -.05 }, pf: { soz: .02 } })
+    ]
+  },
+  'EV-013': {
+    kat: 'Medien', e: '📱', th: 'med', w: .9, title: 'Das Meme',
+    vars: () => ({}),
+    text: () => `Ein Meme zeigt dich als Zeichentrickfigur mit Helm und Zollstock. 18.000 Teilungen. Es ist, zugegeben, ein bisschen gut. Dein Social-Team bietet drei Varianten an: ernst, sarkastisch oder „selbstironisch-cringe“.`,
+    q: 'Wie reagierst du?',
+    opts: [
+      O('Rechtliche Schritte androhen', 'ordnung', { b: -1, m: -2, s: 1 }, { later: { after: 2, chance: .5, hl: 'Streisand-Effekt: Das Meme hat jetzt 90.000 Teilungen. Jemand druckt es auf Tassen.', fx: { b: -1, m: -2 } } }),
+      O('Mit eigenem Gegenmeme kontern', 'humor', { d: -1 }, { chk: { s: 'med', dc: 50, ok: { fx: { b: 3, m: 4 }, t: 'Dein Konter ist besser als das Original. Die Netzgemeinde ist entzückt.' }, bad: { fx: { b: -2, m: -3 }, t: 'Cringe-Alarm. Du wirst zum Meme des Memes.' } } }),
+      O('Ignorieren und aussitzen', 'aussitzen', { m: -1, s: -1 })
+    ]
+  },
+  'EV-014': {
+    kat: 'Absurdes', e: '🐕', th: 'soz', w: .5, title: 'Das Hundekot-Problem',
+    vars: () => ({}),
+    text: () => `In der Bürgersprechstunde schiebt dir eine Dame einen Plastikbeutel unter die Nase: „Das ist das Hauptproblem dieser Stadt.“ Hinter ihr nicken vierzehn Menschen. Es riecht nach Wahlkampf.`,
+    q: 'Was versprichst du der Stadt?',
+    opts: [
+      O('Kotbeutelspender an jeder Ecke', 'ausgaben', { b: 2, m: 1, g: 1 }, { ml: { sen: .06 } }),
+      O('100 Euro Bußgeld und mehr Kontrollen', 'ordnung', { b: 1, g: -1 }, { ml: { sen: .08, jung: -.03 } }),
+      O('DNA-Register für Hunde (Testphase)', 'humor', { b: -1, m: 3, g: -1 }, { later: { after: 3, chance: .6, hl: 'Bundesweit belächelt: „Kot-DNA-Register“ macht Niederhüttingen zur Schlagzeile der Woche.', fx: { m: 3, b: -1 } } }),
+      O('Mit dem Beutel vor die Kamera: Humor', 'humor', { b: 0 }, { chk: { s: 'cha', dc: 46, ok: { fx: { b: 3, m: 3 }, t: 'Du hältst den Beutel wie einen Pokal. Der Kurier druckt es auf Seite 1.' }, bad: { fx: { b: -1, m: -2 }, t: 'Die Dame findet es respektlos. Die Kamera ebenfalls.' } } })
+    ]
+  },
+  'EV-015': {
+    kat: 'Wirtschaft', e: '🗑️', th: 'soz', w: .9, title: 'Streik bei den Stadtwerken',
+    vars: () => ({}),
+    text: () => `Die Müllabfuhr der Stadtwerke streikt. Am Kirchplatz stapeln sich die Tonnen, die Tauben haben ein Festmahl. Die Gewerkschaft fordert 8 Prozent, die Stadt bietet „Wertschätzung“.`,
+    q: 'Wie gehst du mit dem Streik um?',
+    opts: [
+      O('Solidarität zeigen und an den Streikposten reden', 'sozial', { b: 1, p: 1, m: 1, w: -1, g: 1 }, { ml: { arb: .10, gew: -.08 } }),
+      O('Vermitteln: Schlichtung anregen', 'dialog', { b: 2, p: 1, m: 1, g: 1 }, { n: { kaem: 5 } }),
+      O('Notdienst und Ordnung fordern', 'ordnung', { w: 1, g: -2 }, { ml: { gew: .06, arb: -.10 } })
+    ]
+  },
+  'EV-016': {
+    kat: 'Innere Sicherheit', e: '🚉', th: 'sich', w: 1.0, title: 'Unruhe am Bahnhof',
+    vars: () => ({}),
+    text: () => `Am Bahnhof häufen sich Sachbeschädigungen. Der Stammtisch „Klare Kante“ fordert eine Bürgerwehr, der Jugendtreff mehr Personal, die Polizei höflich den Verzicht auf alles Dramatische.`,
+    q: 'Was forderst du?',
+    opts: [
+      O('Videoüberwachung und Ordnungsdienst', 'ordnung', { b: 2, m: 1, g: -1, s: 1 }, { pf: { sich: .08 }, ml: { sen: .08, jung: -.06 } }),
+      O('Streetwork und Jugendtreff ausbauen', 'sozial', { b: 1, p: 1, g: 2 }, { pf: { soz: .05, sich: .03 }, ml: { jung: .04, sen: -.03 } }),
+      O('Runder Tisch: Polizei, Anwohner, Jugend', 'dialog', { b: 1, m: 1, g: 1, s: 1 }, { later: { after: 3, chance: .35, hl: 'Runder Tisch vertagt sich zum dritten Mal: „Wir bleiben im Gespräch.“', fx: { m: -2 } } })
+    ]
+  },
+  'EV-017': {
+    kat: 'Persönliches', e: '🏡', th: 'fam', w: .4, title: 'Familienabend oder Wahlkampftermin?',
+    vars: () => ({}),
+    text: () => `Sam steht im Flur: „Du bist so oft weg, dass sogar der Hund Termine anmeldet.“ Heute Abend wäre Familienessen. Gleichzeitig beginnt der Wahlkampftermin im Gewerbeverein. Beides ist „unverschiebbar“. Dein Stresspegel: Ahoi.`,
+    q: 'Wofür entscheidest du dich?',
+    opts: [
+      O('Familie – der Wahlkampf kann kurz warten', 'dialog', { b: 0, m: 0, s: -8 }, { n: { fam: 10 } }),
+      O('Wahltermin – Familie gleich danach', 'einsatz', { b: 1, p: 1, s: 4 }, { n: { fam: -10 }, ml: { gew: .04 } }),
+      O('Familie zum Termin mitnehmen', 'humor', { b: 1, m: 1, s: 0 }, { chk: { s: 'cha', dc: 48, ok: { fx: { b: 2, m: 2 }, t: 'Das Familienfoto im Gewerbeverein wird zum Bild der Woche.' }, bad: { fx: { b: -1, m: -1, s: 3 }, t: 'Das Kind verlangt laut ein Eis. Sam schaut weg. Die Kamera nicht.' } }, n: { fam: 2 } })
+    ]
+  },
+  'EV-EG1': {
+    kat: 'Partei', e: '🌱', th: 'par', w: 0, title: 'Kinderkrankheiten',
+    vars: () => ({}),
+    text: () => `Dein Schatzmeister hat die Vereinskasse in seinen Privat-Rucksack gepackt („aus Versehen“), der Briefkasten ist voll mit Mitgliedsanträgen, und niemand weiß, wo der Kugelschreiber des Vorstands ist. Neugründungen sind auch Logistik.`,
+    q: 'Wie stabilisierst du die junge Partei?',
+    opts: [
+      O('Satzung, Kassenprüfung und zwei Wochenenden Schulung', 'transparenz', { b: 0, p: 2, d: -2, m: 0, s: 3 }, { pf: {} }),
+      O('Die Sache nach außen drehen: „Wir sind eben anders“', 'humor', { b: 1, m: 1, p: -1 }, {}),
+      O('Kurzfristig alles über deine Privatkonten laufen lassen', 'deal', { p: 1, d: 3, m: -2, s: 1 }, { later: { after: 2, chance: .4, hl: 'Das Finanzamt hat Fragen zu deinem Privatkonto. Und die Presse auch.', fx: { b: -3, m: -3 } } })
+    ]
+  }
+};
+const CARD_IDS = Object.keys(CARDS).filter(k => k !== 'EV-EG1');
+
+/* ===== 13-data-speech.js ===== */
+/* ---------- Bundestagsrede: Themen, Argumente, Zwischenrufe ----------
+ * Argument: t Text, tag (fakt|emo|vision|humor|angriff), pos [Ökonomie −1 Umverteilung … +1 Markt, Kultur −1 progressiv … +1 konservativ]
+ */
+const SPEECH = {
+  wohnen: {
+    n: 'Wohnen & Mieten', e: '🏘️',
+    beats: [
+      { h: 'Einstieg', o: [
+        { t: 'Die Miete ist für viele längst kein Kostenfaktor mehr, sondern ein Schicksal.', tag: 'emo', pos: [-.6, -.3] },
+        { t: 'Die Zahlen sind eindeutig: Die Nachfrage wächst seit zehn Jahren schneller als das Angebot.', tag: 'fakt', pos: [0, 0] },
+        { t: 'Wohnen wurde zur Chefsache erklärt – und dann zur Chefsache vertagt. {gegner}, erklären Sie das!', tag: 'angriff', pos: [.1, 0] }
+      ] },
+      { h: 'Analyse', o: [
+        { t: 'Bauen ist teurer, Genehmigungen dauern 21 Monate – das ist keine Wohnungspolitik, das ist ein Geduldsspiel.', tag: 'fakt', pos: [.5, 0] },
+        { t: 'Fragen Sie die Krankenschwester, die zwei Stunden pendelt, weil sie sich die Stadt nicht mehr leisten kann.', tag: 'emo', pos: [-.6, -.2] },
+        { t: 'Ich will ein Land, in dem man nicht erben muss, um Eigentümer zu werden.', tag: 'vision', pos: [-.2, .2] }
+      ] },
+      { h: 'Lösung', o: [
+        { t: 'Wir schaffen Bauland, beschleunigen Verfahren und senken die Baunebenkosten.', tag: 'fakt', pos: [.75, .1] },
+        { t: 'Wir deckeln Mieten, bauen kommunal und sichern Sozialbindungen – Wohnen ist kein Spekulationsobjekt.', tag: 'vision', pos: [-.85, -.3] },
+        { t: 'Wir verdichten, bauen um, nutzen leere Büros und seriellen Wohnungsbau – pragmatisch, ohne Ideologie.', tag: 'fakt', pos: [.1, -.4] }
+      ] },
+      { h: 'Schluss', o: [
+        { t: 'Ein Zuhause ist mehr als eine Adresse. Es ist der Ort, an dem Zukunft beginnt.', tag: 'emo', pos: [-.2, 0] },
+        { t: 'Ich würde Ihnen gern eine Wohnung anbieten, aber dafür müssen Sie erst ein Formular ausfüllen. In dreifacher Ausfertigung.', tag: 'humor', pos: [0, -.1] },
+        { t: '{gegner}, Sie hatten Jahre Zeit. Jetzt reden wir über Ergebnisse.', tag: 'angriff', pos: [0, 0] }
+      ] }
+    ]
+  },
+  energie: {
+    n: 'Energie & Klima', e: '⚡',
+    beats: [
+      { h: 'Einstieg', o: [
+        { t: 'Wer im Winter die Heizrechnung öffnet, braucht heute starke Nerven.', tag: 'emo', pos: [-.3, 0] },
+        { t: 'Erneuerbare liefern inzwischen fast 60 Prozent des Stroms – mehr als je zuvor, weniger als nötig.', tag: 'fakt', pos: [-.2, -.3] },
+        { t: 'Die Energiewende braucht Tempo – und {gegner} liefert Sitzungen.', tag: 'angriff', pos: [0, 0] }
+      ] },
+      { h: 'Analyse', o: [
+        { t: 'Industriestrom ist bei uns doppelt so teuer wie anderswo. Das kostet Arbeitsplätze.', tag: 'fakt', pos: [.7, .2] },
+        { t: 'Kinder, die heute geboren werden, erleben 2050 ein Land, das wir jetzt gestalten – oder verspielen.', tag: 'emo', pos: [-.5, -.7] },
+        { t: 'Energieunabhängigkeit ist Sicherheitspolitik. Punkt.', tag: 'vision', pos: [.2, .4] }
+      ] },
+      { h: 'Lösung', o: [
+        { t: 'Netze, Speicher, Wasserstoff: mit festen Zielen und festen Terminen.', tag: 'fakt', pos: [-.1, -.4] },
+        { t: 'Wir nutzen Kernkraft und Gas als Brücke, bis die Erneuerbaren tragen.', tag: 'fakt', pos: [.6, .6] },
+        { t: 'Wir geben den Bürgern das Steuer: Bürgerenergie, Mieterstrom, weniger Bürokratie.', tag: 'vision', pos: [-.3, -.3] }
+      ] },
+      { h: 'Schluss', o: [
+        { t: 'Energie ist Zukunft – aber sie muss bezahlbar bleiben.', tag: 'emo', pos: [0, 0] },
+        { t: 'Bei dieser Energiepolitik wäre sogar mein Toaster beleidigt: Er soll sparen und trotzdem liefern.', tag: 'humor', pos: [0, 0] },
+        { t: '{gegner}, Sie haben die Rechnung ausgestellt – wir zahlen sie.', tag: 'angriff', pos: [.1, 0] }
+      ] }
+    ]
+  },
+  haushalt: {
+    n: 'Haushalt & Steuern', e: '💶',
+    beats: [
+      { h: 'Einstieg', o: [
+        { t: 'Der Haushalt ist kein Wunschzettel, sondern ein Versprechen mit Kommastellen.', tag: 'fakt', pos: [.3, 0] },
+        { t: 'Hinter jeder Zahl im Haushalt steht ein Schulbus, eine Pflegekraft, ein Radweg.', tag: 'emo', pos: [-.5, -.2] },
+        { t: '{gegner} schafft es, Milliarden zu verplanen und trotzdem Lücken zu finden.', tag: 'angriff', pos: [.2, 0] }
+      ] },
+      { h: 'Analyse', o: [
+        { t: 'Die Zinslast wächst schneller als die Investitionen – das ist wie Schulden im Dispo.', tag: 'fakt', pos: [.6, .2] },
+        { t: 'Wer an der Zukunft spart, bezahlt sie später mit Zinsen – und mit Enttäuschung.', tag: 'emo', pos: [-.5, -.3] },
+        { t: 'Ein starker Staat ist kein teurer Staat, sondern ein handlungsfähiger.', tag: 'vision', pos: [-.3, 0] }
+      ] },
+      { h: 'Lösung', o: [
+        { t: 'Wir entlasten Mittelstand und Familien und streichen Subventionen.', tag: 'fakt', pos: [.8, 0] },
+        { t: 'Wir besteuern große Vermögen stärker und investieren in Bildung und Verkehr.', tag: 'vision', pos: [-.8, -.2] },
+        { t: 'Wir reformieren die Schuldenregel: Investieren ja, Verschleiern nein.', tag: 'fakt', pos: [-.1, -.1] }
+      ] },
+      { h: 'Schluss', o: [
+        { t: 'Ein Haushalt zeigt, was uns wichtig ist. Lassen Sie uns zeigen, dass es die Menschen sind.', tag: 'emo', pos: [-.1, 0] },
+        { t: 'Ich habe den Haushalt gelesen. Er ist spannend wie ein Krimi, in dem alle den Täter kennen: die Kommastelle.', tag: 'humor', pos: [0, 0] },
+        { t: '{gegner}, reden Sie nicht von Verantwortung, solange Sie die Rechnung weiterreichen.', tag: 'angriff', pos: [.1, 0] }
+      ] }
+    ]
+  }
+};
+const ZWISCHENRUFE = {
+  LINKE: ['„Und die Reichen?!“', '„Sagen Sie das den Mieterinnen und Mietern!“'],
+  SPD: ['„Das ist doch Schönfärberei!“', '„Wo bleibt die Gerechtigkeit?“'],
+  GRUENE: ['„Und das Klima?!“', '„Das reicht hinten und vorne nicht!“'],
+  FDP: ['„Wer soll das bezahlen?“', '„Bürokratie, Bürokratie!“'],
+  BSW: ['„Reden Sie mal mit den normalen Leuten!“', '„Die Wähler sehen das anders!“'],
+  UNION: ['„Das haben wir längst gemacht!“', '„Wo ist Ihre Gegenfinanzierung?“'],
+  AFD: ['„Zeigen Sie mal Mut!“', '„Das Volk denkt anders!“']
+};
+const TONES = {
+  sach: { n: 'Sachlich', d: 'Fakten wirken stärker, Angriffe verpuffen. Wenig Risiko.', m: { fakt: 1.3, vision: 1, emo: .85, humor: .9, angriff: .75 } },
+  angr: { n: 'Angriffslustig', d: 'Angriffe zünden bei den eigenen Reihen – und bei den Kameras. Ordnungsruf-Risiko!', m: { fakt: .9, vision: .9, emo: .85, humor: 1, angriff: 1.45 } },
+  emo: { n: 'Emotional', d: 'Geschichten und Visionen berühren. Zahlen wirken blass.', m: { fakt: .8, vision: 1.3, emo: 1.35, humor: 1, angriff: .9 } }
+};
+
+/* ===== 20-engine-election.js ===== */
+/* ---------- Spielstand anlegen ---------- */
+function newGame() {
+  return {
+    v: 1, phase: 'party', party: null, own: { name: 'Bürgerliste Zukunft', abk: 'BZ', color: '#d6b16c', motto: 'Politik ohne Filterkaffee.', logo: 'stern', sl: [60, 50, 50, 70, 40, 60], kap: 4 },
+    name: '', nn: '', anrede: 'div', bg: 'lehrer', herk: 'alt', dial: 'hoch', age: 38,
+    av: { skin: 2, face: 'oval', hair: 'seit', hairc: 1, outfit: 'anzug', acc: 'none' },
+    stats: { cha: 45, iq: 45, dur: 45, ehr: 45, med: 45, res: 45, net: 45 }, free: 12,
+    res: { bel: 35, par: 55, bud: 10, med: 0, wirt: 50, umw: 50, ges: 50, str: 25 },
+    prof: [.45, .45, .45, .45, .45, .45], ml: {}, recog: .25, mob: 0, mom: 0, realo: 0,
+    camp: { k: { plak: 0, soc: 0, str: 0, rad: 0, evt: 0 }, sl: 0, slfree: '', spent: 0 },
+    deck: [], cardIdx: 0, queue: [], flags: {}, promises: [], log: [], npc: JSON.parse(JSON.stringify(NPC0)),
+    opp: [], noise: [], elec: null, bund: null, speech: null, result: null, weekly: [], pollHist: []
+  };
+}
+
+/* ---------- Startwerte aus Partei, Hintergrund, Herkunft ---------- */
+function initCharacter() {
+  const P = PARTIES[G.party], B = BACKGROUNDS[G.bg], H = HERKUNFT[G.herk];
+  Object.keys(B.st).forEach(k => G.stats[k] = clamp(G.stats[k] + B.st[k], 10, 95));
+  Object.keys(H.st || {}).forEach(k => G.stats[k] = clamp(G.stats[k] + H.st[k], 10, 95));
+  G.res.bel = P.bel; G.res.par = P.par; G.res.bud = P.bud + (B.bud || 0) + (G.party === 'EIGEN' ? G.own.kap - 4 : 0);
+  G.res.bel += Math.round((G.stats.cha - 45) / 6);
+  G.recog = clamp(P.recog + (B.recog || 0) + (H.recog || 0) + G.stats.med / 500, .03, .9);
+  G.prof = (G.party === 'EIGEN' ? G.own.sl.map(v => .25 + .5 * v / 100) : P.prof.slice());
+  Object.keys(B.prof).forEach(k => G.prof[TH.indexOf(k)] += B.prof[k]);
+  G.ml = {}; MI.forEach(m => G.ml[m] = 0);
+  [B.mil, H.mil].forEach(o => o && Object.keys(o).forEach(m => G.ml[m] += o[m]));
+  if (DIALEKTE[G.dial].dorf) G.ml.dorf += DIALEKTE[G.dial].dorf;
+  if (G.party === 'CSU') G.ml.dorf += .18, G.ml.jung -= .06;
+  if (G.party === 'SPD') G.ml.arb += .12;
+  if (G.party === 'AFD') { G.ml.dorf += .08; G.ml.arb += .10; G.mob += .05; }
+  if (G.party === 'LINKE') G.mob += .05;
+  if (G.party === 'BSW') G.mob -= .04;
+  if (G.party === 'CDU') G.ml.gew += .05;
+  if (G.bg === 'journalist') G.npc.press.v = 60;
+  if (G.party === 'EIGEN') { G.npc.party.n = 'Dragan Jablonski'; G.npc.party.r = 'Gründungsmitglied & Schatzmeister'; G.npc.party.v = 60; }
+  G.res.par = clamp(G.res.par, 0, 100);
+}
+
+/* ---------- Gegnerfeld ---------- */
+function setupOpponents() {
+  const inBayern = G.party === 'CSU';
+  let pool = OPP_PARTY_POOL.filter(p => p !== G.party && !(inBayern && p === 'CDU') && !(!inBayern && p === 'CSU'));
+  if (inBayern) pool.push('CSU');
+  // Amtsinhaber: immer eine etablierte Partei, nie die eigene
+  const incParty = pick(pool.filter(p => ['SPD', 'CDU', 'GRUENE', 'FDP', 'CSU'].includes(p)));
+  const others = shuffle(pool.filter(p => p !== incParty));
+  const mk = (name, party, inc, pers, recog, prof) => ({ name, party, inc, pers, recog, prof });
+  const prof = p => PARTIES[p].prof.slice();
+  G.opp = [
+    mk(pick(OPP_NAMES.inc), incParty, 1, .18, .80, prof(incParty)),
+    mk(OPP_NAMES.unab, 'BUERGER', 0, .10, .45, [.45, .45, .50, .35, .45, .45]),
+    mk(pick(OPP_NAMES.o1), others[0], 0, -.02, .35, prof(others[0])),
+    mk(pick(OPP_NAMES.o2), others[1], 0, -.05, .28, prof(others[1]))
+  ];
+  G.opp.forEach(o => { o.aff = o.party === 'BUERGER' ? [-.1, .1, .2, .2, .4, 0] : PARTIES[o.party].aff.slice(); });
+  G.noise = DISTRICTS.map(() => [0, 1, 2, 3].map(() => gauss() * .22));
+  G.noise2 = DISTRICTS.map(() => [0, 1].map(() => gauss() * .22));
+}
+
+/* ---------- Kampagnenkanäle: Reichweite pro Milieu ---------- */
+const CHANNELS = [
+  { id: 'plak', n: 'Plakate', e: '🪧', w: [.4, .5, .6, .4, .7, .6] },
+  { id: 'soc', n: 'Social Media', e: '📱', w: [1, .6, .1, .3, .2, .5] },
+  { id: 'str', n: 'Straße & Haustür', e: '🚪', w: [.5, .6, .7, .4, .6, .8] },
+  { id: 'rad', n: 'Radio & Lokalpresse', e: '📻', w: [.1, .3, 1, .6, .8, .5] },
+  { id: 'evt', n: 'Events & Bierzelt', e: '🎪', w: [.5, .7, .5, .8, 1, .4] }
+];
+function campaignBoost() {
+  // Wirkung: abnehmender Grenznutzen (Log) je Kanal, gewichtet nach Milieu; tanh begrenzt die Gesamtwirkung
+  const out = MI.map(() => 0);
+  CHANNELS.forEach(ch => {
+    let spend = (G.camp.k && G.camp.k[ch.id]) || 0;
+    let eff = Math.log(1 + spend / 4);
+    if (G.party === 'LINKE' && ch.id === 'str') eff *= 1.5;
+    MI.forEach((m, g) => { out[g] += eff * ch.w[g]; });
+  });
+  return out.map(x => .32 * Math.tanh(x / 2.4));
+}
+
+/* ---------- Kandidat:innen-Modell ---------- */
+function playerCand() {
+  const P = PARTIES[G.party];
+  const s = G.stats, r = G.res;
+  let pers = clamp((r.bel - 38) / 40, -.8, 1.3) * LM.B + (s.cha - 45) / 160 + clamp(r.med, -60, 60) / 400;
+  if (G.party === 'BSW') pers *= 1.6;
+  if (G.party === 'EIGEN') pers += G.mom * .03;
+  const stressPenalty = Math.max(0, r.str - 70) / 300;
+  pers -= stressPenalty;
+  const aff = (G.party === 'EIGEN') ? MILIEUS.map((m, g) => {
+    const dot = m.sal.reduce((a, w, t) => a + w * (G.own.sl[t] - 50) / 50, 0);
+    return clamp(dot * 1.1 - .12, -1, 1);
+  }) : P.aff.slice();
+  const slg = sloganTilt();
+  const boost = campaignBoost().map((b, g) => b + (G.ml[MI[g]] || 0) + slg[g]);
+  const pw = G.party === 'BSW' ? .75 : .7 + .6 * r.par / 100;
+  return { name: G.name, party: G.party, inc: 0, pers, recog: clamp(G.recog + G.mom * .006, .02, .98), prof: G.prof, aff, boost, pw, me: true };
+}
+function candList() {
+  const me = playerCand();
+  const list = [me];
+  G.opp.forEach(o => list.push({ name: o.name, party: o.party, inc: o.inc, pers: o.pers + (o.bump || 0), recog: o.recog, prof: o.prof, aff: o.aff, boost: MI.map(() => (o.inc ? .05 : 0)), pw: 1 }));
+  return list;
+}
+/* Modellparameter (Balancing): A Parteiaffinität, P Themenprofil, C Persönlichkeit, I Amtsbonus, R Bekanntheit */
+const LM = { A: .8, P: 3.0, C: 1.9, I: .35, R: .9, B: .42 };
+/* Kalibrierungs-Offset je Partei (nur Spieler:in): Ziel-Siegquoten bei Zufallsspiel, siehe docs/07-balancing.md */
+const HCAP = { CDU: -.1, CSU: -.4, SPD: -.2, GRUENE: .1, FDP: .45, LINKE: .2, BSW: -.25, AFD: .65, EIGEN: -.1, BUERGER: 0 };
+function utility(c, g, stich, ci) {
+  const sal = MILIEUS[g].sal;
+  let prof = 0; for (let t = 0; t < 6; t++) prof += sal[t] * (c.prof[t] - .45);
+  let u = LM.A * c.pw * c.aff[g] + LM.P * prof + LM.C * c.pers + LM.I * c.inc + LM.R * (c.recog - .5) + c.boost[g] + (c.me ? (HCAP[c.party] || 0) : 0);
+  if (c.party === 'AFD' && stich) u -= .45;   // Kooperationssperre: Wähler:innen anderer Bewerber geben seltener an AfD-Kandidaturen weiter
+  return u;
+}
+const TURN = { jung: .42, fam: .55, sen: .68, gew: .55, dorf: .62, arb: .45 };
+function runVote(cands, noise, stich) {
+  // pro Bezirk: Stimmen je Kandidat; Multinomial-Logit je Milieu, gemischt nach Bezirkszusammensetzung und Wahlbeteiligung
+  const C = cands.length;
+  const mob = 1 + G.mob;
+  const pm = MILIEUS.map((m, g) => {
+    const ex = cands.map(c => Math.exp(utility(c, g, stich)));
+    const s = ex.reduce((a, b) => a + b, 0);
+    return ex.map(x => x / s);
+  });
+  const districts = DISTRICTS.map((d, di) => {
+    const v = new Array(C).fill(0);
+    for (let g = 0; g < 6; g++) {
+      const turn = clamp(TURN[MI[g]] * mob * (stich ? .86 : 1), .2, .9);
+      for (let c = 0; c < C; c++) {
+        // Bezirks-Rauschen wirkt als Faktor auf die Kandidatenwahrscheinlichkeit
+        const nz = noise ? Math.exp(noise[di][c] || 0) : 1;
+        v[c] += d.mix[g] * turn * pm[g][c] * nz;
+      }
+    }
+    const s = v.reduce((a, b) => a + b, 0);
+    const tot = d.size * 100 * (s);
+    return { v: v.map(x => x / s * tot), tot, name: d.n, size: d.size };
+  });
+  const total = new Array(C).fill(0); let all = 0;
+  districts.forEach(d => d.v.forEach((x, c) => { total[c] += x; all += x; }));
+  return { districts, total, shares: total.map(x => x / all * 100), all };
+}
+function expectedShares() { return runVote(candList(), null, false).shares; }
+
+/* ---------- Wahlabend: Prognose & Hochrechnungen ---------- */
+function makeElection(stich, cands) {
+  const c = cands || candList();
+  const noise = stich ? G.noise2 : G.noise;
+  const res = runVote(c, noise, stich);
+  const order = DISTRICTS.map((d, i) => ({ i, k: d.size * (.65 + rnd() * .7) })).sort((a, b) => a.k - b.k).map(o => o.i);
+  const prog = res.shares.map(x => x + gauss() * 2.0);
+  const ps = prog.reduce((a, b) => a + Math.max(0.5, b), 0);
+  return { stich: !!stich, cands: c, res, order, prog: prog.map(x => Math.max(.5, x) * 100 / ps), turnout: res.all / (DISTRICTS.reduce((a, d) => a + d.size * 100, 0)) };
+}
+const HR_STEPS = [
+  { t: '18:00', n: 'Prognose', f: 0 }, { t: '18:45', n: '1. Hochrechnung', f: .22 }, { t: '19:30', n: '2. Hochrechnung', f: .46 },
+  { t: '20:15', n: '3. Hochrechnung', f: .71 }, { t: '21:00', n: '4. Hochrechnung', f: .92 }, { t: '22:30', n: 'Endergebnis', f: 1 }
+];
+function hochrechnung(E, step) {
+  const f = HR_STEPS[step].f;
+  if (step === 0) return { shares: E.prog, k: 0, counted: [] };
+  const k = Math.round(f * E.order.length);
+  const counted = E.order.slice(0, k);
+  const C = E.cands.length;
+  const sum = new Array(C).fill(0); let all = 0;
+  counted.forEach(i => E.res.districts[i].v.forEach((x, c) => { sum[c] += x; all += x; }));
+  const naive = sum.map(x => x / all * 100);
+  if (f >= 1) return { shares: E.res.shares, k, counted };
+  const w = Math.pow(f, .75);
+  const mix = naive.map((x, c) => w * x + (1 - w) * E.prog[c]);
+  const s = mix.reduce((a, b) => a + b, 0);
+  return { shares: mix.map(x => x * 100 / s), k, counted, naive };
+}
+
+/* ---------- Bundestag & Umfragen (Bund) ---------- */
+const CONC = { CDU: 1.0, CSU: 5.0, SPD: 1.0, AFD: 1.35, GRUENE: 1.0, FDP: .35, LINKE: 1.7, BSW: .5 };
+function sainteLague(votes, seats) {
+  const ps = Object.keys(votes); const res = {}; ps.forEach(p => res[p] = 0);
+  for (let i = 0; i < seats; i++) { let best = null, bv = -1; for (const p of ps) { const q = votes[p] / (res[p] + .5); if (q > bv) { bv = q; best = p; } } res[best]++; }
+  return res;
+}
+function bundSeats(S) {
+  const v = {}; BUND_PARTIES.forEach(p => v[p] = S[p]);
+  const d = {}; let ds = 0; BUND_PARTIES.forEach(p => { d[p] = Math.pow(v[p], 3) * CONC[p]; ds += d[p]; });
+  const direct = {}; BUND_PARTIES.forEach(p => direct[p] = Math.round(299 * d[p] / ds));
+  const elig = {}; BUND_PARTIES.forEach(p => { if (v[p] >= 5 || direct[p] >= 3) elig[p] = v[p]; });
+  const seats = sainteLague(elig, 630);
+  const fr = { UNION: (seats.CDU || 0) + (seats.CSU || 0) };
+  ['SPD', 'AFD', 'GRUENE', 'FDP', 'LINKE', 'BSW'].forEach(p => fr[p] = seats[p] || 0);
+  return { seats, fr, direct, out: BUND_PARTIES.filter(p => !(p in elig)) };
+}
+const HARD = [['AFD', '*'], ['UNION', 'LINKE'], ['FDP', 'LINKE'], ['BSW', 'GRUENE'], ['BSW', 'FDP']];
+function coalitionsFor(fr) {
+  const FR = ['UNION', 'SPD', 'AFD', 'GRUENE', 'FDP', 'LINKE', 'BSW'];
+  const out = [];
+  for (let m = 1; m < 128; m++) {
+    const set = FR.filter((_, i) => m & (1 << i));
+    if (set.some(f => !fr[f])) continue;
+    let ok = true;
+    for (const a of set) for (const b of set) { if (a >= b) continue; for (const [x, y] of HARD) if ((x === a && (y === b || y === '*')) || (x === b && (y === a || y === '*'))) ok = false; }
+    if (!ok) continue;
+    const seats = set.reduce((a, f) => a + fr[f], 0);
+    if (seats < 316) continue;
+    if (set.some(f => seats - fr[f] >= 316)) continue;
+    out.push({ set, seats, chancellor: set.reduce((b, f) => fr[f] > fr[b] ? f : b, set[0]) });
+  }
+  return out.sort((a, b) => a.set.length - b.set.length || b.seats - a.seats);
+}
+function initBund() {
+  const S = Object.assign({}, BUND0);
+  G.bund = { S, Z: {}, E: {}, week: 0, hist: [], why: [] };
+  Object.keys(S).forEach(p => { G.bund.Z[p] = 0; G.bund.E[p] = 0; });
+  for (let i = 0; i < 26; i++) bundStep(true);
+  G.bund.week = 0;
+}
+function bundStep(silent, shock) {
+  const B = G.bund, keys = Object.keys(B.S);
+  let sumZ = 0;
+  keys.forEach(p => { B.Z[p] = .95 * B.Z[p] + .28 * Math.sqrt(BUND0[p] / 15) * gauss(); sumZ += B.Z[p]; });
+  keys.forEach(p => { B.Z[p] -= sumZ / keys.length; });
+  if (shock) Object.keys(shock).forEach(p => { B.E[p] = (B.E[p] || 0) + shock[p]; });
+  let sumT = 0; const T = {};
+  keys.forEach(p => { B.E[p] *= .94; const gov = ['CDU', 'CSU', 'SPD'].includes(p) ? -BUND0[p] * .02 : 0; T[p] = BUND0[p] + B.Z[p] + B.E[p] + gov; sumT += T[p]; });
+  keys.forEach(p => { T[p] *= 100 / sumT; B.S[p] += .15 * (T[p] - B.S[p]); });
+  const snap = {}; keys.forEach(p => snap[p] = B.S[p]);
+  B.hist.push(snap); B.week++;
+  if (B.hist.length > 60) B.hist.shift();
+}
+function bundPoll(inst, S) {
+  S = S || G.bund.S;
+  const o = {}; let sum = 0;
+  Object.keys(S).forEach(p => { const b = (inst.bias && inst.bias[p]) || 0; const pr = S[p] / 100; const err = Math.sqrt(pr * (1 - pr) / inst.nn) * 100; o[p] = Math.max(.5, S[p] + b + gauss() * err * .55); sum += o[p]; });
+  const out = {}; Object.keys(o).forEach(p => out[p] = Math.round(o[p] * 100 / sum * 2) / 2);
+  return out;
+}
+function halfWidth(p, inst) { const pr = p / 100; return 1.96 * Math.sqrt(pr * (1 - pr) / inst.nn) * 100; }
+
+/* ===== 30-avatar.js ===== */
+/* ---------- Avatar (SVG, parametrisch): Hautton, Gesicht, Frisur, Kleidung, Accessoire, Alterung, Mimik ---------- */
+function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function rgb2hex(r) { return '#' + r.map(x => Math.round(clamp(x, 0, 255)).toString(16).padStart(2, '0')).join(''); }
+function mix(a, b, t) { const A = hex2rgb(a), B = hex2rgb(b); return rgb2hex(A.map((x, i) => x + (B[i] - x) * t)); }
+function shade(h, t) { return t < 0 ? mix(h, '#000000', -t) : mix(h, '#ffffff', t); }
+
+function avatarSVG(c, o) {
+  o = o || {};
+  const skin = SKINS[c.skin] || SKINS[2];
+  const age = c.age || 38, old = clamp((age - 38) / 32, 0, 1);
+  const hair = mix(HAIRC[c.hairc] || HAIRC[1], '#c9c9c9', clamp((age - 40) / 34, 0, 1) * (c.hairc === 4 ? 0 : 1));
+  const emo = o.emo || 'neutral';
+  const sk2 = shade(skin, -.12), sk3 = shade(skin, -.22);
+  const outfit = c.outfit || 'anzug';
+  const OUT = { anzug: ['#1b2a4e', '#2a3c6a'], blazer: ['#5a2d45', '#7a3f5e'], strick: ['#6b5a45', '#8a755a'], tracht: ['#33573f', '#4c7a58'], hemd: ['#d8dde8', '#ffffff'] };
+  const [cb, cl] = OUT[outfit] || OUT.anzug;
+  let body = `<path d="M14 250 C14 200 52 180 86 172 L114 172 C148 180 186 200 186 250 Z" fill="${cb}"/>`;
+  if (outfit === 'anzug' || outfit === 'blazer') {
+    body += `<path d="M86 172 L100 214 L62 250 L36 250 Z" fill="${cl}"/><path d="M114 172 L100 214 L138 250 L164 250 Z" fill="${cl}"/>`;
+    body += `<path d="M88 172 L100 206 L112 172 Z" fill="#f2f2f4"/>`;
+    if (c.acc === 'krawatte' || outfit === 'anzug') body += `<path d="M95 182 L105 182 L109 228 L100 238 L91 228 Z" fill="${outfit === 'anzug' ? '#8a1f2b' : '#234'}"/><path d="M95 178 L105 178 L103 186 L97 186Z" fill="#6d1620"/>`;
+  } else if (outfit === 'strick') {
+    body += `<path d="M86 172 L100 224 L114 172 L100 176 Z" fill="#e9e3d6"/><path d="M100 176 L100 250" stroke="${cl}" stroke-width="3"/>` + [196, 212, 228].map(y => `<circle cx="100" cy="${y}" r="3" fill="#d9c9a8"/>`).join('');
+  } else if (outfit === 'tracht') {
+    body += `<path d="M86 172 L100 200 L114 172 Z" fill="#f4efe6"/><path d="M100 176 L100 250" stroke="${cl}" stroke-width="3"/>`
+      + `<path d="M86 172 L100 224 L62 250 L44 250 Z" fill="${cl}" opacity=".6"/><path d="M114 172 L100 224 L138 250 L156 250 Z" fill="${cl}" opacity=".6"/>`
+      + [200, 216, 232].map(y => `<circle cx="100" cy="${y}" r="3.2" fill="#c9a66b"/>`).join('');
+  } else {
+    body += `<path d="M86 172 L100 212 L114 172 Z" fill="${sk2}"/><path d="M78 170 L100 214 L62 226 Z" fill="${cl}"/><path d="M122 170 L100 214 L138 226 Z" fill="${cl}"/>`;
+  }
+  if (c.acc === 'schal') body += `<path d="M70 170 Q100 196 130 170 L134 186 Q100 212 66 186 Z" fill="#b5452a"/><path d="M110 186 L124 230 L108 228 Z" fill="#b5452a"/>`;
+  if (c.acc === 'pin') body += `<circle cx="132" cy="206" r="4" fill="#d6b16c" stroke="#fff3cf" stroke-width="1"/>`;
+  const neck = `<path d="M86 140 L86 178 Q100 192 114 178 L114 140 Z" fill="${sk2}"/>`;
+  // Gesichtsform
+  let faceP;
+  if (c.face === 'rund') faceP = `<ellipse cx="100" cy="102" rx="50" ry="51" fill="${skin}"/>`;
+  else if (c.face === 'kantig') faceP = `<path d="M54 92 C54 52 146 52 146 92 L144 118 C142 140 124 156 100 158 C76 156 58 140 56 118 Z" fill="${skin}"/>`;
+  else faceP = `<ellipse cx="100" cy="102" rx="44" ry="54" fill="${skin}"/>`;
+  const ears = `<ellipse cx="53" cy="106" rx="6" ry="10" fill="${sk2}"/><ellipse cx="147" cy="106" rx="6" ry="10" fill="${sk2}"/>`;
+  // Haare
+  let hb = '', hf = '';
+  const H = c.hair;
+  if (H === 'lang') { hb = `<path d="M50 100 C40 170 58 196 72 204 L128 204 C142 196 160 170 150 100 C152 38 48 38 50 100 Z" fill="${hair}"/>`; hf = `<path d="M54 94 C52 46 148 46 146 94 C138 70 120 62 100 62 C80 62 62 70 54 94 Z" fill="${hair}"/>`; }
+  else if (H === 'bob') { hb = `<path d="M52 98 C44 150 56 168 66 172 L134 172 C144 168 156 150 148 98 C150 42 50 42 52 98 Z" fill="${hair}"/>`; hf = `<path d="M54 94 C54 50 146 50 146 94 C136 72 118 66 98 66 C78 66 62 76 54 94 Z" fill="${hair}"/>`; }
+  else if (H === 'dutt') { hb = `<circle cx="100" cy="40" r="15" fill="${hair}"/>`; hf = `<path d="M55 96 C52 48 148 48 145 96 C136 72 118 64 100 64 C82 64 64 72 55 96 Z" fill="${hair}"/>`; }
+  else if (H === 'locken') { hf = [[62, 66], [78, 54], [100, 48], [122, 54], [138, 66], [52, 84], [148, 84], [68, 78], [132, 78], [100, 62]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="15" fill="${hair}"/>`).join(''); }
+  else if (H === 'glatze') { hf = `<path d="M54 98 C54 88 58 84 60 82 C58 92 56 98 56 104 Z M146 98 C146 88 142 84 140 82 C142 92 144 98 144 104 Z" fill="${hair}" opacity=".7"/>`; }
+  else if (H === 'seit') { hf = `<path d="M54 98 C48 44 150 38 146 98 C142 74 126 62 96 62 C78 64 62 78 54 98 Z" fill="${hair}"/><path d="M96 62 C112 64 132 70 144 92" stroke="${shade(hair, -.25)}" stroke-width="2" fill="none"/>`; }
+  else { hf = `<path d="M55 96 C52 48 148 48 145 96 C136 72 118 64 100 64 C82 64 64 72 55 96 Z" fill="${hair}"/>`; }
+  // Augen, Brauen, Mund je Mimik
+  const brow = hair === '#c9c9c9' ? '#8a8a8a' : shade(hair, -.2);
+  const B = { neutral: [0, 0], happy: [-1, 1], serious: [3, -2], shocked: [-4, 0], angry: [4, -4] }[emo] || [0, 0];
+  const brows = `<path d="M70 ${84 + B[0]} Q82 ${80 + B[0] - B[1]} 94 ${85 + B[0] + (B[1] < 0 ? 2 : 0)}" stroke="${brow}" stroke-width="4" stroke-linecap="round" fill="none"/>`
+    + `<path d="M106 ${85 + B[0] + (B[1] < 0 ? 2 : 0)} Q118 ${80 + B[0] - B[1]} 130 ${84 + B[0]}" stroke="${brow}" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+  const eyeH = emo === 'shocked' ? 6 : emo === 'happy' ? 3 : 4.5;
+  const eyes = [84, 116].map(x => `<ellipse cx="${x}" cy="100" rx="7.5" ry="${eyeH}" fill="#fff"/><circle cx="${x}" cy="100" r="3.3" fill="#3a2a20"/><circle cx="${x + 1}" cy="99" r="1" fill="#fff"/>`).join('');
+  const nose = `<path d="M100 102 Q93 120 99 122 Q104 123 106 120" stroke="${sk3}" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
+  let mouth;
+  if (o.speak || emo === 'shocked') mouth = `<ellipse cx="100" cy="134" rx="${emo === 'shocked' ? 6 : 8}" ry="${emo === 'shocked' ? 8 : 5}" fill="#5a1f22"/><path d="M93 131 H107" stroke="#fff" stroke-width="2"/>`;
+  else if (emo === 'happy') mouth = `<path d="M84 128 Q100 146 116 128" stroke="#7a2d30" stroke-width="3" fill="#fff" stroke-linejoin="round"/>`;
+  else if (emo === 'serious' || emo === 'angry') mouth = `<path d="M88 134 Q100 130 112 134" stroke="#6a2a2c" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  else mouth = `<path d="M87 131 Q100 138 113 131" stroke="#7a2d30" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const wr = `<g opacity="${(old * .55).toFixed(2)}" stroke="${sk3}" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M68 70 Q100 64 132 70"/><path d="M72 76 Q100 71 128 76"/><path d="M70 104 l-7 3 M70 108 l-6 5 M130 104 l7 3 M130 108 l6 5"/><path d="M84 128 q-5 6 -4 14 M116 128 q5 6 4 14"/></g>`;
+  const glass = c.acc === 'brille' ? `<g stroke="#2a2a2a" stroke-width="2.6" fill="rgba(180,210,255,.12)"><rect x="68" y="90" width="31" height="22" rx="9"/><rect x="101" y="90" width="31" height="22" rx="9"/><path d="M99 98 H101"/></g>` : '';
+  const stub = (o.stubble ? `<path d="M64 120 C70 154 130 154 136 120 C124 140 76 140 64 120 Z" fill="${hair}" opacity=".25"/>` : '');
+  return `<svg viewBox="0 0 200 250" class="${o.cls || ''}" role="img" aria-label="Avatar" xmlns="http://www.w3.org/2000/svg">${hb}${neck}${body}${ears}${faceP}${stub}${wr}${nose}${eyes}${brows}${mouth}${glass}${hf}</svg>`;
+}
+function npcAvatar(seed, emo, extra) {
+  const r = seeded(hashStr(seed));
+  const c = Object.assign({ skin: Math.floor(r() * 5), face: pick(['oval', 'rund', 'kantig']), hair: pick(['kurz', 'seit', 'bob', 'lang', 'glatze', 'dutt', 'locken']), hairc: Math.floor(r() * 5), outfit: pick(['anzug', 'blazer', 'strick', 'hemd']), acc: pick(['none', 'brille', 'pin', 'krawatte']), age: 38 + Math.floor(r() * 26) }, extra || {});
+  return avatarSVG(c, { emo: emo || 'neutral', cls: extra && extra.cls });
+}
+function playerAvatar(emo, o, ageAdd) {
+  return avatarSVG(Object.assign({}, G.av, { age: G.age + (ageAdd || 0) }), Object.assign({ emo: emo || 'neutral' }, o || {}));
+}
+
+/* ===== 40-ui-core.js ===== */
+/* ---------- Screen-Manager, Navigation, Einstellungen ---------- */
+const SCREENS = {}, ACT = {};
+let CUR = null;
+const NAVTABS = [['cards', '🗂️', 'Lage'], ['polls', '📊', 'Umfragen'], ['profile', '👤', 'Profil']];
+
+function render(html, o) {
+  o = o || {};
+  const sc = $('#screen');
+  sc.innerHTML = html;
+  sc.classList.toggle('noscroll', !!o.noscroll);
+  sc.scrollTop = 0;
+  const nav = $('#nav');
+  nav.classList.toggle('on', !!o.nav);
+  if (o.nav) nav.innerHTML = NAVTABS.map(t => `<button data-act="nav" data-s="${t[0]}" class="${CUR === t[0] ? 'act' : ''}" aria-label="${t[2]}"><span>${t[1]}</span>${t[2]}</button>`).join('');
+  $('#gear').style.display = '';
+}
+function show(name, data) {
+  CUR = name;
+  if (G && ['cards', 'polls', 'profile'].includes(name)) { G.lastTab = name; save(); }
+  SCREENS[name](data);
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (!a || a.disabled) return;
+  const fn = ACT[a.dataset.act];
+  if (fn) { buzz(8); fn(a, e); }
+});
+ACT.nav = a => show(a.dataset.s);
+ACT.close = () => closeSheet();
+$('#sheetbg').addEventListener('click', e => { if (e.target.id === 'sheetbg') closeSheet(); });
+
+/* ---------- gemeinsame UI-Bausteine ---------- */
+function meter(label, val, o) {
+  o = o || {};
+  const v = clamp(val, 0, 100);
+  return `<div class="meter"><div class="lab"><span>${label}</span><span>${o.txt || Math.round(val)}</span></div><div class="bar ${o.cls || ''}"><i style="width:${v}%"></i></div></div>`;
+}
+function statStrip() {
+  const r = G.res;
+  return `<div class="statrow">
+    ${meter('Beliebt', r.bel)}${meter('Partei', r.par)}
+    ${meter('Kasse', clamp(r.bud * 2, 0, 100), { txt: f0(r.bud) + 'k' })}
+    ${meter('Medien', (r.med + 100) / 2, { cls: r.med >= 0 ? 'g' : 'r', txt: sgn(Math.round(r.med)) })}
+  </div>`;
+}
+function badge(p, lg) { if (p === 'BUERGER') return `<span class="badge ${lg ? 'lg' : ''}" style="--pc:#b8c2d8">FBL</span>`; const P = PARTIES[p]; return `<span class="badge ${lg ? 'lg' : ''}" style="--pc:${pcolor(p)}">${esc((p === 'EIGEN' ? (G && G.own.abk) || 'NEU' : P.abk).slice(0, 5))}</span>`; }
+function title() { return G.anrede === 'frau' ? 'Bürgermeisterin' : G.anrede === 'mann' ? 'Bürgermeister' : 'Bürgermeister:in'; }
+function kandidat() { return G.anrede === 'frau' ? 'Kandidatin' : G.anrede === 'mann' ? 'Kandidat' : 'Kandidat:in'; }
+
+/* ---------- Einstellungen ---------- */
+ACT.settings = () => {
+  const tog = (k, l, d) => `<div class="kv"><div><b>${l}</b><div class="small mut">${d}</div></div><button class="opt ${SET[k] ? 'on' : ''}" data-act="tog" data-k="${k}" aria-pressed="${!!SET[k]}">${SET[k] ? 'An' : 'Aus'}</button></div>`;
+  openSheet(`<h2>Einstellungen</h2><p class="mut small">Alles wird automatisch gespeichert – auch offline.</p>
+    <div class="kv"><div><b>Schriftgröße</b><div class="small mut">Aktuell ${SET.fs} px</div></div><div class="row"><button class="opt" data-act="fs" data-d="-1" aria-label="Schrift kleiner">A−</button><button class="opt" data-act="fs" data-d="1" aria-label="Schrift größer">A+</button></div></div>
+    ${tog('hc', 'Hoher Kontrast', 'Stärkere Schrift- und Rahmenkontraste')}
+    ${tog('cb', 'Farbenblind-Modus', 'Okabe-Ito-Palette, Muster in Balken, Kürzel überall')}
+    ${tog('haptic', 'Haptisches Feedback', 'Vibration bei Entscheidungen')}
+    ${tog('voice', 'Sprachausgabe (Cutscenes)', 'Liest Untertitel vor (Gerätestimme)')}
+    ${tog('rm', 'Animationen reduzieren', 'Weniger Bewegung, ruhigere Übergänge')}
+    <hr class="rule"><h3>Prototyp-Module</h3><p class="mut small">Direktzugriff für Tests, ohne den Spielverlauf durchzuspielen.</p>
+    <div class="opts mt"><button class="opt" data-act="demo" data-m="polls">📊 Sonntagsfrage</button><button class="opt" data-act="demo" data-m="speech">🎙️ Bundestagsrede</button><button class="opt" data-act="demo" data-m="election">🗳️ Wahlabend</button></div>
+    <hr class="rule"><div class="row"><button class="btn ghost" data-act="toStart">Zum Startbildschirm</button><button class="btn ghost" data-act="close">Schließen</button></div>`);
+};
+ACT.tog = a => { SET[a.dataset.k] = SET[a.dataset.k] ? 0 : 1; applySettings(); ACT.settings(); if (CUR && SCREENS[CUR] && ['polls', 'cards', 'profile', 'party'].includes(CUR)) SCREENS[CUR](); };
+ACT.fs = a => { SET.fs = clamp(SET.fs + (+a.dataset.d) * 2, 13, 24); applySettings(); ACT.settings(); };
+ACT.toStart = () => { closeSheet(); show('start'); };
+ACT.demo = a => { closeSheet(); ensureDemoGame(); ({ polls: () => show('polls'), speech: () => startSpeech(), election: () => startElection(false) })[a.dataset.m](); };
+
+function ensureDemoGame() {
+  if (G && G.party && G.opp && G.opp.length && G.bund) return;
+  G = newGame();
+  G.party = 'SPD'; G.name = 'Alex Brandt'; G.nn = 'Brandt'; G.anrede = 'div'; G.bg = 'lehrer'; G.herk = 'alt';
+  Object.keys(G.stats).forEach(k => G.stats[k] = 52);
+  initCharacter(); G.camp.k = { plak: 2, soc: 1.5, str: 1, rad: 1, evt: .5 }; G.camp.spent = 6; G.res.bud = 10; setupOpponents(); initBund();
+}
+
+/* ===== 41-ui-start-party-avatar.js ===== */
+/* ---------- Start ---------- */
+const CREST = `<svg class="crest" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0c4"/><stop offset=".6" stop-color="#d6b16c"/><stop offset="1" stop-color="#8f7238"/></linearGradient></defs><circle cx="60" cy="60" r="56" fill="none" stroke="url(#cg)" stroke-width="2.5"/><circle cx="60" cy="60" r="50" fill="rgba(19,34,77,.65)" stroke="rgba(214,177,108,.4)"/><path d="M60 24 26 44v6h68v-6z" fill="url(#cg)"/><g fill="url(#cg)"><rect x="32" y="55" width="9" height="34"/><rect x="50" y="55" width="9" height="34"/><rect x="61" y="55" width="9" height="34"/><rect x="79" y="55" width="9" height="34"/></g><rect x="26" y="92" width="68" height="6" fill="url(#cg)"/><rect x="21" y="100" width="78" height="5" fill="url(#cg)"/></svg>`;
+
+SCREENS.start = () => {
+  const sv = loadSave();
+  G = G || null;
+  render(`<div class="hero fadein">
+    ${CREST}
+    <div><div class="caps">Ein Politik-Karrierespiel</div>
+    <h1>Macht &amp; Mandat</h1><div class="sub">Vom Rathaus ins Kanzleramt</div></div>
+    <p class="mut" style="max-width:32ch;margin:0 auto">Vom Gemeinderat bis zur Kanzlerschaft: jede Entscheidung hat Folgen – manche erst nach Jahren. Natürlich ist alles frei erfunden. Fast alles.</p>
+    <div class="col" style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+      <button class="btn" data-act="newgame">Neue Karriere beginnen</button>
+      ${sv ? `<button class="btn ghost" data-act="continue">Fortsetzen · ${esc(sv.name || 'Spielstand')}${sv.party ? ' (' + esc(PARTIES[sv.party].name) + ')' : ''}</button>` : ''}
+      <button class="btn ghost" data-act="howto">Wie wird gespielt?</button>
+    </div>
+    <div class="tiny mut">Prototyp v0.1 · Alle Figuren, Orte und Institute sind fiktiv. Parteien sind stilisiert dargestellt.</div>
+  </div>`, { nogear: false });
+};
+ACT.newgame = () => {
+  if (loadSave()) return openSheet(`<h2>Neue Karriere beginnen?</h2><p class="mut">Dein gespeicherter Spielstand wird dabei überschrieben.</p><div class="row mt"><button class="btn ghost" data-act="close">Abbrechen</button><button class="btn" data-act="newgame2">Neu beginnen</button></div>`);
+  ACT.newgame2();
+};
+ACT.newgame2 = () => { closeSheet(); G = newGame(); G.phase = 'party'; wipeSave(); show('party'); };
+ACT.continue = () => {
+  const sv = loadSave(); if (!sv) return; G = sv;
+  const ph = G.phase;
+  if (ph === 'party') show('party'); else if (ph === 'avatar') show('avatar', G.avStep || 1); else if (ph === 'campaign') show('campaign');
+  else if (ph === 'cards') show(G.lastTab || 'cards'); else if (ph === 'election') { if (G.elec && G.elec.done) show('elecresult'); else startElection(G.elec && G.elec.stich); } else if (ph === 'elecresult') show('elecresult'); else if (ph === 'timeskip') show('timeskip'); else if (ph === 'speech') startSpeech();
+  else if (ph === 'end') show('end'); else show('cards');
+};
+ACT.howto = () => openSheet(`<h2>Wie wird gespielt?</h2><ul class="clean">
+  <li><b>Entscheidungskarten:</b> Tippe eine Option an – bei Zwei-Optionen-Karten kannst du auch wischen.</li>
+  <li><b>Vorschau:</b> Pfeile zeigen die wahrscheinlichen Folgen. Wie zuverlässig sie sind, hängt von deinem Netzwerk und deiner Intelligenz ab („?“ = Berater:innen unsicher).</li>
+  <li><b>Wagnis:</b> Manche Optionen sind Proben. Die Erfolgschance hängt an deinen Fähigkeiten – und an deinem Stress.</li>
+  <li><b>Folgen:</b> Einiges schlägt erst später zu. Schlagzeilen reagieren je nach Partei anders.</li>
+  <li><b>Ziel:</b> Gewinne die Bürgermeisterwahl in Niederhüttingen – und schau, wie weit dich die Karriere trägt.</li></ul>
+  <button class="btn mt" data-act="close">Verstanden</button>`);
+
+/* ---------- Parteiwahl ---------- */
+function logoSVG(style, color, abk, size) {
+  const s = size || 54, c = color || '#d6b16c', t = esc((abk || '').slice(0, 4));
+  const shapes = {
+    kreis: `<circle cx="30" cy="30" r="26" fill="${c}"/>`,
+    schild: `<path d="M10 8h40v24c0 14-12 22-20 26C22 54 10 46 10 32z" fill="${c}"/>`,
+    raute: `<path d="M30 3 57 30 30 57 3 30z" fill="${c}"/>`,
+    stern: `<path d="M30 3l7 17 18 2-14 12 5 18-16-10-16 10 5-18L5 22l18-2z" fill="${c}"/>`
+  };
+  return `<svg width="${s}" height="${s}" viewBox="0 0 60 60">${shapes[style] || shapes.kreis}<text x="30" y="${style === 'stern' ? 37 : 34}" text-anchor="middle" font-size="${t.length > 2 ? 13 : 16}" font-weight="800" fill="#0a0a0a" style="font-family:Georgia,serif">${t}</text></svg>`;
+}
+SCREENS.party = () => {
+  G.phase = 'party'; save();
+  const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+  render(`<div class="stepper"><i class="on"></i><i></i><i></i><i></i></div>
+    <div class="caps">Schritt 1 von 4</div><h2>Welche Partei vertrittst du?</h2>
+    <p class="mut small">Jede Partei hat eigene Stärken, Schwächen und eine eigene Spielmechanik. Tippe für Details.</p>
+    <div class="pgrid mt">${PARTY_ORDER.map(id => { const P = PARTIES[id]; return `<button class="pcard ${G.party === id ? 'sel' : ''}" style="--pc:${pcolor(id)}" data-act="pinfo" data-p="${id}">
+      <div class="row">${id === 'EIGEN' ? logoSVG(G.own.logo, pcolor('EIGEN'), G.own.abk, 34) : badge(id)}<span class="pn">${esc(id === 'EIGEN' ? 'Eigene Partei' : P.name)}</span></div>
+      <div class="ps">${esc(P.slogan)}</div><div class="stars" title="Schwierigkeit" aria-label="Schwierigkeit ${P.diff} von 5">${stars(P.diff)}</div></button>`; }).join('')}</div>`);
+};
+ACT.pinfo = a => {
+  const id = a.dataset.p, P = PARTIES[id];
+  if (id === 'EIGEN') return ownEditor();
+  openSheet(`<div class="row">${badge(id, true)}<div><h2>${esc(P.name)}</h2><div class="small mut">${esc(P.voll)}</div></div></div>
+    <p class="serif gold" style="font-style:italic;font-size:1.05rem">„${esc(P.slogan)}“</p>
+    <div class="kv"><span class="mut">Kernthemen</span><span>${esc(P.kern.join(' · '))}</span></div>
+    <div class="kv"><span class="mut">Wählerschaft</span><span style="text-align:right;max-width:60%">${esc(P.waehler)}</span></div>
+    <div class="kv"><span class="mut">Flügel</span><span style="text-align:right;max-width:60%">${esc(P.fluegel)}</span></div>
+    <h3 class="mt">Stärken</h3><ul class="clean">${P.staerken.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <h3>Schwächen</h3><ul class="clean">${P.schwaechen.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+    <div class="glass tight mt"><div class="caps">Spielmechanik · ${esc(P.mech.n)}</div><p class="small" style="margin:.3em 0 0">${esc(P.mech.t)}</p></div>
+    <p class="small mut">Interner Konflikt: ${esc(P.konflikt)}</p>
+    <div class="row mt"><button class="btn ghost" data-act="close">Zurück</button><button class="btn" data-act="pickparty" data-p="${id}">Diese Partei wählen</button></div>`);
+};
+function ownEditor() {
+  const o = G.own, tot = o.sl.reduce((a, b) => a + b, 0);
+  const sw = ['#d6b16c', '#e3404b', '#3f86e0', '#46b762', '#f5c72e', '#a66be3', '#e8833a', '#2bb3b1'];
+  openSheet(`<h2>Eigene Partei gründen</h2><p class="mut small">Neue Parteien starten schwer: 5-%-Hürde, wenig Geld, kaum Bekanntheit – dafür gibt es enormes Wachstumspotenzial.</p>
+    <label class="f">Name</label><input type="text" maxlength="28" value="${esc(o.name)}" data-bind="own.name" aria-label="Parteiname">
+    <label class="f">Kürzel (max. 4 Zeichen)</label><input type="text" maxlength="4" value="${esc(o.abk)}" data-bind="own.abk" aria-label="Kürzel">
+    <label class="f">Motto</label><input type="text" maxlength="60" value="${esc(o.motto)}" data-bind="own.motto" aria-label="Motto">
+    <label class="f">Logo &amp; Farbe</label>
+    <div class="row wrap"><div id="logoprev" class="avwrap" style="padding:8px">${logoSVG(o.logo, o.color, o.abk, 64)}</div>
+      <div class="opts">${['kreis', 'schild', 'raute', 'stern'].map(l => `<button class="opt ${o.logo === l ? 'on' : ''}" data-act="ownlogo" data-l="${l}">${l[0].toUpperCase() + l.slice(1)}</button>`).join('')}</div></div>
+    <div class="row wrap mt">${sw.map(c => `<button class="sw ${o.color === c ? 'on' : ''}" style="background:${c}" data-act="owncolor" data-c="${c}" aria-label="Farbe ${c}"></button>`).join('')}</div>
+    <label class="f">Grundsatzprogramm (Themenregler) · <span id="slsum">${tot}</span>/330 Punkte</label>
+    ${THEMES.map((t, i) => `<div class="attr"><div><b>${t.n}</b></div><div><input type="range" min="0" max="100" value="${o.sl[i]}" data-slider="${i}" aria-label="${t.n}"></div></div>`).join('')}
+    <p class="tiny mut">Hohe Werte = starkes Profil bei diesem Thema. Das Punktekonto ist begrenzt: Du kannst nicht überall glänzen.</p>
+    <label class="f">Startkapital · <span id="kapv">${o.kap}</span>k€</label><input type="range" min="2" max="8" step="1" value="${o.kap}" data-bind="own.kap" aria-label="Startkapital">
+    <div class="row mt"><button class="btn ghost" data-act="close">Abbrechen</button><button class="btn" data-act="pickparty" data-p="EIGEN">Gründen!</button></div>`);
+}
+ACT.ownlogo = a => { G.own.logo = a.dataset.l; ownEditor(); };
+ACT.owncolor = a => { G.own.color = a.dataset.c; ownEditor(); };
+ACT.pickparty = a => {
+  const id = a.dataset.p;
+  if (id === 'EIGEN') { if (!G.own.name.trim()) G.own.name = 'Bürgerliste Zukunft'; if (!G.own.abk.trim()) G.own.abk = 'BZ'; PARTIES.EIGEN.name = G.own.name; PARTIES.EIGEN.motto = G.own.motto; PARTIES.EIGEN.slogan = G.own.motto || 'Neu. Anders. Ungetestet.'; PARTIES.EIGEN.kern = THEMES.map((t, i) => [t.n, G.own.sl[i]]).sort((x, y) => y[1] - x[1]).slice(0, 3).map(x => x[0]); PARTIES.EIGEN.color = G.own.color; }
+  G.party = id; closeSheet(); G.phase = 'avatar'; G.avStep = 1; save(); show('avatar', 1);
+};
+
+/* ---------- Avatar-Erstellung ---------- */
+SCREENS.avatar = step => {
+  step = step || G.avStep || 1; G.avStep = step; G.phase = 'avatar'; save();
+  const P = PARTIES[G.party];
+  const head = `<div class="stepper"><i class="on"></i><i class="on"></i><i class="${step >= 3 ? 'on' : ''}"></i><i></i></div><div class="caps">Schritt 2 von 4 · Figur ${step}/3</div>`;
+  if (step === 1) {
+    render(`${head}<h2>Wer bist du?</h2>
+      <label class="f">Name</label><input type="text" maxlength="30" value="${esc(G.name)}" placeholder="Vor- und Nachname" data-bind="name" aria-label="Name">
+      <label class="f">Anrede</label><div class="opts">${[['frau', 'Bürgermeisterin'], ['mann', 'Bürgermeister'], ['div', 'Bürgermeister:in']].map(a => `<button class="opt ${G.anrede === a[0] ? 'on' : ''}" data-act="set" data-k="anrede" data-v="${a[0]}">${a[1]}</button>`).join('')}</div>
+      <label class="f">Beruf &amp; Hintergrund</label><div class="opts">${Object.entries(BACKGROUNDS).map(([k, b]) => `<button class="opt ${G.bg === k ? 'on' : ''}" data-act="set" data-k="bg" data-v="${k}">${b.e} ${b.n}</button>`).join('')}</div>
+      <div class="glass tight mt small"><p style="margin:0">${esc(BACKGROUNDS[G.bg].t)}</p><p class="gold" style="margin:.4em 0 0">Startbonus: ${esc(BACKGROUNDS[G.bg].npc)}</p></div>
+      <label class="f">Herkunft</label><div class="opts">${Object.entries(HERKUNFT).map(([k, b]) => `<button class="opt ${G.herk === k ? 'on' : ''}" data-act="set" data-k="herk" data-v="${k}">${b.n}</button>`).join('')}</div>
+      <p class="small mut">${esc(HERKUNFT[G.herk].t)}</p>
+      <label class="f">Dialekt &amp; Stimme</label><div class="opts">${Object.entries(DIALEKTE).map(([k, b]) => `<button class="opt ${G.dial === k ? 'on' : ''}" data-act="set" data-k="dial" data-v="${k}">${b.n}</button>`).join('')}</div>
+      <p class="small mut">${esc(DIALEKTE[G.dial].t)}</p>
+      <div class="row mt2"><button class="btn ghost" data-act="back2party">Zurück</button><button class="btn" data-act="avnext" data-s="2">Weiter</button></div>`);
+  } else if (step === 2) {
+    render(`${head}<h2>Aussehen</h2>
+      <div class="avwrap" id="avprev">${playerAvatar('neutral')}</div>
+      <label class="f">Alter · ${G.age} Jahre</label><input type="range" min="26" max="62" value="${G.age}" data-bind="age" aria-label="Alter">
+      <p class="tiny mut">Dein Avatar altert sichtbar im Laufe der Karriere – Falten, graue Haare, Erschöpfung inklusive.</p>
+      <label class="f">Hautton</label><div class="row wrap">${SKINS.map((c, i) => `<button class="sw ${G.av.skin === i ? 'on' : ''}" style="background:${c}" data-act="avset" data-k="skin" data-v="${i}" aria-label="Hautton ${i + 1}"></button>`).join('')}</div>
+      <label class="f">Gesichtsform</label><div class="opts">${FACES.map(o => `<button class="opt ${G.av.face === o.id ? 'on' : ''}" data-act="avset" data-k="face" data-v="${o.id}">${o.n}</button>`).join('')}</div>
+      <label class="f">Frisur</label><div class="opts">${HAIRS.map(o => `<button class="opt ${G.av.hair === o.id ? 'on' : ''}" data-act="avset" data-k="hair" data-v="${o.id}">${o.n}</button>`).join('')}</div>
+      <label class="f">Haarfarbe</label><div class="row wrap">${HAIRC.map((c, i) => `<button class="sw ${G.av.hairc === i ? 'on' : ''}" style="background:${c}" data-act="avset" data-k="hairc" data-v="${i}" aria-label="Haarfarbe ${i + 1}"></button>`).join('')}</div>
+      <label class="f">Kleidung</label><div class="opts">${OUTFITS.map(o => `<button class="opt ${G.av.outfit === o.id ? 'on' : ''}" data-act="avset" data-k="outfit" data-v="${o.id}">${o.n}</button>`).join('')}</div>
+      <label class="f">Accessoire</label><div class="opts">${ACCS.map(o => `<button class="opt ${G.av.acc === o.id ? 'on' : ''}" data-act="avset" data-k="acc" data-v="${o.id}">${o.n}</button>`).join('')}</div>
+      <div class="row mt2"><button class="btn ghost" data-act="avnext" data-s="1">Zurück</button><button class="btn" data-act="avnext" data-s="3">Weiter</button></div>`);
+  } else {
+    const B = BACKGROUNDS[G.bg], H = HERKUNFT[G.herk];
+    const eff = { ...G.stats }; Object.keys(B.st).forEach(k => eff[k] += B.st[k]); Object.keys(H.st || {}).forEach(k => eff[k] += H.st[k]);
+    const rows = STATS.map(s => `<div class="attr"><div><b>${s.n}</b><div class="tiny mut">${s.d}</div>
+        <div class="bar" style="margin-top:4px"><i style="width:${clamp(eff[s.id], 0, 100)}%"></i></div></div>
+        <div class="pm"><button data-act="stat" data-s="${s.id}" data-d="-1" aria-label="${s.n} senken">−</button><span>${Math.round(eff[s.id])}</span><button data-act="stat" data-s="${s.id}" data-d="1" aria-label="${s.n} erhöhen">+</button></div></div>`).join('');
+    render(`${head}<h2>Fähigkeiten</h2>
+      <div class="row"><div class="avwrap" style="width:96px;padding:2px">${playerAvatar('neutral')}</div><div><div class="serif" style="font-size:1.2rem">${esc(G.name || 'Dein Name')}</div><div class="small mut">${B.n} · ${esc(P.name)}</div><div class="pts mt">Freie Punkte: ${G.free}</div></div></div>
+      <hr class="rule">${rows}
+      <p class="tiny mut">Hintergrund und Herkunft geben Boni (in den Werten oben bereits enthalten). Verteile ${G.free} freie Punkte – jeder Wert maximal 90.</p>
+      <div class="row mt2"><button class="btn ghost" data-act="avnext" data-s="2">Zurück</button><button class="btn" data-act="avdone" ${G.free > 0 ? '' : ''}>Weiter zur Kampagne</button></div>`);
+  }
+};
+ACT.back2party = () => show('party');
+ACT.set = a => { G[a.dataset.k] = a.dataset.v; save(); show('avatar', 1); };
+ACT.avset = a => { const v = a.dataset.v; G.av[a.dataset.k] = /^\d+$/.test(v) ? +v : v; save(); const sc = $('#screen').scrollTop; SCREENS.avatar(2); $('#screen').scrollTop = sc; };
+ACT.avnext = a => {
+  if ((+a.dataset.s) >= 2 && G.avStep === 1) { if (!G.name.trim()) { toast('Bitte gib deiner Figur einen Namen.'); return; } G.nn = G.name.trim().split(/\s+/).pop(); }
+  show('avatar', +a.dataset.s);
+};
+ACT.stat = a => {
+  const k = a.dataset.s, d = +a.dataset.d;
+  const B = BACKGROUNDS[G.bg], H = HERKUNFT[G.herk];
+  const bonus = (B.st[k] || 0) + ((H.st || {})[k] || 0);
+  if (d > 0 && (G.free <= 0 || G.stats[k] + bonus >= 90)) return toast(G.free <= 0 ? 'Keine freien Punkte mehr.' : 'Maximal 90.');
+  if (d < 0 && G.stats[k] <= 30) return toast('Mindestens 30 Basispunkte.');
+  G.stats[k] += d * 2; G.free -= d; save();
+  const sc = $('#screen').scrollTop; SCREENS.avatar(3); $('#screen').scrollTop = sc;
+};
+ACT.avdone = () => {
+  if (!G.name.trim()) { toast('Bitte gib deiner Figur einen Namen.'); return show('avatar', 1); }
+  G.nn = G.name.trim().split(/\s+/).pop();
+  // Basiswerte: 45 + Punkte; Hintergrund-/Herkunftsboni werden in initCharacter addiert
+  initCharacter(); setupOpponents(); initBund();
+  G.phase = 'campaign'; save(); show('campaign');
+};
+
+/* ---------- Eingabe-Bindings ---------- */
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.bind) {
+    const path = t.dataset.bind.split('.'); let o = G; while (path.length > 1) o = o[path.shift()];
+    const k = path[0]; o[k] = t.type === 'range' ? +t.value : t.value;
+    if (k === 'age') { const pv = $('#avprev'); if (pv) pv.innerHTML = playerAvatar('neutral'); const l = t.previousElementSibling; if (l) l.textContent = `Alter · ${G.age} Jahre`; }
+    if (k === 'kap') { const e2 = $('#kapv'); if (e2) e2.textContent = G.own.kap; }
+    if (t.dataset.bind === 'own.abk') { const lp = $('#logoprev'); if (lp) lp.innerHTML = logoSVG(G.own.logo, G.own.color, G.own.abk, 64); }
+    save();
+  }
+  if (t.dataset.slider !== undefined) {
+    const i = +t.dataset.slider, others = G.own.sl.reduce((a, b, j) => j === i ? a : a + b, 0);
+    const v = Math.min(+t.value, 330 - others); t.value = v; G.own.sl[i] = v; const sm = $('#slsum'); if (sm) sm.textContent = G.own.sl.reduce((a, b) => a + b, 0); save();
+  }
+  if (t.dataset.camp) { campInput(t); }
+});
+
+/* ---------- Kampagne planen ---------- */
+function sloganTilt() {
+  if (G.camp.sl === 5) { const r = seeded(hashStr(G.camp.slfree || 'x')); return MI.map(() => (r() - .35) * .14); }
+  return (SLOGANS[G.camp.sl] || SLOGANS[0]).m;
+}
+function reachHTML() {
+  const b = campaignBoost().map((x, g) => x + sloganTilt()[g]);
+  return MILIEUS.map((m, g) => `<div class="brow" style="grid-template-columns:130px 1fr 46px"><span class="nm small" style="font-weight:600">${m.n}</span><div class="track"><div class="fill" style="width:${clamp((b[g] + .15) / .5 * 100, 2, 100)}%;--pc:${pcolor(G.party)}"></div></div><span class="val small">${b[g] >= 0 ? '+' : ''}${(b[g] * 100).toFixed(0)}</span></div>`).join('');
+}
+SCREENS.campaign = () => {
+  G.phase = 'campaign'; save();
+  const bud = G.res.bud, spent = Object.values(G.camp.k).reduce((a, b) => a + b, 0);
+  render(`<div class="stepper"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div><div class="caps">Schritt 3 von 4 · Kampagne</div>
+    <h2>Kampagne planen</h2>
+    <p class="mut small">In ${TOWN.name} (${f0(TOWN.ew)} Einwohner:innen) wird in zehn Wochen ${title()} gewählt. Dein Kampagnenetat: <b class="gold">${f0(bud)}k€</b>.</p>
+    <label class="f">Slogan</label>
+    <div class="opts" style="flex-direction:column">${SLOGANS.map((s, i) => `<button class="opt ${G.camp.sl === i ? 'on' : ''}" style="text-align:left" data-act="slogan" data-i="${i}">„${esc(s.t)}“</button>`).join('')}
+      <button class="opt ${G.camp.sl === 5 ? 'on' : ''}" style="text-align:left" data-act="slogan" data-i="5">✍️ Eigener Slogan…</button></div>
+    ${G.camp.sl === 5 ? `<input type="text" maxlength="48" class="mt" placeholder="Dein Slogan (max. 48 Zeichen)" value="${esc(G.camp.slfree)}" data-bind="camp.slfree" aria-label="Eigener Slogan">` : ''}
+    <label class="f">Budget verteilen · Rest bleibt als Reserve (<span id="resv">${f1(bud - spent)}</span>k€)</label>
+    ${CHANNELS.map(c => `<div class="attr"><div><b>${c.e} ${c.n}</b> <span class="mut small" id="cv-${c.id}">${f1(G.camp.k[c.id])}k€</span></div><div></div></div><input type="range" min="0" max="${Math.max(1, Math.floor(bud))}" step="0.5" value="${G.camp.k[c.id]}" data-camp="${c.id}" aria-label="${c.n}">`).join('')}
+    <label class="f">Erwartete Wirkung nach Zielgruppe</label><div id="reach">${reachHTML()}</div>
+    <p class="tiny mut">Abnehmender Grenznutzen: Der zweite Euro im selben Kanal bringt weniger als der erste im nächsten. Reserve brauchst du für Überraschungen.</p>
+    <button class="btn mt2" data-act="campgo">Wahlkampf starten</button>`);
+};
+ACT.slogan = a => { G.camp.sl = +a.dataset.i; save(); SCREENS.campaign(); };
+function campInput(t) {
+  const id = t.dataset.camp, bud = G.res.bud;
+  const others = Object.entries(G.camp.k).reduce((a, [k, v]) => k === id ? a : a + v, 0);
+  const v = Math.min(+t.value, bud - others); t.value = v; G.camp.k[id] = v;
+  $('#cv-' + id).textContent = f1(v) + 'k€'; $('#resv').textContent = f1(bud - others - v); $('#reach').innerHTML = reachHTML(); save();
+}
+ACT.campgo = () => {
+  const spent = Object.values(G.camp.k).reduce((a, b) => a + b, 0);
+  G.camp.spent = spent; G.res.bud = Math.round((G.res.bud - spent) * 10) / 10;
+  buildDeck(); G.phase = 'cards'; G.cardIdx = 0; save(); startCutscene('intro', () => show('cards'));
+};
+
+/* ===== 42-ui-cards.js ===== */
+/* ---------- Deck-Aufbau (gewichtete Auswahl, Vielfalt, Partei- und Berufs-Affinität) ---------- */
+const TOTAL_CARDS = 10;
+const BG_TH = { lehrer: ['soz'], handwerk: ['wirt', 'wohn'], jurist: ['sich'], unternehmer: ['wirt'], pflege: ['soz'], landwirt: ['verk', 'klim'], polizei: ['sich'], journalist: ['med'] };
+const PARTY_TH = { CDU: ['wirt', 'sich'], CSU: ['sich', 'verk'], SPD: ['soz'], AFD: ['sich'], GRUENE: ['klim', 'verk'], FDP: ['wirt'], LINKE: ['wohn', 'soz'], BSW: ['soz'], EIGEN: [] };
+function cardWeight(id) {
+  const c = CARDS[id]; let w = c.w;
+  if (id === 'EV-017') w *= G.res.str > 50 ? 2.2 : .5;
+  if (id === 'EV-005') w *= G.stats.ehr < 50 ? 1.4 : .8;
+  if ((BG_TH[G.bg] || []).includes(c.th)) w *= 1.35;
+  if ((PARTY_TH[G.party] || []).includes(c.th)) w *= 1.25;
+  if (G.party === 'CSU' && id === 'EV-003') w *= 1.8;
+  if (G.party === 'SPD' && id === 'EV-015') w *= 1.6;
+  if (G.party === 'GRUENE' && ['EV-002', 'EV-001'].includes(id)) w *= 1.3;
+  return w;
+}
+function buildDeck() {
+  const pool = CARD_IDS.slice(), chosen = [];
+  while (chosen.length < TOTAL_CARDS && pool.length) {
+    const ws = pool.map(cardWeight), sum = ws.reduce((a, b) => a + b, 0);
+    let x = rnd() * sum, i = 0; while (i < ws.length - 1 && (x -= ws[i]) > 0) i++;
+    const id = pool.splice(i, 1)[0];
+    // Vielfalt: höchstens ein absurdes Ereignis, nicht dreimal dasselbe Thema in Folge
+    if (CARDS[id].kat === 'Absurdes' && chosen.some(c => CARDS[c].kat === 'Absurdes')) continue;
+    chosen.push(id);
+  }
+  // Reihenfolge: gleiche Themen nicht direkt hintereinander; Krise früh-mittig
+  for (let i = 1; i < chosen.length; i++) if (CARDS[chosen[i]].th === CARDS[chosen[i - 1]].th) { const j = chosen.findIndex((x, k) => k > i && CARDS[x].th !== CARDS[chosen[i - 1]].th); if (j > 0) [chosen[i], chosen[j]] = [chosen[j], chosen[i]]; }
+  if (G.party === 'EIGEN') chosen[3] = 'EV-EG1';
+  G.deck = chosen.map(id => ({ id, v: CARDS[id].vars() }));
+  G.cardIdx = 0; G.queue = []; G.log = []; G.promises = []; G.pollHist = [expectedShares()];
+}
+
+/* ---------- Vorschau-Qualität (Berater:innen) ---------- */
+const FXN = { b: 'Beliebt', p: 'Partei', d: 'Kasse', m: 'Medien', w: 'Wirtschaft', u: 'Umwelt', g: 'Gesellschaft' };
+function advisorQ() { return clamp((G.stats.net + G.stats.iq) / 200, .15, .95); }
+function optFx(card, v, o, out) {
+  const fx = Object.assign({}, o.fx, o.fxf ? o.fxf(v) : {});
+  const ok = o.chk ? (out === 'bad' ? o.chk.bad.fx : o.chk.ok.fx) : null;
+  return ok ? Object.assign({}, fx, ok) : fx;
+}
+function previewHTML(card, inst, o, oi) {
+  const fx = optFx(card, inst.v, o, 'ok'); const q = advisorQ();
+  const items = Object.keys(FXN).filter(k => fx[k]);
+  const r = seeded(hashStr(inst.id + oi + G.name));
+  const chips = items.map(k => { const sure = r() < q; const up = fx[k] > 0; return sure ? `<b class="${(k === 'd' ? up : up) ? 'u' : 'd'}">${FXN[k]} ${up ? (fx[k] >= 4 ? '↑↑' : '↑') : (fx[k] <= -4 ? '↓↓' : '↓')}</b>` : `<b class="q">${FXN[k]} ?</b>`; }).join('');
+  let extra = '';
+  if (o.chk) extra = `<div class="risk">Wagnis · ${Math.round(chkProb(o) * 100)} % Erfolgschance (${STATS.find(s => s.id === o.chk.s).n})</div>`;
+  return `<div class="pv">${chips}</div>${extra}`;
+}
+function chkProb(o) {
+  const s = o.chk.s; let val = G.stats[s];
+  if (o.chk.bierzelt) { if (G.party === 'CSU') val += 8; val += DIALEKTE[G.dial].bierzelt || 0; }
+  if (G.res.str > 60) val -= (G.res.str - 60) * .4;
+  return clamp(.5 + (val - o.chk.dc) / 80, .12, .92);
+}
+
+/* ---------- Kartenansicht ---------- */
+SCREENS.cards = () => {
+  G.phase = 'cards';
+  if (G.cardIdx >= TOTAL_CARDS) return finale();
+  const due = G.queue.find(q => q.due <= G.cardIdx && q.kind === 'hl' && !q.shown);
+  if (due) return showAftermath(due);
+  const fc = G.queue.find(q => q.due <= G.cardIdx && q.kind === 'card' && !q.shown);
+  if (fc) { fc.shown = true; if (G.cardIdx < TOTAL_CARDS) { G.deck.splice(G.cardIdx, 0, { id: fc.id, v: CARDS[fc.id].vars(), follow: true }); G.deck.pop(); } }
+  const inst = G.deck[G.cardIdx], c = CARDS[inst.id];
+  const week = G.cardIdx + 1;
+  const opts = c.opts.map((o, i) => {
+    const cost = -(optFx(c, inst.v, o, 'ok').d || 0);
+    const dis = cost > G.res.bud + .01;
+    return `<button class="oc" data-act="choose" data-i="${i}" ${dis ? 'disabled' : ''}>${esc(o.t)}${dis ? ' <span class="risk">(Kasse reicht nicht)</span>' : ''}${previewHTML(c, inst, o, i)}</button>`;
+  }).join('');
+  const cuts = c.opts.length === 2 && c.swipe;
+  render(`<div class="cardscreen">
+    <div class="row sp"><div><div class="caps">Woche ${week} von ${TOTAL_CARDS}</div><div class="small mut">${esc(G.name)} · ${kandidat()} ${esc(pname(G.party))}</div></div>
+      <div class="chip">${badge(G.party)}&nbsp;Noch ${Math.max(0, TOTAL_CARDS - week)}</div></div>
+    <div class="stepper" style="margin:0">${Array.from({ length: TOTAL_CARDS }, (_, i) => `<i class="${i < week ? 'on' : ''}"></i>`).join('')}</div>
+    ${statStrip()}
+    <div class="stage" id="stage">
+      <div class="dcard" id="dcard">
+        ${cuts ? `<div class="swl l" id="swl">${esc(c.opts[0].t.split(' ')[0])}</div><div class="swl r" id="swr">${esc(c.opts[1].t.split(' ')[0])}</div>` : ''}
+        <div class="row"><div class="ico">${c.e}</div><div><div class="caps">${inst.follow ? '⏳ Folgeereignis · ' : ''}${esc(c.kat)}</div><div class="tiny mut">Stress ${Math.round(G.res.str)} %${G.res.str > 65 ? ' · erschöpft!' : ''}</div></div></div>
+        <h2>${esc(c.title)}</h2>
+        <div class="body">${esc(c.text(inst.v))}<div class="q">${esc(c.q)}</div></div>
+      </div>
+    </div>
+    <div class="ochoices" id="och">${opts}</div></div>`, { nav: true, noscroll: true });
+  if (cuts) bindSwipe(c);
+};
+function bindSwipe(c) {
+  const el = $('#dcard'); if (!el) return;
+  let sx = 0, dx = 0, drag = false;
+  const l = $('#swl'), r = $('#swr');
+  el.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; drag = true; sx = e.clientX; el.setPointerCapture(e.pointerId); el.style.transition = 'none'; });
+  el.addEventListener('pointermove', e => { if (!drag) return; dx = e.clientX - sx; el.style.transform = `translateX(${dx}px) rotate(${dx / 18}deg)`; l.style.opacity = clamp(-dx / 100, 0, 1); r.style.opacity = clamp(dx / 100, 0, 1); });
+  const end = () => { if (!drag) return; drag = false; el.style.transition = ''; if (Math.abs(dx) > 100) { el.style.transform = `translateX(${Math.sign(dx) * 600}px) rotate(${dx / 10}deg)`; el.style.opacity = 0; setTimeout(() => ACT.choose({ dataset: { i: dx < 0 ? 0 : 1 } }), 180); } else { el.style.transform = ''; l.style.opacity = r.style.opacity = 0; } dx = 0; };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
+
+/* ---------- Entscheidung auflösen ---------- */
+function applyMods(fx, o) {
+  const f = Object.assign({}, fx), P = G.party;
+  if (P === 'CDU') { if (f.w < 0) f.w = Math.round(f.w / 2); if (f.g < 0) f.g = Math.round(f.g / 2); if (o.fr === 'klima' && f.b > 0) f.b = Math.round(f.b / 2); }
+  if (P === 'AFD' && f.m) f.m = Math.round(f.m * 1.5);
+  if (P === 'FDP') { if (['sparen', 'wirtschaft'].includes(o.fr)) f.b = (f.b || 0) + 1; if (o.fr === 'sozial' && f.b > 0) f.b = Math.round(f.b * .7); if (o.donation && f.d) f.d = Math.round(f.d * 1.5); }
+  if (P === 'SPD') { if (['sparen', 'deal'].includes(o.fr) && f.p < 0) f.p *= 2; if (['sparen', 'deal'].includes(o.fr) && !f.p) f.p = -1; }
+  if (P === 'LINKE' && o.fr === 'sozial') f.b = (f.b || 0) + 1;
+  if (P === 'GRUENE' && o.ideal) { f.p = (f.p || 0) + o.ideal * 2; f.b = (f.b || 0) - o.ideal; }
+  if (P === 'EIGEN' && f.b > 0) f.b = Math.round(f.b * 1.25 * 10) / 10;
+  return f;
+}
+ACT.choose = a => {
+  const inst = G.deck[G.cardIdx], c = CARDS[inst.id], i = +a.dataset.i, o = c.opts[i];
+  const before = Object.assign({}, G.res);
+  let outcome = null, fx = Object.assign({}, o.fx, o.fxf ? o.fxf(inst.v) : {}), text = '';
+  if (o.chk) {
+    const p = chkProb(o), ok = rnd() < p; outcome = ok ? 'ok' : 'bad';
+    const oc = ok ? o.chk.ok : o.chk.bad; fx = Object.assign(fx, oc.fx); text = oc.t;
+    if (G.stats[o.chk.s] && ok) G.flags['won_' + o.chk.s] = 1;
+  }
+  fx = applyMods(fx, o);
+  // Medienreaktion je Partei und Ausgangslage
+  const risky = ['deal', 'populismus', 'angriff'].includes(o.fr) && rnd() < .5 || (o.fr === 'aussitzen' && rnd() < .35);
+  const mr = mediaReaction(o.fr, G.party, risky);
+  const mBonus = Math.round(mr.score * (G.party === 'AFD' ? 1.5 : 1) * (G.party === 'EIGEN' ? 1.2 : 1));
+  fx.m = (fx.m || 0) + mBonus;
+  const R = G.res;
+  R.bel = clamp(R.bel + (fx.b || 0), 0, 100); R.par = clamp(R.par + (fx.p || 0), 0, 100);
+  R.bud = Math.max(0, Math.round((R.bud + (fx.d || 0)) * 10) / 10);
+  R.med = clamp(R.med + (fx.m || 0) * 2, -100, 100);
+  R.wirt = clamp(R.wirt + (fx.w || 0), 0, 100); R.umw = clamp(R.umw + (fx.u || 0), 0, 100); R.ges = clamp(R.ges + (fx.g || 0), 0, 100);
+  R.str = clamp(R.str + (fx.s || 0) + 1.5, 0, 100);
+  if (o.pf) Object.keys(o.pf).forEach(k => G.prof[TH.indexOf(k)] = clamp(G.prof[TH.indexOf(k)] + o.pf[k], .1, 1));
+  if (o.ml) Object.keys(o.ml).forEach(k => G.ml[k] = clamp((G.ml[k] || 0) + o.ml[k], -.4, .45));
+  if (o.n) Object.keys(o.n).forEach(k => G.npc[k].v = clamp(G.npc[k].v + o.n[k], 0, 100));
+  if (o.flag) G.flags[o.flag] = 1;
+  if (o.promise) G.promises.push({ t: o.promise, card: c.title });
+  if (G.party === 'GRUENE' && o.ideal) G.realo = clamp(G.realo + o.ideal * 12, -100, 100);
+  if (G.party === 'EIGEN' && fx.m > 0) G.mom = Math.min(10, G.mom + 1);
+  if (G.party === 'EIGEN' && fx.m < 0) G.mom = Math.max(0, G.mom - 1);
+  if (mr.score > 0) G.recog = clamp(G.recog + .012 * mr.score, 0, .98);
+  // verzögerte Folgen (Schmetterlingseffekt)
+  let queued = false;
+  if (o.later && rnd() < (o.later.chance || 1) * (G.party === 'AFD' ? 1.25 : 1)) {
+    const item = { due: G.cardIdx + 1 + (o.later.after || 2) - 1, kind: o.later.card ? 'card' : 'hl', id: o.later.card, text: (o.later.hl || '').replace('{firma}', inst.v.firma || 'das Unternehmen'), fx: o.later.fx || {}, from: c.title };
+    if (item.due >= TOTAL_CARDS) item.due = TOTAL_CARDS - 1;
+    if (item.due <= G.cardIdx) item.due = G.cardIdx + 1;
+    G.queue.push(item); queued = true;
+  }
+  // Bundesstimmung: Dein Medienecho färbt minimal auf die Partei ab
+  const shock = {}; shock[G.party === 'EIGEN' ? 'SONST' : G.party] = ((fx.b || 0) + (fx.m || 0)) * .035; bundStep(true, shock); bundStep(true);
+  G.pollHist.push(expectedShares());
+  const after = Object.assign({}, G.res);
+  G.log.push({ i: G.cardIdx + 1, title: c.title, choice: o.t, fr: o.fr, outcome });
+  G.cardIdx++; save(); buzz(outcome === 'bad' ? [30, 40, 30] : 18);
+  showResult({ c, o, before, after, fx, text, outcome, mr, queued });
+};
+function deltaChips(before, after) {
+  const L = [['bel', 'Beliebt'], ['par', 'Partei'], ['bud', 'Kasse'], ['med', 'Medien'], ['wirt', 'Wirtschaft'], ['umw', 'Umwelt'], ['ges', 'Gesellschaft'], ['str', 'Stress']];
+  return L.map(([k, n]) => { const d = Math.round((after[k] - before[k]) * 10) / 10; if (!d) return ''; const good = k === 'str' ? d < 0 : d > 0; return `<span class="chip"><span>${n}</span><span class="delta ${good ? 'up' : 'dn'}">${d > 0 ? '+' : '−'}${Math.abs(d)}${k === 'bud' ? 'k' : ''}</span></span>`; }).join(' ');
+}
+function showResult(r) {
+  const hl = r.mr.out.map(x => `<div class="hl ${x.outlet.c} ${x.tone === 'pos' ? 'pos' : ''}"><span class="src">${esc(x.outlet.n)}</span>${esc(x.text)}</div>`).join('');
+  const done = G.cardIdx >= TOTAL_CARDS;
+  render(`<div class="caps">Ergebnis · ${esc(r.c.title)}</div>
+    <h2 class="resbox">Du hast dich entschieden.</h2>
+    <div class="glass resbox mt"><div class="small mut">Deine Wahl</div><div class="serif" style="font-size:1.1rem">${esc(r.o.t)}</div>
+      ${r.outcome ? `<p class="${r.outcome === 'ok' ? 'gold' : ''}" style="margin:.6em 0 0"><b>${r.outcome === 'ok' ? '✔ Gelungen.' : '✘ Schiefgegangen.'}</b> ${esc(r.text)}</p>` : ''}</div>
+    <div class="row wrap mt" style="gap:6px">${deltaChips(r.before, r.after)}</div>
+    <h3 class="mt2">So berichten die Medien <span class="tiny mut">· Stimmung für ${esc(pname(G.party))}</span></h3>${hl}
+    ${r.queued ? `<div class="glass tight small mt"><b class="gold">🦋 Schmetterlingseffekt:</b> Diese Entscheidung könnte später nachwirken.</div>` : ''}
+    ${G.party === 'GRUENE' && r.o.ideal ? `<div class="glass tight small mt">Realo/Fundi-Kurs: <b>${G.realo > 10 ? 'Fundi ' + G.realo : G.realo < -10 ? 'Realo ' + (-G.realo) : 'ausgewogen'}</b></div>` : ''}
+    <button class="btn mt2" data-act="nextcard">${done ? 'Wahlkampf-Finale' : 'Nächste Woche'}</button>`, { nav: true });
+  $('#screen').scrollTop = 0;
+}
+ACT.nextcard = () => show('cards');
+
+function showAftermath(q) {
+  q.shown = true; const before = Object.assign({}, G.res);
+  const R = G.res, f = q.fx;
+  R.bel = clamp(R.bel + (f.b || 0), 0, 100); R.par = clamp(R.par + (f.p || 0), 0, 100); R.med = clamp(R.med + (f.m || 0) * 2, -100, 100);
+  R.wirt = clamp(R.wirt + (f.w || 0), 0, 100); R.ges = clamp(R.ges + (f.g || 0), 0, 100);
+  G.pollHist.push(expectedShares()); save();
+  render(`<div class="caps">🦋 Nachwirkung · aus „${esc(q.from)}“</div>
+    <h2 class="resbox">Die Folgen holen dich ein.</h2>
+    <div class="hl b mt2" style="font-size:1.05rem"><span class="src">Eilmeldung · ${esc(OUTLETS[0].n)}</span>${esc(q.text)}</div>
+    <div class="row wrap mt" style="gap:6px">${deltaChips(before, G.res)}</div>
+    <p class="mut small mt">Entscheidungen wirken manchmal erst Wochen später – im Amt sogar Jahre.</p>
+    <button class="btn mt2" data-act="nextcard">Weiter</button>`, { nav: true });
+}
+
+/* ---------- Finale: Letzte Umfrage vor der Wahl ---------- */
+function finale() {
+  const sh = expectedShares();
+  const order = [0, 1, 2, 3].sort((a, b) => sh[b] - sh[a]);
+  const names = [G.name, ...G.opp.map(o => o.name)], parts = [G.party, ...G.opp.map(o => o.party)];
+  render(`<div class="caps">Wahlkampf-Finale</div><h2>Der Wahltag rückt näher.</h2>
+    <p class="mut">Zehn Wochen sind vorbei: Plakate hängen schief, Kugelschreiber sind verteilt, die Stimmung ist ${pick(['gereizt', 'erwartungsvoll', 'müde', 'aufgekratzt'])}.</p>
+    ${statStrip()}
+    <div class="glass mt"><div class="caps">Letzte Umfrage · ${TOWN.name}</div>
+      ${order.map(i => `<div class="brow"><span class="nm">${badge(parts[i] === 'BUERGER' ? 'EIGEN' : parts[i])}</span><div class="track"><div class="fill" style="width:${clamp(sh[i] * 1.6, 2, 100)}%;--pc:${parts[i] === 'BUERGER' ? '#b8c2d8' : pcolor(parts[i])}"></div></div><span class="val">${f1(sh[i])} %</span></div><div class="tiny mut" style="margin:-4px 0 6px 72px">${esc(names[i])}${i === 0 ? ' (du)' : ''}</div>`).join('')}
+      <p class="tiny mut">Fehlertoleranz ±3 Punkte. Bei mehr als 50 % gewinnst du direkt, sonst geht es in die Stichwahl.</p></div>
+    ${G.promises.length ? `<div class="glass mt"><div class="caps">Deine Versprechen</div><ul class="clean">${G.promises.map(p => `<li>${esc(p.t)}</li>`).join('')}</ul><p class="tiny mut">Versprechen werden im Amt eingefordert.</p></div>` : ''}
+    <button class="btn mt2" data-act="vote">Zur Wahl gehen</button>`, { nav: true });
+}
+ACT.vote = () => startElection(false);
+
+/* ===== 43-ui-polls.js ===== */
+/* ---------- Grafik-Bausteine: Plenarsaal und Liniendiagramm ---------- */
+function hemicycleSVG(fr, o) {
+  o = o || {};
+  const N = Object.values(fr).reduce((a, b) => a + b, 0) || 1, R = 9, r0 = 62, r1 = 178;
+  const radii = Array.from({ length: R }, (_, i) => r0 + (r1 - r0) * i / (R - 1)), sr = radii.reduce((a, b) => a + b, 0);
+  const seats = [];
+  radii.forEach((rad, i) => { const n = Math.round(N * rad / sr); for (let k = 0; k < n; k++) { const ang = Math.PI - Math.PI * (n === 1 ? .5 : k / (n - 1)); seats.push({ a: ang, r: rad, x: 200 + rad * Math.cos(ang), y: 200 - rad * Math.sin(ang) }); } });
+  seats.sort((p, q) => q.a - p.a || p.r - q.r);
+  const order = FRAKTIONEN.filter(f => fr[f] > 0);
+  const tot = order.reduce((a, f) => a + fr[f], 0); let idx = 0; const dots = [];
+  order.forEach((f, fi) => { const cnt = Math.round(fr[f] * seats.length / tot); const lim = fi === order.length - 1 ? seats.length : Math.min(seats.length, idx + cnt); for (; idx < lim; idx++) { const s = seats[idx]; dots.push(`<circle cx="${s.x.toFixed(1)}" cy="${s.y.toFixed(1)}" r="${o.dr || 3.3}" fill="${frkColor(f)}" data-f="${f}" ${o.hi && o.hi !== f ? 'opacity=".3"' : ''}/>`); } });
+  const lab = o.labels === false ? '' : order.map(f => `<span class="chip" style="border-color:${frkColor(f)}">${esc(frkAbbr(f))} ${fr[f]}</span>`).join(' ');
+  return `<svg viewBox="0 0 400 210" class="plenum" role="img" aria-label="Sitzverteilung im Plenarsaal">${dots.join('')}<text x="200" y="176" text-anchor="middle" fill="#eef1f8" font-size="15" font-weight="700">${N}</text><text x="200" y="192" text-anchor="middle" fill="#9ba7c6" font-size="10">Sitze · Mehrheit ab 316</text></svg>${lab ? `<div class="legend" style="margin-top:6px">${lab}</div>` : ''}`;
+}
+function lineChart(series, o) {
+  o = o || {}; const W = 320, H = o.h || 150, pl = 26, pr = 8, pt = 8, pb = 16;
+  const all = series.flatMap(s => s.data); let mn = Math.min(...all), mx = Math.max(...all); const pad = (mx - mn) * .12 + .5; mn = Math.max(0, mn - pad); mx += pad;
+  const n = Math.max(...series.map(s => s.data.length));
+  const X = i => pl + (W - pl - pr) * (n === 1 ? .5 : i / (n - 1)), Y = v => pt + (H - pt - pb) * (1 - (v - mn) / (mx - mn || 1));
+  const grid = [0, .25, .5, .75, 1].map(t => { const v = mn + (mx - mn) * t; return `<line x1="${pl}" x2="${W - pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(255,255,255,.08)"/><text x="2" y="${Y(v) + 3}" font-size="9" fill="#9ba7c6">${Math.round(v)}</text>`; }).join('');
+  const dash = ['', '6 3', '2 3', '8 3 2 3', '', '6 3', '2 3', '8 3 2 3'];
+  const lines = series.map((s, k) => `<polyline fill="none" stroke="${s.color}" stroke-width="2.2" ${SET.cb ? `stroke-dasharray="${dash[k % 8]}"` : ''} stroke-linejoin="round" points="${s.data.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ')}"/><circle cx="${X(s.data.length - 1)}" cy="${Y(s.data[s.data.length - 1])}" r="3" fill="${s.color}"/>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${o.label || 'Trendkurve'}">${grid}${lines}<text x="${pl}" y="${H - 3}" font-size="9" fill="#9ba7c6">${o.x0 || 'früher'}</text><text x="${W - pr}" y="${H - 3}" font-size="9" fill="#9ba7c6" text-anchor="end">${o.x1 || 'heute'}</text></svg>`;
+}
+
+/* ---------- Umfragen-Screen ---------- */
+let POLLTAB = 'local', POLLINST = 0, POLLSEL = null;
+SCREENS.polls = () => {
+  if (!G || !G.bund) ensureDemoGame();
+  const inst = INSTITUTES[POLLINST];
+  const tabs = `<div class="tabs"><button class="tab ${POLLTAB === 'local' ? 'on' : ''}" data-act="ptab" data-t="local">Rathaus</button><button class="tab ${POLLTAB === 'bund' ? 'on' : ''}" data-act="ptab" data-t="bund">Bundestag</button></div>
+    <div class="opts scroll mb">${INSTITUTES.map((x, i) => `<button class="opt ${POLLINST === i ? 'on' : ''}" data-act="pinst" data-i="${i}" style="min-height:40px">${esc(x.n)}</button>`).join('')}</div>`;
+  render(`<div class="caps">Sonntagsfrage</div><h2>${POLLTAB === 'local' ? 'Wen würden Sie wählen? – Niederhüttingen' : 'Wenn am Sonntag Bundestagswahl wäre …'}</h2>${tabs}${POLLTAB === 'local' ? pollLocalHTML(inst) : pollBundHTML(inst)}`, { nav: true });
+};
+ACT.ptab = a => { POLLTAB = a.dataset.t; POLLSEL = null; show('polls'); };
+ACT.pinst = a => { POLLINST = +a.dataset.i; show('polls'); };
+ACT.psel = a => { POLLSEL = a.dataset.p; show('polls'); };
+
+function pollLocalHTML(inst) {
+  const hist = G.pollHist.length ? G.pollHist : [expectedShares()];
+  const cur = hist[hist.length - 1], prev = hist[Math.max(0, hist.length - 2)];
+  const r = seeded(hashStr(G.name + hist.length + inst.id));
+  const parts = [G.party, ...G.opp.map(o => o.party)], names = [G.name, ...G.opp.map(o => o.name)];
+  const n = 600 + (inst.nn % 700);
+  const undec = 16;
+  const raw = cur.map((x, i) => Math.max(1, (.6 * x + .4 * prev[i]) + (r() - .5) * 3.2 + (inst.bias[parts[i] === 'BUERGER' ? 'CDU' : parts[i]] || 0) * .3));
+  const sum = raw.reduce((a, b) => a + b, 0);
+  const vals = raw.map(x => x * (100 - undec) / sum);
+  const order = [0, 1, 2, 3].sort((a, b) => vals[b] - vals[a]);
+  const hl = 100 - undec;
+  const bars = order.map(i => { const e = halfWidth(vals[i] / hl * 100, { nn: n }) * (hl / 100); return `<div class="brow"><span class="nm">${badge(parts[i])}</span><div class="track"><div class="fill" style="width:${clamp(vals[i] * 2, 2, 100)}%;--pc:${parts[i] === 'BUERGER' ? '#b8c2d8' : pcolor(parts[i])}"></div><span class="err" style="left:${clamp((vals[i] - e) * 2, 0, 100)}%;width:${clamp(e * 4, 2, 100)}%"></span></div><span class="val">${f0(vals[i])} %<small>±${f1(e)}</small></span></div><div class="tiny mut" style="margin:-4px 0 4px 72px">${esc(names[i])}${i === 0 ? ' (du)' : parts[i] === 'BUERGER' ? ' · parteilos' : ''}${G.opp[i - 1] && G.opp[i - 1].inc ? ' · Amtsinhaber' : ''}</div>`; }).join('');
+  // Trend
+  const series = [0, 1, 2, 3].map(i => ({ color: parts[i] === 'BUERGER' ? '#b8c2d8' : pcolor(parts[i]), data: hist.map(h => h[i]) }));
+  // Zielgruppen
+  const cands = candList(), mil = MILIEUS.map((m, g) => { const ex = cands.map(c => Math.exp(utility(c, g, false))); const s = ex.reduce((a, b) => a + b, 0); return { n: m.n, p: ex[0] / s * 100 }; });
+  // Warum?
+  const last = G.log[G.log.length - 1], d = hist.length > 1 ? hist[hist.length - 1][0] - hist[hist.length - 2][0] : 0;
+  let why = 'Noch keine Bewegung – der Wahlkampf hat gerade erst begonnen.';
+  if (last) why = d > .3 ? `Dein Wert steigt (${sgn(Math.round(d * 10) / 10)} Punkte). Auslöser: „${last.title}“ – und das Medienecho (${sgn(Math.round(G.res.med))}).` : d < -.3 ? `Dein Wert fällt (${sgn(Math.round(d * 10) / 10)} Punkte). Auslöser: „${last.title}“. ${G.res.str > 60 ? 'Dazu kommt sichtbare Erschöpfung.' : ''}` : `Kaum Bewegung seit „${last.title}“. Umfragen reagieren verzögert – bis zu zwei Wochen.`;
+  return `<div class="glass">${bars}<div class="row sp small mut"><span>Unentschlossen/Sonstige: ${undec} %</span><span>n = ${f0(n)} · ${esc(inst.n)}</span></div></div>
+    <div class="glass mt"><div class="caps">Trend seit Wahlkampfbeginn</div>${lineChart(series, { x0: 'Start', label: 'Trend der Kandidat:innen' })}
+      <div class="legend">${[0, 1, 2, 3].map(i => `<span>${badge(parts[i])} ${esc(names[i].split(' ').pop())}</span>`).join('')}</div></div>
+    <div class="glass mt"><div class="caps">Warum?</div><p style="margin:.3em 0 0">${esc(why)}</p></div>
+    <div class="glass mt"><div class="caps">Deine Zustimmung nach Zielgruppe</div>${mil.map(m => `<div class="brow" style="grid-template-columns:130px 1fr 46px"><span class="nm small" style="font-weight:600">${m.n}</span><div class="track"><div class="fill" style="width:${clamp(m.p * 1.3, 2, 100)}%;--pc:${pcolor(G.party)}"></div></div><span class="val small">${f0(m.p)} %</span></div>`).join('')}</div>
+    <p class="tiny mut mt">Umfragen haben Fehlertoleranzen und Institute eigene Abweichungen („Hauseffekte“). Die Wahl entscheidet am Ende.</p>`;
+}
+
+function pollBundHTML(inst) {
+  const S = G.bund.S, v = bundPoll(inst, S), hist = G.bund.hist, old = hist[Math.max(0, hist.length - 9)];
+  const show = BUND_PARTIES.map(p => ({ p, v: v[p], d: v[p] - Math.round(old[p] * 2) / 2 })).sort((a, b) => b.v - a.v);
+  const hp = 5 * 4.6;
+  const bars = show.map(x => { const e = halfWidth(x.v, inst); const warn = x.v < 6.2 && x.v > 3.6; return `<button style="all:unset;display:block;width:100%;cursor:pointer" data-act="psel" data-p="${x.p}"><div class="brow" ${POLLSEL === x.p ? 'style="background:rgba(214,177,108,.12);border-radius:8px"' : ''}><span class="nm">${badge(x.p)}</span><div class="track"><div class="fill" style="width:${clamp(x.v * 3.2, 2, 100)}%;--pc:${pcolor(x.p)}"></div><span class="err" style="left:${clamp((x.v - e) * 3.2, 0, 100)}%;width:${clamp(e * 6.4, 2, 100)}%"></span><span class="hurdle" style="left:${5 * 3.2}%"></span></div><span class="val">${f1(x.v)} %<small>${x.d > .2 ? '▲' : x.d < -.2 ? '▼' : '●'} ${warn ? '· zittert' : ''}</small></span></div></button>`; }).join('');
+  const sons = Math.max(0, 100 - BUND_PARTIES.reduce((a, p) => a + v[p], 0));
+  const sel = POLLSEL || G.party; const selP = sel === 'EIGEN' ? 'SONST' : sel;
+  const series = BUND_PARTIES.map(p => ({ color: pcolor(p), data: hist.slice(-26).map(h => h[p]) }));
+  // Sitze
+  const sv = {}; BUND_PARTIES.forEach(p => sv[p] = S[p]);
+  const seatsInfo = bundSeats(sv), co = coalitionsFor(seatsInfo.fr);
+  // Erklärung für gewählte Partei
+  const ex = explainParty(selP, hist);
+  const cs = co.slice(0, 4).map(c => `<div class="kv"><span>${c.set.map(f => esc(frkAbbr(f))).join(' + ')}</span><span class="gold">${c.seats} Sitze${c.chancellor ? ' · Kanzler: ' + esc(frkAbbr(c.chancellor)) : ''}</span></div>`).join('');
+  return `<div class="glass">${bars}<div class="row sp small mut"><span>Sonstige: ${f1(sons)} %</span><span>n = ${f0(inst.nn)} · gestrichelt: 5 %</span></div><div class="tiny mut">Tippe eine Partei an für „Warum?“.</div></div>
+    <div class="glass mt"><div class="caps">Warum ${esc(selP === 'SONST' ? 'Sonstige' : pname(selP))}?</div><p style="margin:.3em 0 0">${esc(ex)}</p></div>
+    <div class="glass mt"><div class="caps">Trend · letzte 26 Wochen</div>${lineChart(series, { x0: '−26 Wo.', label: 'Trend der Parteien', h: 160 })}<div class="legend">${BUND_PARTIES.map(p => `<span>${badge(p)}</span>`).join('')}</div></div>
+    <div class="glass mt"><div class="caps">Sitzverteilung bei diesem Ergebnis</div>${hemicycleSVG(seatsInfo.fr, { hi: null })}${seatsInfo.out.length ? `<p class="tiny mut">Unter der Hürde: ${seatsInfo.out.map(p => esc(pname(p))).join(', ')}</p>` : ''}</div>
+    <div class="glass mt"><div class="caps">Mögliche Mehrheiten (Kooperationssperre aktiv)</div>${cs || '<p class="small mut">Keine Mehrheit ohne Unvereinbarkeiten – Neuwahl oder Minderheitsregierung drohen.</p>'}<p class="tiny mut">Die AfD wird von allen anderen Parteien als Partner ausgeschlossen; weitere Unvereinbarkeiten: Union–Linke, FDP–Linke, BSW–Grüne/FDP.</p></div>
+    <p class="tiny mut mt">Hinweis: Wählerwanderungs-Sankey und Themenkompetenz folgen im Vertical Slice.</p>`;
+}
+function explainParty(p, hist) {
+  const B = G.bund, a = hist[hist.length - 1][p], b = hist[Math.max(0, hist.length - 9)][p], d = a - b;
+  const why = [];
+  if (['CDU', 'CSU', 'SPD'].includes(p)) why.push('Regierungsmüdigkeit: Regierungsparteien verlieren über die Legislatur an Zustimmung');
+  if (B.E[p] > .4) why.push('positive Berichterstattung der letzten Wochen'); else if (B.E[p] < -.4) why.push('negatives Medienecho und Schlagzeilen');
+  if (B.Z[p] > .4) why.push('ein günstiges Themenumfeld'); else if (B.Z[p] < -.4) why.push('ein ungünstiges Themenumfeld');
+  if (p === G.party || (G.party === 'EIGEN' && p === 'SONST')) why.push(`dein Medienecho (${sgn(Math.round(G.res.med))}) färbt leicht auf die Partei ab`);
+  const head = d > .25 ? `${f1(Math.abs(d))} Punkte im Plus seit acht Wochen` : d < -.25 ? `${f1(Math.abs(d))} Punkte im Minus seit acht Wochen` : 'Seit acht Wochen weitgehend stabil';
+  return `${head}. ${why.length ? 'Gründe: ' + why.join('; ') + '.' : 'Keine auffälligen Treiber.'}`;
+}
+
+/* ===== 44-ui-election.js ===== */
+/* ---------- Wahlabend: Prognose 18:00, Hochrechnungen, Bezirke, Elefantenrunde ---------- */
+let ESTEP = 0;
+function startElection(stich) {
+  ensureDemoGame();
+  G.phase = 'election';
+  if (!G.elec || G.elec.stich !== !!stich || G.elec.done) {
+    const cands = stich ? G.result.topCands : candList();
+    G.elec = makeElection(stich, cands); G.elec.done = false;
+    G.eStep = 0;
+  }
+  ESTEP = G.eStep || 0; save();
+  renderElec();
+}
+const TICK_LINES = [
+  (d, n, s) => `Schaltung nach ${d}: ${n} liegt vorn (${f1(s)} %).`,
+  (d, n, s) => `${d} ist ausgezählt – ${n} mit ${f1(s)} %. Die Wahlhelfer:innen trinken Kaffee.`,
+  (d, n, s) => `Live aus ${d}: ${n} führt. Ein Wahlhelfer zählt „zur Sicherheit“ ein drittes Mal.`
+];
+function renderElec() {
+  const E = G.elec, st = HR_STEPS[ESTEP], hr = hochrechnung(E, ESTEP);
+  const C = E.cands, order = C.map((_, i) => i).sort((a, b) => hr.shares[b] - hr.shares[a]);
+  const cname = i => C[i].name, cparty = i => C[i].party;
+  const cols = i => cparty(i) === 'BUERGER' ? '#b8c2d8' : pcolor(cparty(i));
+  const n = E.order.length;
+  const grid = DISTRICTS.map((d, i) => { const idx = E.order.indexOf(i); const on = idx < hr.k; let bg = ''; if (on) { const v = E.res.districts[i].v, lead = v.indexOf(Math.max(...v)); bg = `style="background:${cols(lead)}"`; } return `<div class="${on ? 'on' : ''}" ${bg} title="${esc(d.n)}">${on ? (C[E.res.districts[i].v.indexOf(Math.max(...E.res.districts[i].v))].party === 'BUERGER' ? 'F' : pname(C[E.res.districts[i].v.indexOf(Math.max(...E.res.districts[i].v))].party).slice(0, 1)) : ''}</div>`; }).join('');
+  const lead = order[0];
+  let tick = 'Die Wahllokale haben geschlossen. Die Spannung im Rathaus ist mit dem Löffel zu schneiden.';
+  if (ESTEP > 0 && hr.counted.length) { const di = hr.counted[hr.counted.length - 1], v = E.res.districts[di].v, l = v.indexOf(Math.max(...v)); tick = pick(TICK_LINES)(DISTRICTS[di].n, cname(l), v[l] / E.res.districts[di].tot * 100); }
+  if (ESTEP === HR_STEPS.length - 1) tick = E.stich ? 'Alle Bezirke ausgezählt. Das vorläufige Ergebnis der Stichwahl steht fest.' : 'Alle Stimmbezirke sind ausgezählt: Das vorläufige Ergebnis steht fest.';
+  const turn = Math.round(E.turnout * 100);
+  const last = ESTEP === HR_STEPS.length - 1;
+  render(`<div class="tvframe fadein">
+      <div class="tvh"><span class="live">LIVE · ${E.stich ? 'STICHWAHL' : 'WAHLABEND'}</span><span>${TOWN.name}</span></div>
+      <div class="clock" id="eclock">${st.t}</div><div class="center caps" id="ename">${st.n}${ESTEP === 0 ? ' · Nachwahlbefragung' : ''}</div>
+      <div class="mt">${order.map(i => `<div class="brow" style="grid-template-columns:62px 1fr 64px"><span class="nm">${badge(cparty(i))}</span><div class="track" style="height:26px"><div class="fill" data-i="${i}" style="width:${clamp(hr.shares[i], 1, 100)}%;--pc:${cols(i)}"></div>${i === order[0] ? '' : ''}<span class="hurdle" style="left:50%;border-color:#fff;opacity:.6"></span></div><span class="val">${f1(hr.shares[i])} %</span></div><div class="tiny" style="margin:-4px 0 4px 70px;color:#b9c7ee">${esc(cname(i))}${i === 0 ? ' (du)' : ''}${C[i].inc ? ' · Amtsinhaber' : ''}</div>`).join('')}</div>
+      <div class="tiny" style="color:#9cc0ff;margin-top:2px">Gepunktete Linie: absolute Mehrheit (50 %) · ${ESTEP === 0 ? 'Fehlertoleranz ±3' : hr.k + ' von ' + n + ' Stimmbezirken ausgezählt'}${last ? ' · Wahlbeteiligung ' + turn + ' %' : ''}</div>
+      <div class="dgrid">${grid}</div>
+      <div class="ticker" id="eticker">${esc(tick)}</div>
+    </div>
+    <div class="glass tight mt small"><b class="gold">Hochrechnung:</b> Kleine Dörfer werden zuerst ausgezählt, die Innenstadt zuletzt – frühe Zwischenstände sind deshalb verzerrt. Die Hochrechnung korrigiert das nach und nach.</div>
+    <button class="btn mt2" data-act="${last ? 'elecend' : 'estep'}">${last ? 'Ergebnis & Elefantenrunde' : ESTEP === 0 ? 'Zur 1. Hochrechnung' : 'Weiter zur nächsten Hochrechnung'}</button>`, { noscroll: false, nogear: true });
+}
+ACT.estep = () => { ESTEP++; G.eStep = ESTEP; save(); renderElec(); };
+ACT.elecend = () => {
+  const E = G.elec, sh = E.res.shares, C = E.cands;
+  const order = C.map((_, i) => i).sort((a, b) => sh[b] - sh[a]);
+  const me = C.findIndex(c => c.me), top = order[0];
+  const absolute = sh[top] > 50;
+  E.done = true;
+  G.result = { stich: E.stich, won: !E.stich ? (absolute && top === me) : top === me, share: sh[me], winnerName: C[top].name, winnerParty: C[top].party, absolute, top: [C[order[0]].name, C[order[1]].name], topCands: [C[order[0]], C[order[1]]], shares: sh.slice(), names: C.map(c => c.name), parties: C.map(c => c.party), me };
+  if (!E.stich && !absolute) { G.result.won = false; G.result.needStich = true; }
+  save();
+  const go = () => show('elecresult');
+  if (G.result.needStich) startCutscene('stichwahl', go); else startCutscene('elephant', go);
+};
+SCREENS.elecresult = () => {
+  G.phase = 'elecresult'; save();
+  const r = G.result, sh = r.shares, C = r.names.map((n, i) => ({ n, p: r.parties[i], s: sh[i], i })).sort((a, b) => b.s - a.s);
+  render(`<div class="caps">${r.stich ? 'Ergebnis der Stichwahl' : 'Vorläufiges Endergebnis'}</div>
+    <h2>${r.needStich ? 'Stichwahl!' : r.won ? `${esc(G.name)} ist ${title()} von ${TOWN.name}!` : `${esc(r.winnerName)} gewinnt.`}</h2>
+    <div class="avwrap mt" style="padding:10px">${r.won ? playerAvatar('happy') : r.needStich ? playerAvatar('serious') : playerAvatar('serious')}</div>
+    <div class="glass mt">${C.map(c => `<div class="brow"><span class="nm">${badge(c.p)}</span><div class="track"><div class="fill" style="width:${clamp(c.s, 1, 100)}%;--pc:${c.p === 'BUERGER' ? '#b8c2d8' : pcolor(c.p)}"></div><span class="hurdle" style="left:50%;border-color:#fff;opacity:.6"></span></div><span class="val">${f1(c.s)} %</span></div><div class="tiny mut" style="margin:-4px 0 4px 72px">${esc(c.n)}</div>`).join('')}</div>
+    ${r.needStich ? `<div class="glass mt"><p style="margin:0">Keine Kandidatur erreichte mehr als 50 %. ${r.top.includes(G.name) ? `Du bist in der Stichwahl gegen <b>${esc(r.top.find(n => n !== G.name))}</b>! Die Stimmen der ausgeschiedenen Bewerber:innen werden neu verteilt.` : `Du bist ausgeschieden – die Stichwahl bestreiten ${esc(r.top[0])} und ${esc(r.top[1])}.`}</p></div><button class="btn mt2" data-act="tostich">Stichwahl in 14 Tagen</button>`
+      : `<div class="glass mt small"><p style="margin:0">${r.won ? 'Dein Erfolg: ' + (r.share > 58 ? 'ein Durchmarsch – die Stadt wollte es so.' : r.share > 52 ? 'ein solider Sieg.' : 'denkbar knapp – jede Stimme zählte.') : 'Diesmal hat es nicht gereicht. Politik kennt keine endgültigen Niederlagen, nur längere Pausen.'}</p></div>
+      <button class="btn mt2" data-act="${r.won ? 'oath' : 'defeat'}">${r.won ? 'Zur Vereidigung' : 'Weiter'}</button>`}`, { nogear: true });
+};
+ACT.tostich = () => startElection(true);
+ACT.oath = () => startCutscene('oath', () => show('timeskip'));
+ACT.defeat = () => startCutscene('defeat', () => show('timeskip'));
+
+/* ---------- Zeitsprung zum Bundestag ---------- */
+SCREENS.timeskip = () => {
+  const r = G.result; G.phase = 'timeskip'; save();
+  render(`<div class="caps">Zeitsprung</div><h2>${r.won ? 'Zwölf Jahre später …' : 'Vier Jahre später …'}</h2>
+    <div class="avwrap mt">${playerAvatar('neutral', {}, r.won ? 12 : 4)}</div>
+    <p class="mt">${r.won ? `Nach zwei Amtszeiten als ${title()} von ${TOWN.name} (Wiederwahl mit einem Kaffeeautomaten im Rathausflur als Höhepunkt der zweiten) zieht ${esc(G.name)} für ${esc(pname(G.party))} in den Bundestag ein.` : `Nach der Niederlage von ${TOWN.name} arbeitest du dich im Ortsverband hoch, führst den Kreisverband – und rückst schließlich über die Landesliste in den Bundestag nach.`}</p>
+    <p class="mut">Dein Avatar ist sichtbar älter – ein paar Falten, graue Schläfen, derselbe Kugelschreiber. Jetzt wartet das Hohe Haus. Deine erste Rede ist angesetzt.</p>
+    <button class="btn mt2" data-act="tospeech">Zur ersten Bundestagsrede</button>`, { nogear: true });
+};
+ACT.tospeech = () => startSpeech();
+
+/* ===== 45-ui-cutscene.js ===== */
+/* ---------- Cutscene-Engine: Kamerafahrten, Schnitte, Untertitel, Eilmeldungen, Sprachausgabe (optional), überspringbar ---------- */
+function sceneSVG(type) {
+  const defs = `<defs><linearGradient id="sk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1330"/><stop offset=".55" stop-color="#3b4f8f"/><stop offset="1" stop-color="#e8b27a"/></linearGradient>
+    <linearGradient id="wd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a2f1f"/><stop offset="1" stop-color="#22120a"/></linearGradient>
+    <linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1a4d"/><stop offset="1" stop-color="#050a24"/></linearGradient></defs>`;
+  const svg = inner => `<svg viewBox="0 0 300 420" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">${defs}${inner}</svg>`;
+  const win = (x, y, w, h) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#ffd98a" opacity=".85"/>`;
+  if (type === 'town') {
+    let houses = ''; for (let i = 0; i < 8; i++) { const x = i * 42 - 12, h = 60 + (i * 37 % 50); houses += `<rect x="${x}" y="${330 - h}" width="38" height="${h + 100}" fill="#10182f"/><path d="M${x - 3} ${330 - h} L${x + 19} ${308 - h} L${x + 41} ${330 - h}Z" fill="#1a2447"/>` + win(x + 7, 340 - h, 8, 10) + win(x + 22, 340 - h, 8, 10) + win(x + 7, 362 - h, 8, 10); }
+    return svg(`<rect width="300" height="420" fill="url(#sk)"/><circle cx="235" cy="80" r="26" fill="#ffe9b8" opacity=".92"/>${houses}<rect x="108" y="190" width="84" height="150" fill="#1b2650"/><path d="M102 190 L150 140 L198 190Z" fill="#263263"/><rect x="146" y="92" width="8" height="50" fill="#263263"/><circle cx="150" cy="214" r="12" fill="#ffd98a"/><rect x="138" y="280" width="24" height="60" fill="#0d1433"/><rect x="0" y="330" width="300" height="90" fill="#0a0f22"/>`);
+  }
+  if (type === 'hall') {
+    return svg(`<rect width="300" height="420" fill="url(#wd)"/><rect x="0" y="0" width="46" height="420" fill="#6d1a2a"/><rect x="254" y="0" width="46" height="420" fill="#6d1a2a"/><rect x="60" y="60" width="180" height="110" rx="4" fill="#13224d" stroke="#d6b16c"/><text x="150" y="108" text-anchor="middle" fill="#f3d99b" font-size="23" font-family="Georgia,serif">WAHLPARTY</text><text x="150" y="134" text-anchor="middle" fill="#9ba7c6" font-size="11" letter-spacing="3">NIEDERHÜTTINGEN</text>${Array.from({ length: 9 }, (_, i) => `<circle cx="${18 + i * 33}" cy="${22 + (i % 2) * 7}" r="5" fill="#ffd98a"/>`).join('')}<rect x="0" y="330" width="300" height="90" fill="#140a05"/>`);
+  }
+  if (type === 'studio') {
+    return svg(`<rect width="300" height="420" fill="url(#st)"/><g stroke="#5aa0ff" opacity=".22" fill="none">${Array.from({ length: 12 }, (_, i) => `<path d="M0 ${30 + i * 34} H300"/>`).join('')}${Array.from({ length: 7 }, (_, i) => `<path d="M${i * 50} 0 V420"/>`).join('')}</g><rect x="22" y="56" width="256" height="130" rx="6" fill="#0d2a6b" stroke="#6aa7ff"/><text x="150" y="112" text-anchor="middle" fill="#fff" font-size="27" font-family="Georgia,serif">WAHLABEND</text><text x="150" y="140" text-anchor="middle" fill="#9cc0ff" font-size="11" letter-spacing="3">NIEDERHÜTTINGEN</text><rect x="22" y="200" width="256" height="8" fill="#6aa7ff" opacity=".5"/><ellipse cx="150" cy="390" rx="170" ry="30" fill="#0a1a4a" stroke="#6aa7ff"/>`);
+  }
+  if (type === 'rathaus') {
+    return svg(`<rect width="300" height="420" fill="url(#wd)"/>${Array.from({ length: 8 }, (_, i) => `<rect x="${i * 40}" y="0" width="2" height="420" fill="#1c0f08" opacity=".5"/>`).join('')}<rect x="28" y="40" width="5" height="240" fill="#c9a66b"/><rect x="33" y="50" width="86" height="24" fill="#111"/><rect x="33" y="74" width="86" height="24" fill="#c22"/><rect x="33" y="98" width="86" height="24" fill="#eebb22"/><rect x="160" y="60" width="110" height="100" fill="#13224d" stroke="#d6b16c"/><circle cx="215" cy="110" r="26" fill="none" stroke="#d6b16c" stroke-width="3"/><text x="215" y="118" text-anchor="middle" fill="#d6b16c" font-size="20" font-family="Georgia,serif">NH</text><rect x="0" y="330" width="300" height="90" fill="#140a05"/>`);
+  }
+  if (type === 'plenum') {
+    let rows = ''; for (let r = 0; r < 6; r++) rows += `<path d="M${20 + r * 20} 330 A ${130 - r * 20} ${150 - r * 20} 0 0 1 ${280 - r * 20} 330" fill="none" stroke="#3a4f8f" stroke-width="7" opacity="${.9 - r * .1}"/>`;
+    return svg(`<rect width="300" height="420" fill="#0a1026"/><rect x="0" y="0" width="300" height="80" fill="#13224d"/><path d="M80 0 L220 0 L205 60 L95 60Z" fill="#1d2f66"/><text x="150" y="40" text-anchor="middle" fill="#f3d99b" font-size="14" font-family="Georgia,serif">DEM DEUTSCHEN VOLKE</text>${rows}<rect x="115" y="320" width="70" height="50" fill="#2b190f"/>`);
+  }
+  return svg('<rect width="300" height="420" fill="#0a1026"/>');
+}
+
+const DIALEKT_LINES = {
+  hoch: 'Ich will, dass Niederhüttingen morgen besser dasteht als gestern.',
+  bair: 'Servus, Niederhüttingen! Des pack mer – und zwar gscheit.',
+  nord: 'Moin, Niederhüttingen. Dat kriegen wir hin – ohne viel Gedöns.',
+  saechs: 'Nu, Niederhüttingen – das kriegn mer hin. Gloob mir.',
+  rhein: 'Niederhüttingen, et hätt noch immer jot jejange – diesmal mit Plan.',
+  schwab: 'Niederhüttingen, do schaffe mer. Ond zwar ordentlich.'
+};
+function closeness() { const r = G.result; return r ? Math.abs(r.share - 50) : 10; }
+
+const CUTS = {
+  intro: () => [
+    { bg: 'town', cam: ['scale(1.12) translate(4%,3%)', 'scale(1.0) translate(-2%,0)'], who: 'Erzähler', text: `Niederhüttingen. ${f0(TOWN.ew)} Einwohner, eine Hauptstraße, drei Kreisverkehre – und in zehn Wochen eine Bürgermeisterwahl.` },
+    { bg: 'hall', cam: ['scale(1.05)', 'scale(1.22) translate(0,-3%)'], chars: [{ me: 1, emo: 'serious', speak: 0 }, { npc: 'gisela', emo: 'happy', speak: 1 }], who: G.npc.party.n, text: `${G.name}, die Partei steht hinter Ihnen. Zumindest die Hälfte. Die andere Hälfte steht noch im Stau.` },
+    { bg: 'hall', cam: ['scale(1.2)', 'scale(1.05) translate(2%,0)'], chars: [{ me: 1, emo: 'happy', speak: 1 }, { npc: 'gisela', emo: 'neutral', speak: 0 }], who: G.name, text: DIALEKT_LINES[G.dial] },
+    { bg: 'studio', cam: ['scale(1.1)', 'scale(1.0)'], ticker: `EILMELDUNG · ${G.name} (${pname(G.party)}) fordert Amtsinhaber ${G.opp[0].name} heraus – ${G.opp[1].name} tritt parteilos an`, who: 'Erzähler', text: 'Zehn Wochen. Zehn Entscheidungen. Eine Wahl.' }
+  ],
+  elephant: () => {
+    const r = G.result, win = r.won, cl = closeness(), w = G.opp.find(o => o.name === r.winnerName);
+    const meWon = win;
+    const inc = G.opp[0];
+    const L = [];
+    L.push({ bg: 'studio', cam: ['scale(1.15)', 'scale(1.0)'], ticker: meWon ? `BREAKING · ${G.name} gewinnt die Bürgermeisterwahl in Niederhüttingen mit ${f1(r.share)} %` : `BREAKING · ${r.winnerName} gewinnt in Niederhüttingen – ${G.name} unterliegt mit ${f1(r.share)} %`, who: 'Moderation', text: meWon ? (cl < 1.5 ? 'Es ist denkbar knapp, aber es steht fest: Niederhüttingen hat gewählt. Und zwar sehr genau.' : 'Ein klares Ergebnis in Niederhüttingen. Wir schalten ins Rathaus zur Elefantenrunde.') : 'Niederhüttingen hat entschieden – anders, als Sie es sich erhofft hatten. Wir schalten zur Elefantenrunde.' });
+    L.push({ bg: 'studio', cam: ['scale(1.0)', 'scale(1.18) translate(-2%,0)'], chars: [{ npc: inc.name, emo: meWon ? 'serious' : 'happy', speak: 1 }, { me: 1, emo: meWon ? 'happy' : 'serious', speak: 0 }], who: inc.name, text: meWon ? `Ich gratuliere ${G.name}. Es war ein fairer Wahlkampf. Meistens. Die Bürgerinnen und Bürger haben gesprochen.` : `Die Wähler haben gesprochen – und sie haben ${r.winnerName === inc.name ? 'mir erneut ihr Vertrauen geschenkt. Ich danke herzlich.' : 'sich für einen Neuanfang entschieden.'}` });
+    L.push({ bg: 'studio', cam: ['scale(1.18)', 'scale(1.05)'], chars: [{ me: 1, emo: meWon ? 'happy' : 'serious', speak: 1 }, { npc: inc.name, emo: 'neutral', speak: 0 }], who: G.name, text: meWon ? (G.res.med > 15 ? 'Dieses Ergebnis gehört allen, die mitgeholfen haben – und den Plakatierern, die nie genug Kabelbinder hatten.' : 'Ich danke allen Wählerinnen und Wählern. Jetzt wird gearbeitet – und wer mir nicht geglaubt hat, darf gern mitmachen.') : 'Demokratie ist kein Wunschkonzert. Ich gratuliere dem Sieger und bleibe der Stadt verbunden – auch ohne Amtskette.' });
+    return L;
+  },
+  oath: () => {
+    const cl = closeness();
+    return [
+      { bg: 'rathaus', cam: ['scale(1.2) translate(4%,0)', 'scale(1.02) translate(-2%,0)'], chars: [{ npc: 'beamte', emo: 'serious', speak: 1 }, { me: 1, emo: 'serious', speak: 0 }], who: 'Stadtverordnetenvorsteher', text: cl < 1.5 ? 'Der Wahlausschuss hat dreimal gezählt. Es bleibt dabei. Bitte erheben Sie sich zur Vereidigung.' : 'Bitte erheben Sie sich zur Vereidigung. Legen Sie die rechte Hand auf die Gemeindeordnung – nur symbolisch, sie wiegt vier Kilo.' },
+      { bg: 'rathaus', cam: ['scale(1.0)', 'scale(1.3) translate(0,-4%)'], chars: [{ me: 1, emo: 'serious', speak: 1 }], who: G.name, text: 'Ich schwöre, mein Amt getreu der Verfassung und den Gesetzen zu führen, meine Kraft dem Wohle der Stadt zu widmen und Gerechtigkeit gegen jedermann zu üben.' },
+      { bg: 'rathaus', cam: ['scale(1.3)', 'scale(1.1)'], chars: [{ me: 1, emo: 'happy', speak: 1 }, { npc: 'gisela', emo: 'happy', speak: 0 }], who: G.npc.party.n, text: `Glückwunsch, ${title()}. Der Dienstwagen hat übrigens noch den Geruch des Vorgängers. Und einen Strafzettel.` },
+      { bg: 'town', cam: ['scale(1.2)', 'scale(1.0)'], who: 'Erzähler', ticker: `${G.name.toUpperCase()} VEREIDIGT · NEUE ${title().toUpperCase()} ÜBERNIMMT DAS RATHAUS`, text: `Zwölf Jahre später wird man sagen: Es begann in Niederhüttingen. Mit ${G.promises.length} Versprechen, ${f0(G.res.bud)}k€ Restkasse und einer Menge Kabelbinder.` }
+    ];
+  },
+  defeat: () => [
+    { bg: 'hall', cam: ['scale(1.1)', 'scale(1.25)'], chars: [{ me: 1, emo: 'serious', speak: 0 }, { npc: 'gisela', emo: 'serious', speak: 1 }], who: G.npc.party.n, text: `Es waren ${f1(G.result.share)} Prozent, ${G.name}. Das ist nicht nichts. Und ab morgen sagen alle, sie hätten es kommen sehen.` },
+    { bg: 'town', cam: ['scale(1.2)', 'scale(1.0)'], chars: [{ me: 1, emo: 'neutral', speak: 1 }], who: G.name, text: 'Wahlkampf ist wie Kommunalpolitik: Man verliert selten ganz und gewinnt nie endgültig. Nächstes Mal – mit besseren Kabelbindern.' }
+  ],
+  stichwahl: () => [
+    { bg: 'studio', cam: ['scale(1.1)', 'scale(1.0)'], ticker: 'STICHWAHL · Keine Kandidatur erreicht die absolute Mehrheit', who: 'Moderation', text: `Keine absolute Mehrheit. In 14 Tagen treten ${G.result.top[0]} und ${G.result.top[1]} in der Stichwahl gegeneinander an.` }
+  ]
+};
+function npcFor(ch) {
+  if (ch.me) return playerAvatar(ch.emo, { speak: ch.speak });
+  if (ch.npc === 'gisela') return avatarSVG({ skin: 1, face: 'rund', hair: 'bob', hairc: 4, outfit: 'blazer', acc: 'pin', age: 60 }, { emo: ch.emo, speak: ch.speak });
+  if (ch.npc === 'beamte') return avatarSVG({ skin: 2, face: 'kantig', hair: 'seit', hairc: 4, outfit: 'anzug', acc: 'brille', age: 58 }, { emo: ch.emo, speak: ch.speak });
+  return npcAvatar(ch.npc, ch.emo, { speak: ch.speak });
+}
+let CUTSTATE = null;
+function startCutscene(id, done) {
+  const shots = CUTS[id]();
+  CUTSTATE = { shots, i: 0, done, typing: null };
+  const el = document.createElement('div'); el.className = 'cut'; el.id = 'cut';
+  el.innerHTML = `<button class="skip" data-act="cutskip">Überspringen ⏭</button><div class="view" id="cview" data-act="cutnext"></div><div class="sub" data-act="cutnext"><div class="who" id="cwho"></div><div class="txt" id="ctxt"></div><div class="hint">Tippen zum Fortfahren ▸</div></div>`;
+  $('#app').appendChild(el); $('#nav').classList.remove('on');
+  playShot();
+}
+function playShot() {
+  const S = CUTSTATE, sh = S.shots[S.i]; if (!sh) return endCut();
+  const view = $('#cview');
+  const chars = (sh.chars || []).map(ch => `<div style="display:contents">${npcFor(ch).replace('<svg', `<svg class="${ch.speak ? 'speak' : 'dim'}"`)}</div>`).join('');
+  view.innerHTML = `<div class="lb t"></div><div class="lb b"></div><div class="scene" id="cscene" style="transform:${sh.cam[0]};transition:none">${sceneSVG(sh.bg)}</div>
+    ${sh.ticker ? `<div class="tick"><span>${esc(sh.ticker)} &nbsp;·&nbsp; ${esc(sh.ticker)}</span></div>` : ''}<div class="chars">${chars}</div>`;
+  view.classList.remove('flash'); void view.offsetWidth; view.classList.add('flash');
+  requestAnimationFrame(() => requestAnimationFrame(() => { const sc = $('#cscene'); if (sc) { sc.style.transition = 'transform 7s cubic-bezier(.3,.1,.3,1)'; sc.style.transform = sh.cam[1]; } }));
+  $('#cwho').textContent = sh.who || '';
+  const t = $('#ctxt'); t.textContent = ''; let k = 0; const txt = sh.text || '';
+  clearInterval(S.typing);
+  S.full = txt;
+  S.typing = setInterval(() => { k += 2; t.textContent = txt.slice(0, k); if (k >= txt.length) { clearInterval(S.typing); S.typing = null; } }, 22);
+  speak((sh.who ? sh.who + ': ' : '') + txt);
+}
+ACT.cutnext = () => {
+  const S = CUTSTATE; if (!S) return;
+  if (S.typing) { clearInterval(S.typing); S.typing = null; $('#ctxt').textContent = S.full; return; }
+  S.i++; if (S.i >= S.shots.length) endCut(); else playShot();
+};
+ACT.cutskip = () => endCut();
+function endCut() {
+  const S = CUTSTATE; if (!S) return; clearInterval(S.typing); CUTSTATE = null;
+  try { speechSynthesis && speechSynthesis.cancel(); } catch (e) {}
+  const el = $('#cut'); if (el) el.remove();
+  if (S.done) S.done();
+}
+
+/* ===== 46-ui-speech.js ===== */
+/* ---------- Bundestagsrede (Dialog-Minispiel) ---------- */
+const SP_TIME = 8;
+function ownFraktion() { return ['CDU', 'CSU'].includes(G.party) ? 'UNION' : G.party; }
+function parliament() {
+  // Demo-Legislatur: Ausgangslage, die Spielerpartei zieht mindestens mit ~7 % ein
+  const S = {}; BUND_PARTIES.forEach(p => S[p] = BUND0[p]);
+  if (G.party === 'EIGEN') { S.EIGEN = 7; const t = BUND_PARTIES.reduce((a, p) => a + S[p], 0) + 7; BUND_PARTIES.forEach(p => S[p] = S[p] * 93 / (t - 7)); }
+  else if (S[G.party] < 7) { const add = 7 - S[G.party], others = BUND_PARTIES.filter(p => p !== G.party).reduce((a, p) => a + S[p], 0); BUND_PARTIES.forEach(p => { if (p !== G.party) S[p] -= add * S[p] / others; }); S[G.party] = 7; }
+  const v = {}; Object.keys(S).forEach(p => { if (S[p] >= 5) v[p] = S[p]; });
+  const seats = sainteLague(v, 630);
+  const fr = { UNION: (seats.CDU || 0) + (seats.CSU || 0) };
+  ['LINKE', 'SPD', 'GRUENE', 'FDP', 'BSW', 'AFD', 'EIGEN'].forEach(p => fr[p] = seats[p] || 0);
+  Object.keys(fr).forEach(k => { if (!fr[k]) delete fr[k]; });
+  return fr;
+}
+function frPos(f) {
+  if (f === 'EIGEN') return [clamp((G.own.sl[0] - 50) / 50, -1, 1), clamp((G.own.sl[4] - G.own.sl[3]) / 60, -1, 1)];
+  return FRK[f].pos;
+}
+function frName(f) { return f === 'EIGEN' ? G.own.abk || G.own.name : frkAbbr(f); }
+const _frkColor = frkColor; frkColor = f => f === 'EIGEN' ? pcolor('EIGEN') : _frkColor(f);
+const _frkAbbr = frkAbbr; frkAbbr = f => f === 'EIGEN' ? (G.own.abk || 'Eigene') : _frkAbbr(f);
+if (FRAKTIONEN.indexOf('EIGEN') < 0) FRAKTIONEN.splice(3, 0, 'EIGEN');
+
+function startSpeech() {
+  ensureDemoGame();
+  G.phase = 'speech';
+  const fr = parliament(), own = ownFraktion();
+  const others = Object.keys(fr).filter(f => f !== own).sort((a, b) => fr[b] - fr[a]);
+  G.speech = { step: 'setup', fr, own, gegner: others[0], topic: null, tone: null, beat: 0, app: Object.fromEntries(Object.keys(fr).map(f => [f, 0])), time: 0, ordnung: 0, log: [], zw: 0 };
+  save(); SCREENS.speech();
+}
+SCREENS.speech = () => {
+  const S = G.speech; if (!S) return startSpeech();
+  const head = `<div class="row sp"><div><div class="caps">Deutscher Bundestag</div><div class="small mut">${esc(G.name)} · ${esc(pname(G.party))}</div></div><div class="chip">${frName(S.own)} · ${S.fr[S.own]} Sitze</div></div>`;
+  if (S.step === 'setup') {
+    render(`${head}<h2>Deine erste Rede</h2><p class="mut small">Plenarsaal, 14:32 Uhr, Tagesordnungspunkt 5: „Aussprache“. Die Präsidentin ruft dich auf: Du hast ${SP_TIME} Minuten. Achte auf Beifall und Zwischenrufe der Fraktionen.</p>
+      <div class="glass tight">${hemicycleSVG(S.fr, { hi: S.own, labels: true })}</div>
+      <label class="f">Thema</label><div class="opts">${Object.entries(SPEECH).map(([k, t]) => `<button class="opt ${S.topic === k ? 'on' : ''}" data-act="spt" data-k="${k}">${t.e} ${t.n}</button>`).join('')}</div>
+      <label class="f">Tonfall</label><div class="opts" style="flex-direction:column">${Object.entries(TONES).map(([k, t]) => `<button class="opt ${S.tone === k ? 'on' : ''}" style="text-align:left" data-act="spn" data-k="${k}"><b>${t.n}</b><br><span class="small mut" style="font-weight:400">${t.d}</span></button>`).join('')}</div>
+      <button class="btn mt2" data-act="spstart" ${S.topic && S.tone ? '' : 'disabled'}>Ans Rednerpult</button>`);
+  } else if (S.step === 'beat') {
+    const T = SPEECH[S.topic], B = T.beats[S.beat];
+    const used = S.time / SP_TIME * 100;
+    render(`${head}
+      <div class="row sp mt"><span class="small mut">Noch ${f1(Math.max(0, SP_TIME - S.time))} von ${SP_TIME} Min. Redezeit</span><span class="chip">${S.beat + 1}/${T.beats.length} · ${B.h}</span></div>
+      <div class="bar mt" style="height:7px"><i style="width:${clamp(100 - used, 0, 100)}%;background:${used > 85 ? 'linear-gradient(90deg,#b34a4a,#ff7b7b)' : ''}"></i></div>
+      <div class="glass tight mt" id="plen">${hemicycleSVG(S.fr, { labels: false, dr: 2.9 })}</div>
+      <div id="appl" class="row wrap mt" style="gap:6px">${applauseHTML(S)}</div>
+      <h3 class="mt">${esc(B.h)} – was sagst du?</h3>
+      <div class="ochoices">${B.o.map((a, i) => `<button class="oc" data-act="sparg" data-i="${i}"><span class="tiny gold" style="text-transform:uppercase;letter-spacing:.1em">${({ fakt: 'Fakten', emo: 'Emotion', vision: 'Vision', humor: 'Humor', angriff: 'Angriff' })[a.tag]}</span><br>${esc(a.t.replace('{gegner}', frName(S.gegner)))}</button>`).join('')}</div>`);
+  } else if (S.step === 'zw') {
+    const z = S.zwCur;
+    render(`${head}
+      <div class="row sp mt"><span class="small mut">Noch ${f1(Math.max(0, SP_TIME - S.time))} von ${SP_TIME} Min. Redezeit</span><span class="chip">Zwischenruf!</span></div>
+      <div class="bar mt" style="height:7px"><i style="width:${clamp(100 - S.time / SP_TIME * 100, 0, 100)}%"></i></div>
+      <div class="glass tight mt">${hemicycleSVG(S.fr, { hi: z.f, labels: false, dr: 2.9 })}</div>
+      <div class="zw"><div class="caps" style="color:#ff9b9b">Aus den Reihen der ${esc(frName(z.f))}</div><div class="serif" style="font-size:1.3rem;margin-top:4px">${esc(z.t)}</div>
+        <div class="timer mt"><i id="zwtimer" style="transition:transform 4.5s linear"></i></div></div>
+      <div class="ochoices">
+        <button class="oc" data-act="zwr" data-r="kontern"><b>Schlagfertig kontern</b><div class="risk">Wagnis · ${Math.round(zwProb('kontern') * 100)} % (Charisma &amp; Medienwirkung)</div></button>
+        <button class="oc" data-act="zwr" data-r="frage"><b>Zwischenfrage zulassen</b> <span class="tiny mut">(+1 Min.)</span><div class="risk">Wagnis · ${Math.round(zwProb('frage') * 100)} % (Intelligenz)</div></button>
+        <button class="oc" data-act="zwr" data-r="ignorieren"><b>Ignorieren und weiterreden</b><div class="tiny mut">Kein Risiko, kein Gewinn.</div></button></div>`);
+    requestAnimationFrame(() => requestAnimationFrame(() => { const t = $('#zwtimer'); if (t) { t.style.transform = 'scaleX(0)'; } }));
+    clearTimeout(S.zt); S.zt = setTimeout(() => { if (G.speech && G.speech.step === 'zw') ACT.zwr({ dataset: { r: 'ignorieren', timeout: 1 } }); }, 4700);
+  } else if (S.step === 'end') {
+    speechEnd();
+  }
+};
+function applauseHTML(S) {
+  return Object.keys(S.fr).filter(f => S.fr[f] > 0).sort((a, b) => FRAKTIONEN.indexOf(a) - FRAKTIONEN.indexOf(b)).map(f => {
+    const v = S.app[f], e = v > .6 ? '👏' : v > .1 ? '🙂' : v < -.6 ? '😠' : v < -.1 ? '😒' : '😐';
+    return `<span class="chip" style="border-color:${frkColor(f)}">${esc(frkAbbr(f))} ${e}<span class="delta ${v >= 0 ? 'up' : 'dn'}">${v >= 0 ? '+' : '−'}${Math.abs(v).toFixed(1)}</span></span>`;
+  }).join('');
+}
+ACT.spt = a => { G.speech.topic = a.dataset.k; SCREENS.speech(); };
+ACT.spn = a => { G.speech.tone = a.dataset.k; SCREENS.speech(); };
+ACT.spstart = () => { G.speech.step = 'beat'; SCREENS.speech(); };
+
+function reception(f, arg, S) {
+  const tone = TONES[S.tone], mult = tone.m[arg.tag];
+  const fp = frPos(f), d = Math.hypot(arg.pos[0] - fp[0], arg.pos[1] - fp[1]);
+  let r = (1 - d / 1.4);
+  if (f === S.own) r += .35;
+  if (arg.tag === 'humor') r = r * .5 + .35;
+  if (arg.tag === 'angriff') {
+    const gp = frPos(S.gegner), dg = Math.hypot(fp[0] - gp[0], fp[1] - gp[1]);
+    if (f === S.gegner) r = -.9; else if (dg < 1) r = Math.min(r, -.25); else if (f === S.own) r = .7; else r = r * .4 + .1;
+  }
+  r = r * (r > 0 ? mult : 1 / Math.max(.6, mult)) + gauss() * .08;
+  return clamp(r, -1.5, 1.5);
+}
+ACT.sparg = a => {
+  const S = G.speech, T = SPEECH[S.topic], B = T.beats[S.beat], arg = B.o[+a.dataset.i];
+  const cost = { fakt: 1.4, emo: 1.6, vision: 1.7, humor: 1.0, angriff: 1.2 }[arg.tag];
+  S.time += cost;
+  Object.keys(S.fr).forEach(f => { S.app[f] = clamp(S.app[f] + reception(f, arg, S) * 1.0, -3, 3); });
+  S.log.push(arg.tag);
+  // Ordnungsruf-Risiko bei Angriffen (Tonfall angriffslustig erhöht das Risiko)
+  const risk = arg.tag === 'angriff' ? (S.tone === 'angr' ? .38 : .12) : 0;
+  buzz(14);
+  if (rnd() < risk) { S.ordnung++; S.app[S.own] -= .4; flashBanner('Ordnungsruf von der Präsidentin!'); buzz([40, 40, 40]); }
+  S.lastArg = arg;
+  // Zwischenruf der Fraktion mit der niedrigsten Stimmung (aber nie die eigene)
+  const cand = Object.keys(S.fr).filter(f => f !== S.own).sort((x, y) => S.app[x] - S.app[y])[0];
+  S.zwCur = { f: cand, t: pick(ZWISCHENRUFE[cand] || ['„Hört, hört!“']) };
+  S.step = S.beat >= T.beats.length - 1 ? 'endzw' : 'zw';
+  if (S.step === 'endzw') { S.step = 'end'; }
+  S.beat++; save(); SCREENS.speech();
+  if (S.step === 'end') return;
+};
+function zwProb(kind) {
+  const s = G.stats, stress = Math.max(0, G.res.str - 60) * .4;
+  if (kind === 'kontern') return clamp(.5 + (((s.cha + s.med) / 2) - 52 - stress) / 80, .12, .9);
+  return clamp(.5 + (s.iq - 50 - stress) / 80, .12, .9);
+}
+ACT.zwr = a => {
+  const S = G.speech; if (!S || S.step !== 'zw') return; clearTimeout(S.zt);
+  const z = S.zwCur, r = a.dataset.r; let msg = '';
+  if (r === 'kontern') {
+    const ok = rnd() < zwProb('kontern');
+    if (ok) { S.app[S.own] += .5; S.app[z.f] += .2; S.app = clampAll(S.app); msg = 'Kontra sitzt! Der Saal lacht – sogar ein bisschen bei den Zwischenrufern.'; S.time += .3; }
+    else { S.app[S.own] -= .2; S.app[z.f] -= .3; if (rnd() < .3) { S.ordnung++; msg = 'Der Konter geht daneben – Ordnungsruf.'; buzz([40, 40, 40]); } else msg = 'Der Konter verpufft. Jemand hüstelt.'; S.time += .4; }
+  } else if (r === 'frage') {
+    S.time += 1; const ok = rnd() < zwProb('frage');
+    Object.keys(S.app).forEach(f => S.app[f] += ok ? .25 : -.2); if (!ok) S.app[z.f] += .3; S.app = clampAll(S.app);
+    msg = ok ? 'Du beantwortest die Frage präzise. Respekt aus mehreren Fraktionen.' : 'Bei der Frage zur Gegenfinanzierung verhedderst du dich. Der Zwischenrufer strahlt.';
+  } else { S.app[z.f] -= a.dataset.timeout ? .2 : .1; msg = a.dataset.timeout ? 'Zu langsam – der Zwischenruf bleibt im Saal stehen.' : 'Du redest einfach weiter. Die Präsidentin nickt anerkennend.'; S.time += .1; }
+  S.zwMsg = msg; S.step = S.beat >= SPEECH[S.topic].beats.length ? 'end' : 'beat'; save();
+  if (S.step === 'beat') { SCREENS.speech(); flashBanner(msg); } else SCREENS.speech();
+  if (S.step === 'end') G.speech.endMsg = msg;
+};
+function clampAll(o) { Object.keys(o).forEach(k => o[k] = clamp(o[k], -3, 3)); return o; }
+function flashBanner(t) { const b = document.createElement('div'); b.className = 'banner'; b.textContent = t; $('#app').appendChild(b); setTimeout(() => b.remove(), 2600); }
+
+function speechEnd() {
+  const S = G.speech;
+  if (!S.scored) {
+    let wsum = 0, tot = 0; Object.keys(S.fr).forEach(f => { wsum += S.fr[f]; tot += S.fr[f] * S.app[f]; });
+    const avg = tot / wsum / 3;           // −1 … +1
+    const own = S.app[S.own] / 3;
+    const over = Math.max(0, S.time - SP_TIME);
+    let score = 50 + 34 * avg + 16 * own - 9 * S.ordnung - 6 * over;
+    S.score = clamp(Math.round(score), 0, 100); S.scored = true;
+    const dm = Math.round((S.score - 50) / 8), dp = Math.round((own) * 4 - S.ordnung * 2);
+    G.res.med = clamp(G.res.med + dm * 2, -100, 100); G.res.par = clamp(G.res.par + dp, 0, 100);
+    S.dm = dm; S.dp = dp; save();
+  }
+  const grade = S.score >= 80 ? ['Rede des Tages', 'Die Kameras bleiben auf dir, selbst der Bundestagspräsident klatscht.'] : S.score >= 60 ? ['Starker Auftritt', 'Gute Mischung aus Substanz und Schlagkraft. Die Fraktion ist zufrieden.'] : S.score >= 40 ? ['Solide', 'Ordentlich geredet – bloß das Protokoll wird mehr Aufmerksamkeit bekommen als du.'] : ['Verpufft', 'Die Rede war wie ein Dienstagnachmittag: da, aber nicht erinnerungswürdig.'];
+  const rows = Object.keys(S.fr).sort((a, b) => FRAKTIONEN.indexOf(a) - FRAKTIONEN.indexOf(b)).map(f => `<div class="brow" style="grid-template-columns:96px 1fr 54px"><span class="nm small" style="font-weight:700"><span class="badge" style="width:12px;height:12px;border-radius:50%;--pc:${frkColor(f)}"></span>${esc(frkAbbr(f))}</span><div class="track"><div class="fill" style="width:${clamp((S.app[f] + 3) / 6 * 100, 2, 100)}%;--pc:${frkColor(f)}"></div></div><span class="val small">${S.app[f] >= 0 ? '+' : '−'}${Math.abs(S.app[f]).toFixed(1)}</span></div>`).join('');
+  render(`<div class="caps">Deutscher Bundestag · Rede beendet</div><h2>${grade[0]}</h2>
+    <div class="glass mt center"><div style="font:800 3rem var(--serif);color:var(--gold2)">${S.score}<span class="small mut"> / 100</span></div><p style="margin:.2em 0 0">${grade[1]}</p></div>
+    <div class="glass mt"><div class="caps">Beifall &amp; Murren nach Fraktion</div>${rows}</div>
+    <div class="row wrap mt" style="gap:6px"><span class="chip">Medienecho <span class="delta ${S.dm >= 0 ? 'up' : 'dn'}">${sgn(S.dm * 2)}</span></span><span class="chip">Fraktionsrückhalt <span class="delta ${S.dp >= 0 ? 'up' : 'dn'}">${sgn(S.dp)}</span></span><span class="chip">Ordnungsrufe ${S.ordnung}</span><span class="chip">Redezeit ${f1(Math.min(S.time, 9.9))} Min.</span></div>
+    <div class="glass tight mt small"><b class="gold">Schlagzeile:</b> ${esc(speechHeadline(S))}</div>
+    <div class="row mt2"><button class="btn ghost" data-act="speechagain">Nochmal versuchen</button><button class="btn" data-act="toend">Karriere-Bilanz</button></div>`, { nogear: true });
+}
+function speechHeadline(S) {
+  const n = G.nn || G.name;
+  if (S.ordnung >= 2) return `Ordnungsruf-Festival: ${n} poltert durch den Plenarsaal`;
+  if (S.score >= 80) return `${n} begeistert das Hohe Haus – „So klingt Opposition, die regieren will“`;
+  if (S.score >= 60) return `Starke Premiere: ${n} überzeugt mit Substanz und Schlagfertigkeit`;
+  if (S.score >= 40) return `${n} hielt eine Rede. Sie war da.`;
+  return `Verpufft im Plenum: ${n} bleibt blass`;
+}
+ACT.speechagain = () => startSpeech();
+ACT.toend = () => { G.phase = 'end'; save(); show('end'); };
+
+/* ===== 47-ui-end.js ===== */
+/* ---------- Profil (Figur, Werte, NPCs, Geschichtsbuch) ---------- */
+SCREENS.profile = () => {
+  ensureDemoGame();
+  const B = BACKGROUNDS[G.bg], P = PARTIES[G.party], r = G.res;
+  const stats = STATS.map(s => meter(s.n, G.stats[s.id])).join('');
+  const npc = Object.values(G.npc).map(n => `<div class="row" style="padding:6px 0"><div class="badge lg" style="--pc:#26366b;color:#fff;font-size:1.4rem">${n.e}</div><div class="grow"><div><b>${esc(n.n)}</b> <span class="small mut">· ${esc(n.r)}</span></div><div class="tiny mut">${esc(n.d)}</div>${meter('Beziehung', n.v, { cls: n.v >= 40 ? 'g' : 'r' })}</div></div>`).join('');
+  const book = G.log.length ? G.log.map(l => `<div class="kv"><span><b>Woche ${l.i}</b> · ${esc(l.title)}<br><span class="small mut">${esc(l.choice)}${l.outcome ? (l.outcome === 'ok' ? ' ✔' : ' ✘') : ''}</span></span></div>`).join('') : '<p class="small mut">Noch keine Einträge – dein Lebenslauf beginnt mit der ersten Entscheidung.</p>';
+  render(`<div class="caps">Profil</div><h2>${esc(G.name)}</h2>
+    <div class="row"><div class="avwrap" style="width:120px;padding:2px">${playerAvatar(r.str > 75 ? 'serious' : 'neutral')}</div>
+      <div class="grow"><div class="row">${badge(G.party)}<div><div class="serif" style="font-size:1.1rem">${esc(pname(G.party))}</div><div class="small mut">${B.e} ${B.n} · ${HERKUNFT[G.herk].n}</div></div></div>
+      <div class="tiny mut mt">Dialekt: ${DIALEKTE[G.dial].n} · Alter ${G.age}</div><div class="tiny gold" style="margin-top:4px">Mechanik: ${esc(P.mech.n)}</div></div></div>
+    <div class="glass mt"><div class="caps">Lage</div>${statStrip()}
+      <div class="statrow mt">${meter('Wirtschaft', r.wirt)}${meter('Umwelt', r.umw)}${meter('Gesellschaft', r.ges)}${meter('Stress', r.str, { cls: r.str > 65 ? 'r' : '' })}</div></div>
+    <div class="glass mt"><div class="caps">Fähigkeiten</div>${stats}</div>
+    ${G.party === 'GRUENE' ? `<div class="glass mt"><div class="caps">Realo/Fundi-Regler</div>${meter(G.realo > 10 ? 'Fundi-Kurs' : G.realo < -10 ? 'Realo-Kurs' : 'ausgewogen', (G.realo + 100) / 2, { txt: sgn(G.realo) })}</div>` : ''}
+    ${G.party === 'EIGEN' ? `<div class="glass mt"><div class="caps">Momentum (Wachstumsspirale)</div>${meter('Momentum', G.mom * 10, { txt: G.mom + '/10' })}</div>` : ''}
+    <div class="glass mt"><div class="caps">Beziehungen</div>${npc}</div>
+    ${G.promises.length ? `<div class="glass mt"><div class="caps">Versprechen</div><ul class="clean">${G.promises.map(p => `<li>${esc(p.t)} <span class="tiny mut">(${esc(p.card)})</span></li>`).join('')}</ul></div>` : ''}
+    <div class="glass mt"><div class="caps">Geschichtsbuch</div>${book}</div>`, { nav: true });
+};
+
+/* ---------- Karriere-Bilanz ---------- */
+function legacyScore() {
+  const r = G.result || { won: false, share: 30 }, R = G.res, S = G.speech;
+  const parts = [
+    ['Wahlergebnis', r.won ? 35 + Math.min(15, Math.max(0, (r.share - 50) * 1.5)) : r.share * .6, 50],
+    ['Integrität', G.stats.ehr / 100 * 10 + (G.flags.spendeGeheim ? -2 : 0), 10],
+    ['Medienecho', (R.med + 100) / 200 * 10, 10],
+    ['Parteirückhalt', R.par / 100 * 10, 10],
+    ['Versprechen', Math.min(10, G.promises.length * 2.5), 10],
+    ['Rede im Bundestag', S && S.score ? S.score * .1 : 0, 10]
+  ];
+  const total = parts.reduce((a, p) => a + p[1], 0);
+  return { parts, total: Math.round(total) };
+}
+SCREENS.end = () => {
+  const L = legacyScore(), r = G.result || {};
+  const title_ = L.total >= 80 ? 'Kanzler-Format' : L.total >= 65 ? 'Politische Schwergewicht' : L.total >= 50 ? 'Aufsteiger:in mit Potenzial' : L.total >= 35 ? 'Lokalmatador:in' : 'Lehrjahre';
+  const stages = [['Kommune', 'Bürgermeisterwahl', 1], ['Land', 'Landtag, MP', 0], ['Bund', 'Bundestag, Fraktion', 0.35], ['Kanzleramt', 'Kandidatur, Regieren', 0], ['Endgame', 'Wiederwahl, Vermächtnis', 0]];
+  render(`<div class="caps">Karriere-Bilanz · Prototyp</div><h2>${esc(G.name)} – ${esc(title_)}</h2>
+    <div class="row mt"><div class="avwrap" style="width:130px;padding:2px">${playerAvatar('happy', {}, r.won ? 12 : 4)}</div><div class="grow"><div class="glass center" style="padding:10px"><div class="caps">Legacy-Score</div><div style="font:800 2.6rem var(--serif);color:var(--gold2)">${L.total}</div><div class="tiny mut">von 100</div></div></div></div>
+    <div class="glass mt">${L.parts.map(p => `<div style="margin:6px 0">${meter(p[0], p[1] / p[2] * 100, { txt: f1(p[1]) + '/' + p[2] })}</div>`).join('')}</div>
+    <div class="glass mt"><div class="caps">Dein Lebenslauf</div>
+      <div class="kv"><span>Bürgermeisterwahl ${TOWN.name}</span><span class="gold">${r.won ? 'gewonnen (' + f1(r.share) + ' %)' : 'verloren (' + f1(r.share || 0) + ' %)'}</span></div>
+      <div class="kv"><span>Entscheidungen</span><span>${G.log.length}</span></div>
+      <div class="kv"><span>Versprechen</span><span>${G.promises.length}</span></div>
+      <div class="kv"><span>Bundestagsrede</span><span>${G.speech && G.speech.score != null ? G.speech.score + '/100' : '–'}</span></div></div>
+    <div class="glass mt"><div class="caps">Weiterer Weg</div>${stages.map(s => `<div style="margin:8px 0">${meter((s[2] >= 1 ? '✔ ' : s[2] > 0 ? '◐ ' : '🔒 ') + s[0] + ' · ' + s[1], s[2] * 100, { txt: s[2] >= 1 ? 'fertig' : s[2] > 0 ? 'Demo' : 'folgt' })}</div>`).join('')}
+      <p class="tiny mut">Der Prototyp zeigt den Kern der Schleife. Landtag, Kanzlerwahlkampf, Koalitionsverhandlungen und Regieren folgen im Vertical Slice (siehe Roadmap).</p></div>
+    <div class="row mt2"><button class="btn ghost" data-act="tocards">Profil ansehen</button><button class="btn" data-act="restart">Neue Karriere</button></div>`, { nav: true });
+};
+ACT.tocards = () => show('profile');
+ACT.restart = () => { G = null; wipeSave(); show('start'); };
+
+/* ===== 99-boot.js ===== */
+/* ---------- Start ---------- */
+applySettings();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+window.addEventListener('error', e => { try { console.error(e.message); } catch (x) {} });
+show('start');
+
+</script>
+</body>
+</html>
