@@ -123,6 +123,10 @@ body.playing #hotbar { display: flex; }
 #invGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; width: min(560px, 92vw); overflow-y: auto; touch-action: pan-y; max-height: 60vh; padding: 4px; }
 .ibtn { flex-direction: column; min-height: 84px; padding: 6px; font-size: 12px; font-family: inherit; font-weight: bold; cursor: pointer; touch-action: manipulation; }
 .ibtn img { width: 44px; height: 44px; image-rendering: pixelated; }
+#hearts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--slot) + 30px + env(safe-area-inset-bottom, 0px)); font-size: 20px; letter-spacing: 1px; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
+#hearts .e { color: rgba(255,255,255,.25); }
+#hearts .f { color: #ff3b3b; }
+.panel { overflow-y: auto; touch-action: pan-y; }
 #err { position: fixed; left: 10px; right: 10px; top: 10px; z-index: 99; background: #a00; padding: 10px; display: none; font-size: 14px; }
 </style>
 </head>
@@ -134,6 +138,7 @@ body.playing #hotbar { display: flex; }
   <div id="cross" class="hud-only"></div>
   <div id="fps"></div>
   <div id="toast"></div>
+  <div id="hearts" class="hud-only"></div>
   <div id="joyHint"></div>
   <div class="gb hud-only" id="bBreak">BREAK</div>
   <div class="gb hud-only" id="bPlace">PLACE</div>
@@ -171,6 +176,8 @@ body.playing #hotbar { display: flex; }
     <div id="settings">
       <div class="row"><label>Render distance</label><input type="range" id="setRD" min="2" max="8" step="1"><span class="v" id="vRD"></span></div>
       <div class="row"><label>Look sensitivity</label><input type="range" id="setSens" min="0.3" max="3" step="0.1"><span class="v" id="vSens"></span></div>
+      <div class="row"><label>Wemmbu (enemy)</label><button class="pbtn small" id="setWem" style="width:110px">ON</button></div>
+      <div class="row"><label>Post-processing</label><button class="pbtn small" id="setFx" style="width:110px">ON</button></div>
       <div class="row"><label>FPS counter</label><button class="pbtn small" id="setFps" style="width:110px">OFF</button></div>
       <button class="pbtn" id="btnBack">Back</button>
     </div>
@@ -212,13 +219,17 @@ const BLOCKS = [null,
   { n: 'Planks', t: [9, 9, 9],   hard: 0.50 },
   { n: 'Glass',  t: [10, 10, 10], hard: 0.25 }
 ];
-const OPAQUE = new Uint8Array(16);  // hides neighbouring faces
-const SOLID = new Uint8Array(16);   // collides
+const OPAQUE = new Uint8Array(32);  // hides neighbouring faces
+const SOLID = new Uint8Array(32);   // collides
 [1, 2, 3, 4, 5, 8].forEach(i => OPAQUE[i] = 1);
-for (let i = 1; i < BLOCKS.length; i++) if (i !== B.WATER) SOLID[i] = 1;
+// ids 10..15 = flowing water, strength 6..1 (strength = 16 - id). 7 = water source.
+for (let i = 10; i <= 15; i++) BLOCKS[i] = { n: 'Flowing water', t: [8, 8, 8], hard: 0.05 };
+const PLAYABLE = 9;                         // ids 1..9 appear in the inventory
+const isWater = id => id === B.WATER || id >= 10;
+for (let i = 1; i < BLOCKS.length; i++) if (BLOCKS[i] && !isWater(i)) SOLID[i] = 1;
 
 const SAVE_WORLD = 'voxelcraft.world.v1', SAVE_PLAYER = 'voxelcraft.player.v1', SAVE_SET = 'voxelcraft.settings.v1';
-const S = { rd: 4, sens: 1, fps: false };   // user settings
+const S = { rd: 4, sens: 1, fps: false, wem: true, fx: true };   // user settings
 
 // localStorage wrapper that never throws
 const store = {
@@ -434,7 +445,10 @@ function generateChunk(cx, cz) {
   }
   // apply player modifications
   const m = world.mods[cx + ',' + cz];
-  if (m) for (const k in m) { d[k] = m[k]; const y = (+k / 256) | 0; if (m[k] && y >= maxY) maxY = y + 1; }
+  if (m) for (const k in m) {
+    d[k] = m[k]; const y = (+k / 256) | 0; if (m[k] && y >= maxY) maxY = y + 1;
+    if (m[k] === 0 || m[k] === B.WATER) wq.add((ox + (+k & 15)) + ',' + y + ',' + (oz + ((+k >> 4) & 15)));
+  }
   const ch = { cx, cz, data: d, maxY, dirty: true, mesh: null, tmesh: null };
   world.chunks.set(ckey(cx, cz), ch);
   return ch;
@@ -445,21 +459,57 @@ function getBlock(x, y, z) {
   const ch = world.chunks.get(ckey(x >> 4, z >> 4));
   return ch ? ch.data[(x & 15) + (z & 15) * CW + y * 256] : 0;
 }
-function setBlock(x, y, z, id) {
+function setBlock(x, y, z, id) { return writeBlock(x, y, z, id, true, true); }
+// record: remember in save file; now: rebuild affected meshes immediately (else just flag dirty)
+function writeBlock(x, y, z, id, record, now) {
   if (y < 1 || y >= H) return false;
   const cx = x >> 4, cz = z >> 4, ch = world.chunks.get(ckey(cx, cz));
   if (!ch) return false;
   const lx = x & 15, lz = z & 15, i = lx + lz * CW + y * 256;
   if (ch.data[i] === id) return false;
   ch.data[i] = id; if (id && y >= ch.maxY) ch.maxY = y + 1;
-  const mk = cx + ',' + cz;
-  (world.mods[mk] || (world.mods[mk] = {}))[i] = id; world.modsDirty = true;
+  if (record) { const mk = cx + ',' + cz; (world.mods[mk] || (world.mods[mk] = {}))[i] = id; world.modsDirty = true; }
+  wetNeighbours(x, y, z);
   // rebuild this chunk and any neighbours touching the edge
   const list = [ch];
   const nb = (dx, dz) => { const n = world.chunks.get(ckey(cx + dx, cz + dz)); if (n) list.push(n); };
   if (lx === 0) nb(-1, 0); if (lx === 15) nb(1, 0); if (lz === 0) nb(0, -1); if (lz === 15) nb(0, 1);
-  for (const c of list) { c.dirty = true; buildMesh(c); }
+  for (const c of list) { c.dirty = true; if (now) buildMesh(c); }
   return true;
+}
+/* ----- water physics: cellular automaton, 5 ticks/s ----- */
+const wq = new Set();
+const NB4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function wetNeighbours(x, y, z) {
+  if (wq.size > 4000) return;
+  wq.add(x + ',' + y + ',' + z);
+  wq.add((x + 1) + ',' + y + ',' + z); wq.add((x - 1) + ',' + y + ',' + z);
+  wq.add(x + ',' + y + ',' + (z + 1)); wq.add(x + ',' + y + ',' + (z - 1));
+  wq.add(x + ',' + (y + 1) + ',' + z); wq.add(x + ',' + (y - 1) + ',' + z);
+}
+const loadedAt = (x, z) => world.chunks.has(ckey(x >> 4, z >> 4));
+const strength = id => id === B.WATER ? 7 : id >= 10 ? 16 - id : 0;
+function stepWater(maxCells) {
+  let n = 0;
+  for (const k of Array.from(wq)) {
+    wq.delete(k);
+    if (++n > maxCells) break;
+    const q = k.split(','), x = +q[0], y = +q[1], z = +q[2];
+    if (y < 1 || y >= H || !loadedAt(x, z)) continue;
+    const cur = getBlock(x, y, z);
+    if (cur !== 0 && cur < 10) continue;                      // solid blocks & sources never change
+    let want = 0;
+    if (isWater(getBlock(x, y + 1, z))) want = 6;             // falling column
+    for (const d of NB4) {
+      const nx = x + d[0], nz = z + d[1];
+      if (!loadedAt(nx, nz)) continue;
+      const s = strength(getBlock(nx, y, nz));
+      if (s > 1 && SOLID[getBlock(nx, y - 1, nz)]) want = Math.max(want, s - 1);   // spreads sideways only over ground
+    }
+    if (want === 0 && cur === 0) continue;
+    const nid = want === 0 ? 0 : 16 - want;
+    if (nid !== cur) writeBlock(x, y, z, nid, false, false);
+  }
 }
 function solidAt(x, y, z) {           // physics: unloaded chunks count as solid
   if (y < 0) return true; if (y >= H) return false;
@@ -481,7 +531,7 @@ const FACES = [
 ];
 function faceVisible(id, n) {
   if (n === 0) return true;
-  if (id === B.WATER) return n !== B.WATER && !OPAQUE[n];
+  if (isWater(id)) return !isWater(n) && !OPAQUE[n];
   if (id === B.GLASS) return n !== B.GLASS && !OPAQUE[n];
   if (id === B.LEAVES) return n !== B.LEAVES && !OPAQUE[n];
   return !OPAQUE[n];
@@ -508,8 +558,8 @@ function buildMesh(ch) {
   for (let y = 0; y < ch.maxY; y++) for (let z = 0; z < CW; z++) for (let x = 0; x < CW; x++) {
     const id = data[x + z * CW + y * 256];
     if (!id) continue;
-    const trans = id === B.WATER || id === B.GLASS, g = trans ? T : O, tiles = BLOCKS[id].t;
-    const top = (id === B.WATER && get(x, y + 1, z) !== B.WATER) ? 0.9 : 1;
+    const trans = isWater(id) || id === B.GLASS, g = trans ? T : O, tiles = BLOCKS[id].t;
+    const top = isWater(id) ? (isWater(get(x, y + 1, z)) ? 1 : id === B.WATER ? 0.9 : 0.1 + 0.13 * (16 - id)) : 1;
     for (let f = 0; f < 6; f++) {
       const F = FACES[f];
       if (!faceVisible(id, get(x + F.d[0], y + F.d[1], z + F.d[2]))) continue;
@@ -580,7 +630,7 @@ function streamWorld(gen, mesh) {
 /* =========================================================
  * 6. PLAYER, PHYSICS, RAYCAST
  * ======================================================= */
-const player = { x: 8.5, y: 60, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, onGround: false, fly: false, placed: false, inWater: false };
+const player = { hp: 20, hurtT: 0, kbT: 0, x: 8.5, y: 60, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, onGround: false, fly: false, placed: false, inWater: false };
 const input = { jx: 0, jy: 0, kx: 0, kz: 0, jump: false, down: false };
 const hotbar = [1, 2, 3, 4, 5, 8, 9, 6, 7];
 let hotSel = 0;
@@ -592,8 +642,8 @@ function collides(px, py, pz) {
   for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) for (let x = x0; x <= x1; x++) if (solidAt(x, y, z)) return true;
   return false;
 }
-function movePlayer(dt, wantMove) {
-  const p = player, hw = CFG.halfW;
+function moveBody(p, dt, wantMove) {
+  const hw = CFG.halfW;
   const maxs = Math.max(Math.abs(p.vx), Math.abs(p.vy), Math.abs(p.vz)) * dt;
   const n = Math.min(10, Math.max(1, Math.ceil(maxs / 0.3))), h = dt / n;
   const wasGround = p.onGround;
@@ -617,6 +667,18 @@ function movePlayer(dt, wantMove) {
     } else p.y = ny;
   }
 }
+// flowing water pushes bodies downhill (toward weaker water / open air) and down falling columns
+function waterCurrent(b, x, y, z, dt) {
+  const id = getBlock(x, y, z);
+  if (id === B.WATER) return;
+  if (isWater(getBlock(x, y + 1, z))) b.vy -= 14 * dt;
+  const s = strength(id); let dx = 0, dz = 0;
+  for (const d of NB4) {
+    const nid = getBlock(x + d[0], y, z + d[1]);
+    if (!SOLID[nid] && strength(nid) < s) { dx += d[0]; dz += d[1]; }
+  }
+  b.vx += dx * 9 * dt; b.vz += dz * 9 * dt;
+}
 function updatePlayer(dt) {
   const p = player;
   if (!world.chunks.has(ckey(Math.floor(p.x) >> 4, Math.floor(p.z) >> 4))) return;   // wait for terrain
@@ -625,10 +687,13 @@ function updatePlayer(dt) {
   const len = Math.hypot(mx, mz); if (len > 1) { mx /= len; mz /= len; }
   const sy = Math.sin(p.yaw), cy = Math.cos(p.yaw);
   const wx = mx * cy - mz * sy, wz = -mx * sy - mz * cy;
-  p.inWater = getBlock(Math.floor(p.x), Math.floor(p.y + 0.5), Math.floor(p.z)) === B.WATER;
+  const fx = Math.floor(p.x), fz = Math.floor(p.z);
+  p.inWater = isWater(getBlock(fx, Math.floor(p.y + 0.5), fz));
+  if (p.inWater) waterCurrent(p, fx, Math.floor(p.y + 0.5), fz, dt);
   const speed = p.fly ? CFG.fly : (p.inWater ? CFG.walk * 0.55 : CFG.walk);
   const k = 1 - Math.exp(-dt * (p.fly ? 8 : p.onGround ? 20 : 6));
-  p.vx += (wx * speed - p.vx) * k; p.vz += (wz * speed - p.vz) * k;
+  if (p.kbT > 0) p.kbT -= dt;
+  else { p.vx += (wx * speed - p.vx) * k; p.vz += (wz * speed - p.vz) * k; }
   if (p.fly) {
     const vt = (input.jump ? CFG.flyV : 0) - (input.down ? CFG.flyV : 0);
     p.vy += (vt - p.vy) * (1 - Math.exp(-dt * 10));
@@ -640,7 +705,7 @@ function updatePlayer(dt) {
     p.vy = Math.max(p.vy - CFG.gravity * dt, -45);
     if (input.jump && p.onGround) { p.vy = CFG.jump; p.onGround = false; }
   }
-  movePlayer(dt, len > 0.3);
+  moveBody(p, dt, len > 0.3);
   if (p.y < -30) { p.y = heightAt(Math.floor(p.x), Math.floor(p.z)) + 3; p.vy = 0; }
 }
 function viewDir() {
@@ -658,7 +723,7 @@ function raycast(ox, oy, oz, dx, dy, dz, maxD) {
   let nx = 0, ny = 0, nz = 0, t = 0;
   while (t <= maxD) {
     const id = getBlock(x, y, z);
-    if (id && id !== B.WATER) return { x, y, z, nx, ny, nz, id };
+    if (id && !isWater(id)) return { x, y, z, nx, ny, nz, id, t };
     if (tx < ty && tx < tz) { x += sx; t = tx; tx += tdx; nx = -sx; ny = 0; nz = 0; }
     else if (ty < tz) { y += sy; t = ty; ty += tdy; nx = 0; ny = -sy; nz = 0; }
     else { z += sz; t = tz; tz += tdz; nx = 0; ny = 0; nz = -sz; }
@@ -684,14 +749,19 @@ function doPlace() {
   if (!target) return;
   const x = target.x + target.nx, y = target.y + target.ny, z = target.z + target.nz, id = hotbar[hotSel];
   const cur = getBlock(x, y, z);
-  if (cur !== 0 && cur !== B.WATER) return;
+  if (cur !== 0 && !isWater(cur)) return;
   if (SOLID[id] && playerOverlaps(x, y, z)) return;
   setBlock(x, y, z, id);
 }
-function doBreak() { if (target && target.y > 0) setBlock(target.x, target.y, target.z, 0); }
+function doBreak() { if (mobTargeted) { attackMob(); return; } if (target && target.y > 0) setBlock(target.x, target.y, target.z, 0); }
 function pressPlace(src) { act.place[src] = true; doPlace(); act.placeCd = 0.4; }
 function updateActions(dt) {
   if (anyOf(act.place)) { act.placeCd -= dt; if (act.placeCd <= 0) { doPlace(); act.placeCd = 0.22; } }
+  if (mobTargeted) {                                        // hitting Wemmbu takes priority over mining
+    mine.progress = 0; mine.key = ''; crackMesh.visible = false;
+    if (anyOf(act.mine)) { atkCd -= dt; if (atkCd <= 0) { attackMob(); atkCd = 0.45; } } else atkCd = 0;
+    return;
+  }
   if (!anyOf(act.mine) || !target) { mine.progress = 0; mine.key = ''; crackMesh.visible = false; return; }
   const k = target.x + ',' + target.y + ',' + target.z;
   if (k !== mine.key) { mine.key = k; mine.progress = 0; }
@@ -700,6 +770,143 @@ function updateActions(dt) {
   crackMesh.visible = true;
   crackMesh.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5);
   crackMesh.material.map = crackTex[Math.min(5, Math.floor(mine.progress * 6))];
+}
+
+/* =========================================================
+ * 7b. WEMMBU: a blocky enemy that chases you and smashes you with a mace
+ * ======================================================= */
+const mob = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, hp: 20, alive: false, respawnT: 3, state: 'chase', t: 0, cd: 0, kbT: 0,
+  onGround: false, inWater: false, flash: 0, walk: 0, root: null, body: null, armR: null, armL: null, legR: null, legL: null, bar: null, mats: [] };
+let mobTargeted = false, atkCd = 0, lightLevel = 1, spawnPt = [0.5, 30, 0.5];
+const MOB_HP = 20;
+
+function makeMob() {
+  const root = new THREE.Group(), body = new THREE.Group();
+  root.add(body);
+  const mk = (hex, w, h, d, x, y, z, parent) => {
+    const m = new THREE.MeshBasicMaterial({ color: hex }); m.userData.base = new THREE.Color(hex); mob.mats.push(m);
+    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); mesh.position.set(x, y, z); (parent || body).add(mesh); return mesh;
+  };
+  // head with a procedural angry face on the front (+Z)
+  const fc = document.createElement('canvas'); fc.width = fc.height = 8;
+  const g = fc.getContext('2d');
+  g.fillStyle = '#d9a066'; g.fillRect(0, 0, 8, 8);
+  g.fillStyle = '#4a2f1b'; g.fillRect(0, 0, 8, 2); g.fillRect(0, 2, 1, 2); g.fillRect(7, 2, 1, 2);
+  g.fillStyle = '#fff'; g.fillRect(1, 4, 2, 1); g.fillRect(5, 4, 2, 1);
+  g.fillStyle = '#c00'; g.fillRect(2, 4, 1, 1); g.fillRect(5, 4, 1, 1);
+  g.fillStyle = '#2a1408'; g.fillRect(1, 3, 2, 1); g.fillRect(5, 3, 2, 1); g.fillRect(3, 6, 2, 1);
+  const ft = new THREE.CanvasTexture(fc); ft.magFilter = ft.minFilter = THREE.NearestFilter; ft.generateMipmaps = false;
+  const skin = new THREE.MeshBasicMaterial({ color: 0xd9a066 }); skin.userData.base = new THREE.Color(0xd9a066);
+  const face = new THREE.MeshBasicMaterial({ map: ft }); face.userData.base = new THREE.Color(0xffffff);
+  mob.mats.push(skin, face);
+  const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), [skin, skin, skin, skin, face, skin]);
+  head.position.y = 1.65; body.add(head);
+  mk(0x6a3fb5, 0.55, 0.7, 0.3, 0, 1.05, 0);                                   // hoodie
+  mob.legR = new THREE.Group(); mob.legR.position.set(-0.14, 0.7, 0); body.add(mob.legR); mk(0x24346b, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legR);
+  mob.legL = new THREE.Group(); mob.legL.position.set(0.14, 0.7, 0); body.add(mob.legL); mk(0x24346b, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legL);
+  mob.armL = new THREE.Group(); mob.armL.position.set(0.4, 1.38, 0); body.add(mob.armL); mk(0x6a3fb5, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armL);
+  mob.armR = new THREE.Group(); mob.armR.position.set(-0.4, 1.38, 0); body.add(mob.armR); mk(0x6a3fb5, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armR);
+  // the mace: handle + spiked head, pointing "down" from the hand until the arm is raised
+  const mace = new THREE.Group(); mace.position.set(0, -0.62, 0); mace.rotation.x = Math.PI; mob.armR.add(mace);
+  mk(0x5a3a1a, 0.08, 0.85, 0.08, 0, 0.42, 0, mace);
+  mk(0x55575c, 0.3, 0.3, 0.3, 0, 0.98, 0, mace);
+  [[0.22, 0, 0], [-0.22, 0, 0], [0, 0, 0.22], [0, 0, -0.22], [0, 0.22, 0], [0, -0.22, 0]].forEach(o => mk(0x9aa0a8, 0.12, 0.12, 0.12, o[0], 0.98 + o[1], o[2], mace));
+  // floating health bar (billboarded)
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.1), new THREE.MeshBasicMaterial({ color: 0x220000, fog: false, depthTest: false, transparent: true }));
+  const fg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.1), new THREE.MeshBasicMaterial({ color: 0xff3030, fog: false, depthTest: false, transparent: true }));
+  bg.renderOrder = 5; fg.renderOrder = 6; fg.position.z = 0.001;
+  const bar = new THREE.Group(); bar.add(bg); bar.add(fg); bar.position.y = 2.2; bar.userData.fg = fg; root.add(bar);
+  mob.bar = bar; mob.root = root; mob.body = body; root.visible = false; scene.add(root);
+}
+function spawnMob() {
+  for (let i = 0; i < 14; i++) {
+    const a = Math.random() * Math.PI * 2, r = 16 + Math.random() * 8;
+    const x = Math.floor(player.x + Math.cos(a) * r), z = Math.floor(player.z + Math.sin(a) * r);
+    if (!loadedAt(x, z)) continue;
+    let gy = -1; for (let y = H - 1; y > 0; y--) { const id = getBlock(x, y, z); if (SOLID[id]) { gy = y; break; } if (isWater(id)) break; }
+    if (gy < 0 || gy < SEA) continue;
+    Object.assign(mob, { x: x + 0.5, y: gy + 1, z: z + 0.5, vx: 0, vy: 0, vz: 0, hp: MOB_HP, alive: true, state: 'chase', t: 0, cd: 1, kbT: 0, flash: 0 });
+    return;
+  }
+  mob.respawnT = 1.5;
+}
+function attackMob() {
+  if (!mob.alive) return;
+  mob.hp -= 4; mob.flash = 1;
+  let dx = mob.x - player.x, dz = mob.z - player.z; const l = Math.hypot(dx, dz) || 1;
+  mob.vx = dx / l * 8; mob.vz = dz / l * 8; mob.vy = 5; mob.kbT = 0.3;
+  if (mob.state === 'windup') mob.state = 'chase';
+  if (mob.hp <= 0) { mob.alive = false; mob.respawnT = 12; toast('Wemmbu defeated!'); }
+}
+let lastHearts = -1;
+function renderHearts() {
+  if (lastHearts === player.hp) return; lastHearts = player.hp;
+  let h = ''; for (let i = 0; i < 10; i++) h += '<span class="' + (player.hp >= i * 2 + 1 ? 'f' : 'e') + '">&#9829;</span>';
+  $('hearts').innerHTML = h;
+}
+function hurtPlayer(dmg, dx, dz) {
+  player.hp -= dmg; player.hurtT = 1; player.hpT = 0;
+  player.vx = dx * 9; player.vz = dz * 9; player.vy = 9; player.kbT = 0.4; player.onGround = false;
+  if (player.hp <= 0) {
+    toast('Wemmbu maced you!'); player.hp = 20;
+    Object.assign(player, { x: spawnPt[0], y: spawnPt[1], z: spawnPt[2], vx: 0, vy: 0, vz: 0, placed: false });
+    mob.alive = false; mob.respawnT = 6;
+  }
+}
+function rayMob(ox, oy, oz, dx, dy, dz) {          // ray vs the mob's AABB (slab test)
+  let t0 = 0, t1 = 1e9;
+  const mn = [mob.x - 0.3, mob.y, mob.z - 0.3], mx = [mob.x + 0.3, mob.y + 1.9, mob.z + 0.3], o = [ox, oy, oz], d = [dx, dy, dz];
+  for (let i = 0; i < 3; i++) {
+    if (Math.abs(d[i]) < 1e-8) { if (o[i] < mn[i] || o[i] > mx[i]) return Infinity; continue; }
+    let a = (mn[i] - o[i]) / d[i], b = (mx[i] - o[i]) / d[i]; if (a > b) { const t = a; a = b; b = t; }
+    t0 = Math.max(t0, a); t1 = Math.min(t1, b); if (t0 > t1) return Infinity;
+  }
+  return t0;
+}
+function updateMob(dt) {
+  if (!mob.root) return;
+  if (!S.wem) { mob.alive = false; mob.root.visible = false; return; }
+  if (state !== 'play') { mob.root.visible = mob.alive; return; }
+  if (!mob.alive) { mob.root.visible = false; mob.respawnT -= dt; if (mob.respawnT <= 0) spawnMob(); return; }
+  const p = player;
+  let dx = p.x - mob.x, dz = p.z - mob.z; const dist = Math.hypot(dx, dz) || 1, dy = p.y - mob.y;
+  if (dist > 70 || !loadedAt(Math.floor(mob.x), Math.floor(mob.z))) { mob.alive = false; mob.respawnT = 0.5; return; }
+  const chasing = mob.state === 'chase';
+  mob.cd -= dt; mob.t += dt;
+  if (mob.kbT > 0) mob.kbT -= dt;
+  else {
+    const sp = chasing ? (mob.inWater ? 2 : 3.7) : 0, k = 1 - Math.exp(-dt * 10);
+    mob.vx += (dx / dist * sp - mob.vx) * k; mob.vz += (dz / dist * sp - mob.vz) * k;
+  }
+  { const ty = Math.atan2(dx, dz); let da = ty - mob.yaw; da = Math.atan2(Math.sin(da), Math.cos(da)); mob.yaw += da * Math.min(1, dt * 10); }
+  const fx = Math.floor(mob.x), fz = Math.floor(mob.z);
+  mob.inWater = isWater(getBlock(fx, Math.floor(mob.y + 0.5), fz));
+  if (mob.inWater) {
+    waterCurrent(mob, fx, Math.floor(mob.y + 0.5), fz, dt);
+    mob.vy = clamp(mob.vy - CFG.gravity * 0.25 * dt + 30 * dt * (dy > -1 ? 1 : 0), -3, 3);
+  } else mob.vy = Math.max(mob.vy - CFG.gravity * dt, -45);
+  moveBody(mob, dt, chasing && mob.kbT <= 0);
+  if (mob.y < -30) { mob.alive = false; mob.respawnT = 1; return; }
+  // attack state machine
+  if (mob.state === 'chase' && dist < 2.7 && Math.abs(dy) < 2.6 && mob.cd <= 0) { mob.state = 'windup'; mob.t = 0; }
+  else if (mob.state === 'windup' && mob.t >= 0.55) {
+    mob.state = 'recover'; mob.t = 0; mob.cd = 1.5;
+    if (dist < 3.4 && Math.abs(dy) < 2.8) hurtPlayer(6, dx / dist, dz / dist);
+  } else if (mob.state === 'recover' && mob.t >= 0.5) mob.state = 'chase';
+  // animation
+  const moving = Math.hypot(mob.vx, mob.vz) > 0.5 && mob.onGround !== undefined;
+  if (moving) mob.walk += dt * 9;
+  const sw = moving ? Math.sin(mob.walk) : 0;
+  mob.legR.rotation.x = sw * 0.7; mob.legL.rotation.x = -sw * 0.7; mob.armL.rotation.x = -sw * 0.6;
+  let arm = -0.9 + sw * 0.15;
+  if (mob.state === 'windup') arm = -0.9 + (-2.8 + 0.9) * Math.min(1, mob.t / 0.55);
+  else if (mob.state === 'recover') arm = -0.5 + Math.min(1, mob.t / 0.5) * -0.4;
+  mob.armR.rotation.x = arm;
+  mob.flash = Math.max(0, mob.flash - dt * 4);
+  mob.root.visible = true; mob.root.position.set(mob.x, mob.y, mob.z); mob.body.rotation.y = mob.yaw;
+  mob.bar.rotation.y = Math.atan2(camera.position.x - mob.x, camera.position.z - mob.z);
+  mob.bar.userData.fg.scale.x = Math.max(0.001, mob.hp / MOB_HP); mob.bar.userData.fg.position.x = -0.45 * (1 - mob.hp / MOB_HP);
+  for (const m of mob.mats) { m.color.copy(m.userData.base).multiplyScalar(lightLevel); if (mob.flash > 0) m.color.lerp(new THREE.Color(1, 0.1, 0.1), mob.flash * 0.7); }
 }
 
 /* =========================================================
@@ -918,7 +1125,7 @@ function renderHotbar() {
 }
 function buildInventory() {
   const g = $('invGrid'); g.innerHTML = '';
-  for (let id = 1; id < BLOCKS.length; id++) {
+  for (let id = 1; id <= PLAYABLE; id++) {
     const b = document.createElement('button'); b.className = 'ibtn';
     b.innerHTML = '<img src="' + blockIcon(id) + '" alt=""><span>' + BLOCKS[id].n + '</span>';
     b.addEventListener('click', () => { hotbar[hotSel] = id; renderHotbar(); toast(BLOCKS[id].n); });
@@ -938,7 +1145,7 @@ function showSettings(on) { $('settings').classList.toggle('show', on); $('mainb
 function syncSettingsUI() {
   $('setRD').value = S.rd; $('vRD').textContent = S.rd;
   $('setSens').value = S.sens; $('vSens').textContent = S.sens.toFixed(1);
-  $('setFps').textContent = S.fps ? 'ON' : 'OFF';
+  $('setFps').textContent = S.fps ? 'ON' : 'OFF'; $('setWem').textContent = S.wem ? 'ON' : 'OFF'; $('setFx').textContent = S.fx ? 'ON' : 'OFF';
   $('fps').style.display = S.fps ? 'block' : 'none';
 }
 function saveSettings() { store.set(SAVE_SET, JSON.stringify(S)); }
@@ -957,6 +1164,8 @@ function setupMenu() {
   $('btnBack').addEventListener('click', () => showSettings(false));
   $('setRD').addEventListener('input', e => { S.rd = +e.target.value; syncSettingsUI(); saveSettings(); applyRenderDistance(); });
   $('setSens').addEventListener('input', e => { S.sens = +e.target.value; syncSettingsUI(); saveSettings(); });
+  $('setWem').addEventListener('click', () => { S.wem = !S.wem; if (S.wem && !mob.alive) mob.respawnT = 3; syncSettingsUI(); saveSettings(); });
+  $('setFx').addEventListener('click', () => { S.fx = !S.fx; syncSettingsUI(); saveSettings(); });
   $('setFps').addEventListener('click', () => { S.fps = !S.fps; syncSettingsUI(); saveSettings(); });
   $('invClose').addEventListener('click', () => setState('play'));
 }
@@ -986,10 +1195,10 @@ function newWorld() {
   store.del(SAVE_WORLD); store.del(SAVE_PLAYER);
   resetWorldState(); world.mods = {}; world.modsDirty = false;
   setSeed((Math.random() * 2147483647) | 0);
-  const sp = findSpawn();
+  const sp = findSpawn(); spawnPt = sp.slice();
   Object.assign(player, { x: sp[0], y: sp[1], z: sp[2], vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, placed: false });
   if (player.fly) toggleFly();
-  dayTime = 0.3;
+  dayTime = 0.3; player.hp = 20; mob.alive = false; mob.respawnT = 5; wq.clear();
   saveGame();
 }
 function loadGame() {
@@ -1004,10 +1213,11 @@ function loadGame() {
   } else {
     const sp = findSpawn(); player.x = sp[0]; player.y = sp[1]; player.z = sp[2];
   }
+  spawnPt = findSpawn();
 }
 function loadSettings() {
   const s = loadJSON(SAVE_SET);
-  if (s) { S.rd = clamp(s.rd | 0 || 4, 2, 8); S.sens = clamp(+s.sens || 1, 0.3, 3); S.fps = !!s.fps; }
+  if (s) { S.rd = clamp(s.rd | 0 || 4, 2, 8); S.sens = clamp(+s.sens || 1, 0.3, 3); S.fps = !!s.fps; S.wem = s.wem !== false; S.fx = s.fx !== false; }
 }
 
 /* =========================================================
@@ -1027,7 +1237,7 @@ function initRenderer() {
   const tex = buildAtlas();
   matOpaque = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, alphaTest: 0.5 });
   matTrans = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, transparent: true, depthWrite: false });
-  buildCracks();
+  buildCracks(); initPost(); makeMob();
   // sun & moon billboards
   const mk = (size, color) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ color, fog: false, depthTest: false, depthWrite: false })); m.renderOrder = -10; m.frustumCulled = false; scene.add(m); return m; };
   sun = mk(44, 0xfff2b0); moon = mk(30, 0xdde5ff);
@@ -1038,10 +1248,51 @@ function initRenderer() {
   crackMesh.visible = false; crackMesh.renderOrder = 2; scene.add(crackMesh);
   onResize();
 }
+
+/* ----- post-processing: render to a target, then a fullscreen shader pass ----- */
+let rt, postScene, postCam, postMat, underAmt = 0, underNow = false;
+function initPost() {
+  rt = new THREE.WebGLRenderTarget(4, 4, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, format: THREE.RGBAFormat, depthBuffer: true, stencilBuffer: false });
+  postMat = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: rt.texture }, time: { value: 0 }, under: { value: 0 }, hurt: { value: 0 }, texel: { value: new THREE.Vector2(1, 1) } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: [
+      'precision highp float; uniform sampler2D tDiffuse; uniform float time, under, hurt; uniform vec2 texel; varying vec2 vUv;',
+      'void main(){',
+      '  vec2 uv = vUv;',
+      '  uv += under * vec2(sin(uv.y * 24.0 + time * 2.2), cos(uv.x * 28.0 + time * 1.8)) * 0.004;',   // underwater wobble
+      '  vec3 c = texture2D(tDiffuse, uv).rgb;',
+      '  vec2 r = texel * 6.0; vec3 b = vec3(0.0);',                                                        // cheap bloom (8 taps)
+      '  b += texture2D(tDiffuse, uv + vec2(r.x, 0.0)).rgb; b += texture2D(tDiffuse, uv - vec2(r.x, 0.0)).rgb;',
+      '  b += texture2D(tDiffuse, uv + vec2(0.0, r.y)).rgb; b += texture2D(tDiffuse, uv - vec2(0.0, r.y)).rgb;',
+      '  b += texture2D(tDiffuse, uv + r).rgb; b += texture2D(tDiffuse, uv - r).rgb;',
+      '  b += texture2D(tDiffuse, uv + vec2(r.x, -r.y)).rgb; b += texture2D(tDiffuse, uv + vec2(-r.x, r.y)).rgb;',
+      '  c += max(b / 8.0 - 0.78, 0.0) * 1.3;',
+      '  float l = dot(c, vec3(0.299, 0.587, 0.114));',
+      '  c = mix(vec3(l), c, 1.14); c = (c - 0.5) * 1.05 + 0.5;',                                            // grade
+      '  c = mix(c, c * vec3(0.5, 0.8, 1.15) + vec3(0.0, 0.04, 0.1), under);',                               // underwater tint
+      '  vec2 q = vUv - 0.5; c *= 1.0 - dot(q, q) * 0.85;',                                                  // vignette
+      '  c = mix(c, vec3(0.85, 0.04, 0.04), hurt * (0.15 + 0.8 * smoothstep(0.1, 0.6, length(q))));',        // damage flash
+      '  gl_FragColor = vec4(c, 1.0);',
+      '}'].join('\n'),
+    depthTest: false, depthWrite: false
+  });
+  postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  postScene = new THREE.Scene();
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMat); quad.frustumCulled = false; postScene.add(quad);
+}
+function renderFrame(now) {
+  if (!S.fx) { renderer.render(scene, camera); return; }
+  renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+  underAmt += ((underNow ? 1 : 0) - underAmt) * 0.15;
+  postMat.uniforms.time.value = now / 1000; postMat.uniforms.under.value = underAmt; postMat.uniforms.hurt.value = player.hurtT;
+  renderer.render(postScene, postCam);
+}
 function onResize() {
   const w = window.innerWidth, h = window.innerHeight;
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(w, h, false);
+  rt.setSize(Math.floor(w * pixelRatio), Math.floor(h * pixelRatio)); postMat.uniforms.texel.value.set(1 / (w * pixelRatio), 1 / (h * pixelRatio));
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 function applyRenderDistance() {
@@ -1058,11 +1309,12 @@ function updateSky() {
     let v = C_NIGHT[i] + (C_DAY[i] - C_NIGHT[i]) * d;
     v += (C_DUSK[i] - v) * dusk; col[i] = v;
   }
-  const light = 0.24 + 0.76 * d;
+  const light = 0.24 + 0.76 * d; lightLevel = 0.3 + 0.7 * d;
   matOpaque.color.setRGB(light * 0.92, light * 0.96, light);
   matTrans.color.copy(matOpaque.color);
   const eyeY = player.y + CFG.eye;
-  const under = getBlock(Math.floor(player.x), Math.floor(eyeY), Math.floor(player.z)) === B.WATER;
+  const under = getBlock(Math.floor(player.x), Math.floor(eyeY), Math.floor(player.z)) !== 0 && isWater(getBlock(Math.floor(player.x), Math.floor(eyeY), Math.floor(player.z)));
+  underNow = under;
   const far = S.rd * CW;
   if (under) {
     col[0] = 0.08 * light + 0.02; col[1] = 0.25 * light + 0.03; col[2] = 0.5 * light + 0.05;
@@ -1077,13 +1329,13 @@ function updateSky() {
 /* =========================================================
  * 12. MAIN LOOP
  * ======================================================= */
-let last = performance.now(), fpsFrames = 0, fpsTime = 0, fpsVal = 60, lowCount = 0, saveTimer = 0, errCount = 0;
+let waterAcc = 0, last = performance.now(), fpsFrames = 0, fpsTime = 0, fpsVal = 60, lowCount = 0, saveTimer = 0, errCount = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   try {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     update(dt);
-    renderer.render(scene, camera);
+    renderFrame(now);
     // FPS counter + adaptive resolution (drops pixel ratio if we can't hold ~40fps)
     fpsFrames++; fpsTime += dt;
     if (fpsTime >= 1) {
@@ -1099,7 +1351,14 @@ function frame(now) {
 function update(dt) {
   if (state !== 'menu') dayTime = (dayTime + dt / CFG.dayLen) % 1;
   else dayTime = (dayTime + dt / CFG.dayLen * 0.3) % 1;
-  if (state === 'play') { updateLongPress(); updatePlayer(dt); }
+  if (state === 'play') {
+    updateLongPress(); updatePlayer(dt);
+    player.hurtT = Math.max(0, player.hurtT - dt * 1.6);
+    player.hpT = (player.hpT || 0) + dt;
+    if (player.hpT > 6 && player.hp < 20) { player.hp++; player.hpT = 4.5; }
+  }
+  updateMob(dt); renderHearts();
+  if (state !== 'menu') { waterAcc += dt; if (waterAcc >= 0.2) { waterAcc = 0; stepWater(250); } }
   camera.position.set(player.x, player.y + CFG.eye, player.z);
   camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
 
@@ -1112,10 +1371,12 @@ function update(dt) {
   if (state === 'play') {
     const d = viewDir();
     target = raycast(camera.position.x, camera.position.y, camera.position.z, d[0], d[1], d[2], CFG.reach);
-    if (target) { outline.visible = true; outline.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5); }
+    mobTargeted = false;
+    if (mob.alive && S.wem) { const mt = rayMob(camera.position.x, camera.position.y, camera.position.z, d[0], d[1], d[2]); mobTargeted = mt <= CFG.reach && mt < (target ? target.t : Infinity); }
+    if (target && !mobTargeted) { outline.visible = true; outline.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5); }
     else outline.visible = false;
     updateActions(dt);
-  } else { outline.visible = false; crackMesh.visible = false; target = null; }
+  } else { outline.visible = false; crackMesh.visible = false; target = null; mobTargeted = false; }
 
   updateSky();
   saveTimer += dt;
@@ -1126,7 +1387,7 @@ function update(dt) {
  * 13. BOOT
  * ======================================================= */
 function preventBrowserGestures() {
-  document.addEventListener('touchmove', e => { if (!(e.target.closest && e.target.closest('input,#invGrid'))) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (!(e.target.closest && e.target.closest('input,#invGrid,.panel'))) e.preventDefault(); }, { passive: false });
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(n => document.addEventListener(n, e => e.preventDefault()));
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('selectstart', e => e.preventDefault());
@@ -1161,6 +1422,7 @@ function boot() {
   setState('menu');
   requestAnimationFrame(t => { last = t; frame(t); });
 }
+window.__vc = { setBlock, getBlock, player, mob };   // debug handle
 boot();
 
 })();
