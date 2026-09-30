@@ -95,6 +95,7 @@ body.playing #hotbar { display: flex; }
 #slots { display: flex; gap: 3px; padding: 3px; background: rgba(0, 0, 0, .35); border: 3px solid rgba(255, 255, 255, .3); border-radius: 6px; }
 .slot { position: relative; width: var(--slot); height: var(--slot); padding: 0; }
 .slot img { width: 70%; height: 70%; image-rendering: pixelated; pointer-events: none; }
+.slot b { position: absolute; right: 4px; bottom: 1px; font-size: 13px; text-shadow: 2px 2px 0 #000; pointer-events: none; }
 .slot i { position: absolute; left: 3px; top: 1px; font-size: 10px; font-style: normal; opacity: .8; pointer-events: none; }
 .slot.sel { border-color: #fff; background: rgba(255, 255, 255, .28); outline: 3px solid rgba(0, 0, 0, .6); }
 #invBtn { width: var(--slot); height: var(--slot); font-size: 22px; pointer-events: auto; }
@@ -128,6 +129,15 @@ body.playing #hotbar { display: flex; }
 #hearts .e { color: rgba(255,255,255,.25); }
 #hearts .f { color: #ff3b3b; }
 .panel { overflow-y: auto; touch-action: pan-y; }
+#invTabs { display: flex; gap: 10px; }
+#invTabs .pbtn { width: 130px; }
+#invTabs .pbtn.sel { border-color: #fff; background: rgba(120,120,120,.9); }
+#craftList { display: none; flex-direction: column; gap: 8px; width: min(560px, 92vw); max-height: 55vh; overflow-y: auto; touch-action: pan-y; }
+.craft { display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: rgba(40,40,40,.75); border: 3px solid rgba(255,255,255,.35); border-radius: 6px; font-size: 14px; }
+.craft img { width: 40px; height: 40px; image-rendering: pixelated; }
+.craft .info { flex: 1; } .craft .need { font-size: 12px; opacity: .8; }
+.craft button { min-height: 44px; min-width: 76px; font-family: inherit; font-weight: bold; font-size: 14px; }
+.craft button:disabled { opacity: .35; }
 #err { position: fixed; left: 10px; right: 10px; top: 10px; z-index: 99; background: #a00; padding: 10px; display: none; font-size: 14px; }
 </style>
 </head>
@@ -160,8 +170,10 @@ body.playing #hotbar { display: flex; }
 <div id="inv" class="overlay">
   <div class="panel">
     <div class="title" style="font-size:28px">INVENTORY</div>
-    <div class="sub">Tap a block to put it in the selected hotbar slot</div>
+    <div class="sub" id="invSub">Tap a block to put it in the selected hotbar slot</div>
+    <div id="invTabs"><button class="pbtn small" id="tabItems">Items</button><button class="pbtn small" id="tabCraft">Craft</button></div>
     <div id="invGrid"></div>
+    <div id="craftList"></div>
     <button class="pbtn small" id="invClose">Close</button>
   </div>
 </div>
@@ -178,6 +190,7 @@ body.playing #hotbar { display: flex; }
     <div id="settings">
       <div class="row"><label>Render distance</label><input type="range" id="setRD" min="2" max="8" step="1"><span class="v" id="vRD"></span></div>
       <div class="row"><label>Look sensitivity</label><input type="range" id="setSens" min="0.3" max="3" step="0.1"><span class="v" id="vSens"></span></div>
+      <div class="row"><label>Game mode</label><button class="pbtn small" id="setMode" style="width:140px">SURVIVAL</button></div>
       <div class="row"><label>Wemmbu (enemy)</label><button class="pbtn small" id="setWem" style="width:110px">ON</button></div>
       <div class="row"><label>Post-processing</label><button class="pbtn small" id="setFx" style="width:110px">ON</button></div>
       <div class="row"><label>FPS counter</label><button class="pbtn small" id="setFps" style="width:110px">OFF</button></div>
@@ -203,7 +216,7 @@ const CW = 16;              // chunk width/depth
 const H = 64;               // world height
 const SEA = 22;             // sea level (top water block y)
 const CFG = {
-  reach: 6, eye: 1.62, halfW: 0.3, height: 1.8,
+  reach: 4.5, eye: 1.62, halfW: 0.3, height: 1.8,
   gravity: 28, jump: 8.6, walk: 4.6, fly: 11, flyV: 8,
   dayLen: 420,              // seconds per day
   longPress: 0.35, moveSlop: 14
@@ -226,12 +239,28 @@ const SOLID = new Uint8Array(32);   // collides
 [1, 2, 3, 4, 5, 8].forEach(i => OPAQUE[i] = 1);
 // ids 10..15 = flowing water, strength 6..1 (strength = 16 - id). 7 = water source.
 for (let i = 10; i <= 15; i++) BLOCKS[i] = { n: 'Flowing water', t: [8, 8, 8], hard: 0.05 };
-const PLAYABLE = 9;                         // ids 1..9 appear in the inventory
+const PLAYABLE = 9;
+// non-block items (survival). dmg = sword damage, mul = mining speed multiplier
+const ITEMS = {
+  20: { n: 'Stick' },
+  21: { n: 'Wood Sword', dmg: 6, tier: 0xb08850 }, 22: { n: 'Stone Sword', dmg: 8, tier: 0x8d8d92 },
+  23: { n: 'Wood Pickaxe', mul: 2.2, tier: 0xb08850 }, 24: { n: 'Stone Pickaxe', mul: 3.5, tier: 0x8d8d92 }
+};
+const itemName = id => id >= 20 ? ITEMS[id].n : BLOCKS[id].n;
+const RECIPES = [
+  { out: 8, n: 4, need: [[5, 1]] },              // planks <- wood
+  { out: 20, n: 4, need: [[8, 2]] },             // sticks <- planks
+  { out: 21, n: 1, need: [[8, 2], [20, 1]] },
+  { out: 22, n: 1, need: [[3, 2], [20, 1]] },
+  { out: 23, n: 1, need: [[8, 3], [20, 2]] },
+  { out: 24, n: 1, need: [[3, 3], [20, 2]] },
+  { out: 9, n: 2, need: [[4, 2]] }               // glass <- sand
+];                         // ids 1..9 appear in the inventory
 const isWater = id => id === B.WATER || id >= 10;
 for (let i = 1; i < BLOCKS.length; i++) if (BLOCKS[i] && !isWater(i)) SOLID[i] = 1;
 
 const SAVE_WORLD = 'voxelcraft.world.v1', SAVE_PLAYER = 'voxelcraft.player.v1', SAVE_SET = 'voxelcraft.settings.v1';
-const S = { rd: 4, sens: 1, fps: false, wem: true, fx: true };   // user settings
+const S = { rd: 4, sens: 1, fps: false, wem: true, fx: true, mode: 'survival' };   // user settings
 
 // localStorage wrapper that never throws
 const store = {
@@ -341,8 +370,25 @@ function buildAtlas() {
 
 // Small isometric block icons for hotbar / inventory (drawn from the atlas)
 const iconCache = {};
+function itemIcon(id) {
+  const c = document.createElement('canvas'); c.width = c.height = 16; const g = c.getContext('2d');
+  const px = (col, x, y, w, h) => { g.fillStyle = col; g.fillRect(x, y, w || 1, h || 1); };
+  const it = ITEMS[id], hex = '#' + (it.tier || 0xa0703a).toString(16).padStart(6, '0'), brown = '#6b4a25', gold = '#c9a83a';
+  if (id === 20) { for (let i = 0; i < 10; i++) px(brown, 3 + i, 12 - i, 2, 2); }
+  else if (id === 21 || id === 22) {
+    for (let i = 0; i < 9; i++) { px(hex, 5 + i, 9 - i, 2, 2); px('rgba(255,255,255,.45)', 6 + i, 9 - i); }
+    for (let k = -2; k <= 2; k++) px(gold, 5 + k, 10 + k);
+    px(brown, 4, 11); px(brown, 3, 12); px(brown, 2, 13, 2, 2);
+  } else {
+    for (let i = 0; i < 9; i++) px(brown, 3 + i, 13 - i, 2, 1);
+    [[5, 5], [6, 4], [7, 3], [8, 3], [9, 3], [10, 3], [11, 4], [12, 5], [13, 6], [14, 7]].forEach(q => { px(hex, q[0], q[1], 1, 2); });
+  }
+  const o = document.createElement('canvas'); o.width = o.height = 48; const og = o.getContext('2d');
+  og.imageSmoothingEnabled = false; og.drawImage(c, 0, 0, 48, 48); return o.toDataURL();
+}
 function blockIcon(id) {
   if (iconCache[id]) return iconCache[id];
+  if (id >= 20) return iconCache[id] = itemIcon(id);
   const S2 = 48, c = document.createElement('canvas'); c.width = c.height = S2;
   const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
   const t = BLOCKS[id].t, w = S2 / 2 / TILE, h = S2 / 4 / TILE, hv = S2 / 2 / TILE;
@@ -634,7 +680,10 @@ function streamWorld(gen, mesh) {
  * ======================================================= */
 const player = { hp: 20, hurtT: 0, kbT: 0, x: 8.5, y: 60, z: 8.5, vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, onGround: false, fly: false, placed: false, inWater: false };
 const input = { jx: 0, jy: 0, kx: 0, kz: 0, jump: false, down: false };
-const hotbar = [1, 2, 3, 4, 5, 8, 9, 6, 7];
+const hbC = [1, 2, 3, 4, 5, 8, 9, 6, 7], hbS = [0, 0, 0, 0, 0, 0, 0, 0, 0];   // creative / survival hotbars
+let hotbar = hbS;
+const inv = {};                                                              // survival item counts
+const survival = () => S.mode === 'survival';
 let hotSel = 0;
 
 function collides(px, py, pz) {
@@ -750,12 +799,23 @@ function playerOverlaps(bx, by, bz) {
 function doPlace() {
   if (!target) return;
   const x = target.x + target.nx, y = target.y + target.ny, z = target.z + target.nz, id = hotbar[hotSel];
+  if (!id || id > PLAYABLE) return;                         // tools/sticks aren't placeable
+  if (survival() && !(inv[id] > 0)) return;
   const cur = getBlock(x, y, z);
   if (cur !== 0 && !isWater(cur)) return;
   if (SOLID[id] && playerOverlaps(x, y, z)) return;
-  setBlock(x, y, z, id);
+  if (setBlock(x, y, z, id)) { swingNow(); if (survival()) takeItem(id, 1); }
 }
-function doBreak() { if (mobTargeted) { attackMob(); return; } if (target && target.y > 0) setBlock(target.x, target.y, target.z, 0); }
+const heldItem = () => ITEMS[hotbar[hotSel]] || null;
+function heldDamage() { if (!survival()) return 8; const it = heldItem(); return it && it.dmg || 2; }
+function toolMul() { const it = heldItem(); return it && it.mul || 1; }
+function dropFor(id) {
+  if (id === B.GLASS || isWater(id)) return;
+  if (id === B.GRASS) giveItem(B.DIRT, 1);
+  else if (id === B.LEAVES) { const r = Math.random(); if (r < 0.25) giveItem(20, 1); else if (r < 0.4) giveItem(B.LEAVES, 1); }
+  else giveItem(id, 1);
+}
+function doBreak() { if (mobTargeted) { attackMob(); return; } if (target && target.y > 0) { const bid = target.id; swingNow(); if (setBlock(target.x, target.y, target.z, 0) && survival()) dropFor(bid); } }
 function pressPlace(src) { act.place[src] = true; doPlace(); act.placeCd = 0.4; }
 function updateActions(dt) {
   if (anyOf(act.place)) { act.placeCd -= dt; if (act.placeCd <= 0) { doPlace(); act.placeCd = 0.22; } }
@@ -767,7 +827,7 @@ function updateActions(dt) {
   if (!anyOf(act.mine) || !target) { mine.progress = 0; mine.key = ''; crackMesh.visible = false; return; }
   const k = target.x + ',' + target.y + ',' + target.z;
   if (k !== mine.key) { mine.key = k; mine.progress = 0; }
-  mine.progress += dt / Math.max(0.05, BLOCKS[target.id].hard);
+  mine.progress += dt / Math.max(0.05, BLOCKS[target.id].hard * (survival() ? 1.6 : 1) / toolMul());
   if (mine.progress >= 1) { doBreak(); mine.progress = 0; mine.key = ''; crackMesh.visible = false; return; }
   crackMesh.visible = true;
   crackMesh.position.set(target.x + 0.5, target.y + 0.5, target.z + 0.5);
@@ -775,54 +835,57 @@ function updateActions(dt) {
 }
 
 /* =========================================================
- * 7b. WEMMBU: a blocky enemy that chases you and smashes you with a mace
+ * 7b. WEMMBU: a purple, crowned enemy that chases you and smashes you with a mace
  * ======================================================= */
-const mob = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, hp: 20, alive: false, respawnT: 3, state: 'chase', t: 0, cd: 0, kbT: 0,
-  onGround: false, inWater: false, flash: 0, walk: 0, root: null, body: null, armR: null, armL: null, legR: null, legL: null, bar: null, mats: [] };
-let mobTargeted = false, atkCd = 0, lightLevel = 1, spawnPt = [0.5, 30, 0.5];
-const MOB_HP = 20;
-mob.healOnRespawn = false;
+const mob = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, hp: 60, alive: false, respawnT: 60, healOnRespawn: false, state: 'chase', t: 0, cd: 0, kbT: 0,
+  onGround: false, inWater: false, flash: 0, walk: 0, hitT: 0, spawnT: 1, deadT: 9, dying: false, hitDone: true, ringT: 1, mats: [],
+  pose: { lean: 0, armR: -0.9, armL: 0, head: 0, bob: 0, twist: 0, splay: 0 },
+  root: null, body: null, torso: null, head: null, armR: null, armL: null, legR: null, legL: null, barG: null, bar: null, ring: null };
+let mobTargeted = false, atkCd = 0, lightLevel = 1, spawnPt = [0.5, 30, 0.5], shakeT = 0;
+const MOB_HP = 60;
+const TMPC = new THREE.Color(), REDC = new THREE.Color(1, 0.1, 0.1);
+const lerp = (a, b, t) => a + (b - a) * t;
 
 function makeMob() {
-  const root = new THREE.Group(), body = new THREE.Group();
-  root.add(body);
-  const mk = (hex, w, h, d, x, y, z, parent) => {
-    const m = new THREE.MeshBasicMaterial({ color: hex }); m.userData.base = new THREE.Color(hex); mob.mats.push(m);
-    const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); mesh.position.set(x, y, z); (parent || body).add(mesh); return mesh;
-  };
-  // head with a procedural angry face on the front (+Z)
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const P = 0x7a16c9, PD = 0x6a10b0, GOLD = 0xc9a83a;
+  const mat = hex => { const m = new THREE.MeshBasicMaterial({ color: hex }); m.userData.base = new THREE.Color(hex); mob.mats.push(m); return m; };
+  const box = (hex, w, h, d, x, y, z, parent) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(hex)); m.position.set(x, y, z); parent.add(m); return m; };
+  const limb = (px, hex, h) => { const g = new THREE.Group(); g.position.set(px[0], px[1], 0); box(hex, 0.25, h, 0.25, 0, -h / 2, 0, g); return g; };
+  mob.legR = limb([-0.14, 0.7], PD, 0.7); mob.legL = limb([0.14, 0.7], PD, 0.7); body.add(mob.legR); body.add(mob.legL);
+  const torso = new THREE.Group(); torso.position.y = 0.7; body.add(torso); mob.torso = torso;
+  box(P, 0.55, 0.7, 0.3, 0, 0.35, 0, torso);
+  mob.armL = new THREE.Group(); mob.armL.position.set(0.4, 0.68, 0); torso.add(mob.armL); box(P, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armL);
+  mob.armR = new THREE.Group(); mob.armR.position.set(-0.4, 0.68, 0); torso.add(mob.armR); box(P, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armR);
+  // mace: handle + spiked head; points down from the hand until the arm is raised
+  const mace = new THREE.Group(); mace.position.set(0, -0.62, 0); mace.rotation.x = Math.PI; mob.armR.add(mace);
+  box(0x5a3a1a, 0.08, 0.85, 0.08, 0, 0.42, 0, mace);
+  box(0x55575c, 0.3, 0.3, 0.3, 0, 0.98, 0, mace);
+  [[0.22, 0, 0], [-0.22, 0, 0], [0, 0, 0.22], [0, 0, -0.22], [0, 0.22, 0], [0, -0.22, 0]].forEach(o => box(0x9aa0a8, 0.12, 0.12, 0.12, o[0], 0.98 + o[1], o[2], mace));
+  // head (pivot at the neck) with the purple face from the skin
+  const head = new THREE.Group(); head.position.y = 0.72; torso.add(head); mob.head = head;
   const fc = document.createElement('canvas'); fc.width = fc.height = 8;
   const g = fc.getContext('2d');
   g.fillStyle = '#7a16c9'; g.fillRect(0, 0, 8, 8);
   g.fillStyle = '#1a0026'; g.fillRect(0, 3, 1, 1); g.fillRect(7, 3, 1, 1);          // eyes
   g.fillRect(2, 4, 1, 1); g.fillRect(5, 4, 1, 1); g.fillRect(2, 5, 4, 1);           // U-shaped mouth
   const ft = new THREE.CanvasTexture(fc); ft.magFilter = ft.minFilter = THREE.NearestFilter; ft.generateMipmaps = false;
-  const skin = new THREE.MeshBasicMaterial({ color: 0x7a16c9 }); skin.userData.base = new THREE.Color(0x7a16c9);
-  const face = new THREE.MeshBasicMaterial({ map: ft }); face.userData.base = new THREE.Color(0xffffff);
-  mob.mats.push(skin, face);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), [skin, skin, skin, skin, face, skin]);
-  head.position.y = 1.65; body.add(head);
-  mk(0x7a16c9, 0.55, 0.7, 0.3, 0, 1.05, 0);                                   // body
-  // gold crown with a magenta gem
-  mk(0xc9a83a, 0.54, 0.1, 0.54, 0, 1.93, 0);
-  [[-0.2, -0.2], [0, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0.2]].forEach(o => mk(0xc9a83a, 0.1, 0.14, 0.1, o[0], 2.05, o[1]));
-  mk(0xd02be0, 0.12, 0.12, 0.06, 0, 1.93, 0.28);
-  mob.legR = new THREE.Group(); mob.legR.position.set(-0.14, 0.7, 0); body.add(mob.legR); mk(0x6a10b0, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legR);
-  mob.legL = new THREE.Group(); mob.legL.position.set(0.14, 0.7, 0); body.add(mob.legL); mk(0x6a10b0, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legL);
-  mob.armL = new THREE.Group(); mob.armL.position.set(0.4, 1.38, 0); body.add(mob.armL); mk(0x7a16c9, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armL);
-  mob.armR = new THREE.Group(); mob.armR.position.set(-0.4, 1.38, 0); body.add(mob.armR); mk(0x7a16c9, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armR);
-  // the mace: handle + spiked head, pointing "down" from the hand until the arm is raised
-  const mace = new THREE.Group(); mace.position.set(0, -0.62, 0); mace.rotation.x = Math.PI; mob.armR.add(mace);
-  mk(0x5a3a1a, 0.08, 0.85, 0.08, 0, 0.42, 0, mace);
-  mk(0x55575c, 0.3, 0.3, 0.3, 0, 0.98, 0, mace);
-  [[0.22, 0, 0], [-0.22, 0, 0], [0, 0, 0.22], [0, 0, -0.22], [0, 0.22, 0], [0, -0.22, 0]].forEach(o => mk(0x9aa0a8, 0.12, 0.12, 0.12, o[0], 0.98 + o[1], o[2], mace));
-  // floating health bar (billboarded)
+  const skin = mat(P), face = new THREE.MeshBasicMaterial({ map: ft }); face.userData.base = new THREE.Color(0xffffff); mob.mats.push(face);
+  const hm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), [skin, skin, skin, skin, face, skin]); hm.position.y = 0.25; head.add(hm);
+  box(GOLD, 0.54, 0.1, 0.54, 0, 0.53, 0, head);                                       // crown
+  [[-0.2, -0.2], [0, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0.2]].forEach(o => box(GOLD, 0.1, 0.14, 0.1, o[0], 0.65, o[1], head));
+  box(0xd02be0, 0.12, 0.12, 0.06, 0, 0.53, 0.28, head);                               // gem
+  // health bar (billboarded, separate from the body so it never tilts)
   const bg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.1), new THREE.MeshBasicMaterial({ color: 0x220000, fog: false, depthTest: false, transparent: true }));
   const fg = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.1), new THREE.MeshBasicMaterial({ color: 0xff3030, fog: false, depthTest: false, transparent: true }));
   bg.renderOrder = 5; fg.renderOrder = 6; fg.position.z = 0.001;
-  const bar = new THREE.Group(); bar.add(bg); bar.add(fg); bar.position.y = 2.2; bar.userData.fg = fg; root.add(bar);
-  mob.bar = bar; mob.root = root; mob.body = body; root.visible = false; scene.add(root);
+  const barG = new THREE.Group(); barG.add(bg); barG.add(fg); mob.barG = barG; mob.bar = fg; scene.add(barG);
+  // shockwave ring for mace impacts / spawn
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.6, 24), new THREE.MeshBasicMaterial({ color: 0xd8a0ff, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, fog: false }));
+  ring.rotation.x = -Math.PI / 2; ring.visible = false; scene.add(ring); mob.ring = ring;
+  mob.root = root; mob.body = body; root.visible = false; scene.add(root);
 }
+function pulseRing(x, y, z) { mob.ring.position.set(x, y, z); mob.ringT = 0; mob.ring.visible = true; }
 function spawnMob() {
   for (let i = 0; i < 14; i++) {
     const a = Math.random() * Math.PI * 2, r = 16 + Math.random() * 8;
@@ -830,18 +893,20 @@ function spawnMob() {
     if (!loadedAt(x, z)) continue;
     let gy = -1; for (let y = H - 1; y > 0; y--) { const id = getBlock(x, y, z); if (SOLID[id]) { gy = y; break; } if (isWater(id)) break; }
     if (gy < 0 || gy < SEA) continue;
-    Object.assign(mob, { x: x + 0.5, y: gy + 1, z: z + 0.5, vx: 0, vy: 0, vz: 0, hp: MOB_HP, alive: true, state: 'chase', t: 0, cd: 1, kbT: 0, flash: 0 });
+    Object.assign(mob, { x: x + 0.5, y: gy + 1, z: z + 0.5, vx: 0, vy: 0, vz: 0, hp: MOB_HP, alive: true, dying: false, state: 'chase', t: 0, cd: 1, kbT: 0, flash: 0, hitT: 0, spawnT: 0 });
+    mob.body.rotation.x = 0; pulseRing(mob.x, mob.y + 0.05, mob.z);
     return;
   }
   mob.respawnT = 1.5;
 }
 function attackMob() {
   if (!mob.alive) return;
-  mob.hp -= 4; mob.flash = 1;
+  swingNow();
+  mob.hp -= heldDamage(); mob.flash = 1; mob.hitT = 1;
   let dx = mob.x - player.x, dz = mob.z - player.z; const l = Math.hypot(dx, dz) || 1;
   mob.vx = dx / l * 8; mob.vz = dz / l * 8; mob.vy = 5; mob.kbT = 0.3;
-  if (mob.state === 'windup') mob.state = 'chase';
-  if (mob.hp <= 0) { mob.alive = false; mob.respawnT = 60; mob.healOnRespawn = true; toast('Wemmbu defeated! Back in 1 minute'); }
+  if (mob.state === 'windup') { mob.state = 'chase'; mob.cd = 0.6; }
+  if (mob.hp <= 0) { mob.alive = false; mob.dying = true; mob.deadT = 0; mob.respawnT = 60; mob.healOnRespawn = true; toast('Wemmbu defeated! Back in 1 minute'); }
 }
 let lastHearts = -1;
 function renderHearts() {
@@ -850,7 +915,7 @@ function renderHearts() {
   $('hearts').innerHTML = h;
 }
 function hurtPlayer(dmg, dx, dz) {
-  player.hp -= dmg; player.hurtT = 1; player.hpT = 0;
+  player.hp -= dmg; player.hurtT = 1; player.hpT = 0; shakeT = 0.45;
   player.vx = dx * 9; player.vz = dz * 9; player.vy = 9; player.kbT = 0.4; player.onGround = false;
   if (player.hp <= 0) {
     toast('Wemmbu maced you!'); player.hp = 20;
@@ -868,17 +933,58 @@ function rayMob(ox, oy, oz, dx, dy, dz) {          // ray vs the mob's AABB (sla
   }
   return t0;
 }
+// Poses are blended with a damped follow so every state change eases in/out instead of snapping
+function animateMob(dt, moving, dist, dy) {
+  const P = mob.pose, t = performance.now() / 1000, st = mob.state, tt = mob.t;
+  const sw = Math.sin(mob.walk);
+  let lean = 0, armR = -0.9, armL = 0, head = 0, bob = 0, twist = 0, splay = 0, rate = 14;
+  if (moving) { bob = Math.abs(Math.cos(mob.walk)) * 0.07; twist = sw * 0.12; lean = 0.14; armR = -0.9 - sw * 0.18; armL = sw * 0.75; }
+  else { armL = Math.sin(t * 1.6) * 0.06; armR = -0.9 + Math.sin(t * 1.4) * 0.03; bob = Math.sin(t * 2.2) * 0.012; }
+  if (st === 'windup') {                                       // anticipation: crouch, lean back, raise mace overhead with both hands
+    const p = Math.min(1, tt / 0.55), e = 1 - (1 - p) * (1 - p);
+    armR = lerp(-0.9, -3.05, e); armL = lerp(0, -2.5, e); lean = -0.4 * e; bob = -0.08 * e; splay = 0.25 * e; twist = -0.25 * e; rate = 16;
+  } else if (st === 'smash') {                                 // fast slam down + lunge
+    armR = -0.15; armL = -0.3; lean = 0.6; bob = -0.12; twist = 0.2; rate = 50;
+  } else if (st === 'recover') {                               // heavy, slow recovery
+    const p = Math.min(1, tt / 0.6); armR = lerp(-0.2, -0.9, p); armL = lerp(-0.2, 0, p); lean = lerp(0.5, 0, p); bob = lerp(-0.08, 0, p); rate = 7;
+  }
+  lean -= 0.55 * mob.hitT; head -= 0.5 * mob.hitT; twist += 0.3 * mob.hitT;          // stagger when hit
+  const look = clamp(Math.atan2((mob.y + 1.7) - (player.y + CFG.eye), Math.max(0.5, dist)), -0.5, 0.5);
+  head += look + (st === 'windup' ? -0.3 : 0);
+  const k = 1 - Math.exp(-dt * rate);
+  P.lean += (lean - P.lean) * k; P.armR += (armR - P.armR) * k; P.armL += (armL - P.armL) * k; P.head += (head - P.head) * k;
+  P.bob += (bob - P.bob) * k; P.twist += (twist - P.twist) * k; P.splay += (splay - P.splay) * k;
+  mob.torso.rotation.x = P.lean; mob.torso.rotation.y = P.twist; mob.torso.position.y = 0.7 + P.bob;
+  mob.armR.rotation.x = P.armR; mob.armL.rotation.x = P.armL; mob.armR.rotation.z = P.splay; mob.armL.rotation.z = -P.splay;
+  mob.head.rotation.x = P.head; mob.head.rotation.y = clamp(-P.twist * 0.7, -0.5, 0.5);
+  const lw = moving ? 0.85 : 0;
+  mob.legR.rotation.x += (sw * lw - mob.legR.rotation.x) * k; mob.legL.rotation.x += (-sw * lw - mob.legL.rotation.x) * k;
+  if (st === 'windup') { mob.legR.rotation.x += (-0.35 - mob.legR.rotation.x) * k; mob.legL.rotation.x += (0.35 - mob.legL.rotation.x) * k; }   // wide stance
+}
+function tintMob() {
+  for (const m of mob.mats) { m.color.copy(m.userData.base).multiplyScalar(lightLevel); if (mob.flash > 0) m.color.lerp(REDC, mob.flash * 0.7); }
+}
 function updateMob(dt) {
   if (!mob.root) return;
   const tEl = $('wtimer');
-  if (!S.wem) { mob.alive = false; mob.root.visible = false; tEl.style.display = 'none'; return; }
-  if (state !== 'play') { mob.root.visible = mob.alive; return; }
+  if (!S.wem) { mob.alive = false; mob.dying = false; mob.root.visible = false; mob.barG.visible = false; tEl.style.display = 'none'; return; }
+  if (state !== 'play') return;
+  if (mob.ring.visible) {                                       // ring animation
+    mob.ringT += dt / 0.5; const r = Math.min(1, mob.ringT);
+    mob.ring.scale.setScalar(1 + r * 4); mob.ring.material.opacity = (1 - r) * 0.85; if (r >= 1) mob.ring.visible = false;
+  }
   if (!mob.alive) {
-    mob.root.visible = false; mob.respawnT -= dt;
-    if (mob.healOnRespawn) {                                   // 1-minute countdown after a kill
-      const sec = Math.max(0, Math.ceil(mob.respawnT));
-      tEl.textContent = 'Wemmbu returns in ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); tEl.style.display = 'block';
+    mob.barG.visible = false;
+    if (mob.dying) {                                            // death: fall over backwards, then shrink away
+      mob.deadT += dt; const f = Math.min(1, mob.deadT / 0.55);
+      mob.body.rotation.x = -(Math.PI / 2) * f * f;
+      const sc = mob.deadT > 1.1 ? Math.max(0.01, 1 - (mob.deadT - 1.1) / 0.5) : 1; mob.body.scale.setScalar(sc);
+      mob.flash = Math.max(0, 1 - mob.deadT * 2); tintMob();
+      if (mob.deadT > 1.6) { mob.dying = false; mob.root.visible = false; mob.body.scale.setScalar(1); }
     }
+    mob.respawnT -= dt;
+    const sec = Math.max(0, Math.ceil(mob.respawnT));
+    tEl.textContent = (mob.healOnRespawn ? 'Wemmbu returns in ' : 'Wemmbu arrives in ') + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); tEl.style.display = 'block';
     if (mob.respawnT <= 0) {
       spawnMob();
       if (mob.alive && mob.healOnRespawn) { mob.healOnRespawn = false; player.hp = 20; toast('Timer over: you are healed, Wemmbu is back!'); }
@@ -890,13 +996,13 @@ function updateMob(dt) {
   let dx = p.x - mob.x, dz = p.z - mob.z; const dist = Math.hypot(dx, dz) || 1, dy = p.y - mob.y;
   if (dist > 70 || !loadedAt(Math.floor(mob.x), Math.floor(mob.z))) { mob.alive = false; mob.respawnT = 0.5; return; }
   const chasing = mob.state === 'chase';
-  mob.cd -= dt; mob.t += dt;
+  mob.cd -= dt; mob.t += dt; mob.hitT = Math.max(0, mob.hitT - dt * 3); mob.spawnT += dt;
   if (mob.kbT > 0) mob.kbT -= dt;
   else {
     const sp = chasing ? (mob.inWater ? 2 : 3.7) : 0, k = 1 - Math.exp(-dt * 10);
     mob.vx += (dx / dist * sp - mob.vx) * k; mob.vz += (dz / dist * sp - mob.vz) * k;
   }
-  { const ty = Math.atan2(dx, dz); let da = ty - mob.yaw; da = Math.atan2(Math.sin(da), Math.cos(da)); mob.yaw += da * Math.min(1, dt * 10); }
+  { const ty = Math.atan2(dx, dz); let da = ty - mob.yaw; da = Math.atan2(Math.sin(da), Math.cos(da)); mob.yaw += da * Math.min(1, dt * (mob.state === 'windup' ? 4 : 10)); }
   const fx = Math.floor(mob.x), fz = Math.floor(mob.z);
   mob.inWater = isWater(getBlock(fx, Math.floor(mob.y + 0.5), fz));
   if (mob.inWater) {
@@ -905,26 +1011,94 @@ function updateMob(dt) {
   } else mob.vy = Math.max(mob.vy - CFG.gravity * dt, -45);
   moveBody(mob, dt, chasing && mob.kbT <= 0);
   if (mob.y < -30) { mob.alive = false; mob.respawnT = 1; return; }
-  // attack state machine
+  // attack state machine: chase -> windup (0.55s) -> smash (impact at 0.1s) -> recover
   if (mob.state === 'chase' && dist < 2.7 && Math.abs(dy) < 2.6 && mob.cd <= 0) { mob.state = 'windup'; mob.t = 0; }
-  else if (mob.state === 'windup' && mob.t >= 0.55) {
-    mob.state = 'recover'; mob.t = 0; mob.cd = 1.5;
-    if (dist < 3.4 && Math.abs(dy) < 2.8) hurtPlayer(6, dx / dist, dz / dist);
-  } else if (mob.state === 'recover' && mob.t >= 0.5) mob.state = 'chase';
-  // animation
-  const moving = Math.hypot(mob.vx, mob.vz) > 0.5 && mob.onGround !== undefined;
-  if (moving) mob.walk += dt * 9;
-  const sw = moving ? Math.sin(mob.walk) : 0;
-  mob.legR.rotation.x = sw * 0.7; mob.legL.rotation.x = -sw * 0.7; mob.armL.rotation.x = -sw * 0.6;
-  let arm = -0.9 + sw * 0.15;
-  if (mob.state === 'windup') arm = -0.9 + (-2.8 + 0.9) * Math.min(1, mob.t / 0.55);
-  else if (mob.state === 'recover') arm = -0.5 + Math.min(1, mob.t / 0.5) * -0.4;
-  mob.armR.rotation.x = arm;
+  else if (mob.state === 'windup' && mob.t >= 0.55) { mob.state = 'smash'; mob.t = 0; mob.hitDone = false; }
+  else if (mob.state === 'smash') {
+    if (!mob.hitDone && mob.t >= 0.1) {
+      mob.hitDone = true;
+      pulseRing(mob.x + dx / dist * 1.7, mob.y + 0.05, mob.z + dz / dist * 1.7);
+      if (dist < 6) shakeT = Math.max(shakeT, 0.3);
+      if (dist < 3.4 && Math.abs(dy) < 2.8) hurtPlayer(6, dx / dist, dz / dist);
+    }
+    if (mob.t >= 0.28) { mob.state = 'recover'; mob.t = 0; mob.cd = 1.4; }
+  } else if (mob.state === 'recover' && mob.t >= 0.6) mob.state = 'chase';
+  const moving = Math.hypot(mob.vx, mob.vz) > 0.5 && mob.state === 'chase';
+  if (moving) mob.walk += dt * (6 + Math.hypot(mob.vx, mob.vz) * 0.9);
+  animateMob(dt, moving, dist, dy);
   mob.flash = Math.max(0, mob.flash - dt * 4);
-  mob.root.visible = true; mob.root.position.set(mob.x, mob.y, mob.z); mob.body.rotation.y = mob.yaw;
-  mob.bar.rotation.y = Math.atan2(camera.position.x - mob.x, camera.position.z - mob.z);
-  mob.bar.userData.fg.scale.x = Math.max(0.001, mob.hp / MOB_HP); mob.bar.userData.fg.position.x = -0.45 * (1 - mob.hp / MOB_HP);
-  for (const m of mob.mats) { m.color.copy(m.userData.base).multiplyScalar(lightLevel); if (mob.flash > 0) m.color.lerp(new THREE.Color(1, 0.1, 0.1), mob.flash * 0.7); }
+  const e = Math.min(1, mob.spawnT / 0.5), c1 = 1.70158, back = 1 + (c1 + 1) * Math.pow(e - 1, 3) + c1 * Math.pow(e - 1, 2);   // pop-in (ease-out-back)
+  mob.body.scale.setScalar(Math.max(0.01, back));
+  mob.root.visible = true; mob.root.position.set(mob.x, mob.y, mob.z); mob.root.rotation.y = mob.yaw;
+  mob.barG.visible = true; mob.barG.position.set(mob.x, mob.y + 2.35, mob.z);
+  mob.barG.rotation.y = Math.atan2(camera.position.x - mob.x, camera.position.z - mob.z);
+  mob.bar.scale.x = Math.max(0.001, mob.hp / MOB_HP); mob.bar.position.x = -0.45 * (1 - mob.hp / MOB_HP);
+  tintMob();
+}
+
+/* ----- first-person hand / held item (dynamic: rebuilds when the selected item changes) ----- */
+let heldRoot = null, heldId = -2, heldMats = [], swingT = 1, swingLoop = 0, heldBob = 0;
+const tileTex = {};
+function tileTexture(tile) {
+  if (tileTex[tile]) return tileTex[tile];
+  const c = document.createElement('canvas'); c.width = c.height = 16;
+  c.getContext('2d').drawImage(atlasCanvas, (tile % GRID) * TILE, ((tile / GRID) | 0) * TILE, TILE, TILE, 0, 0, 16, 16);
+  const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false;
+  return tileTex[tile] = t;
+}
+function swingNow() { if (swingT >= 1) swingT = 0.001; }
+function buildHeld(id) {
+  const g = new THREE.Group();
+  const vm = (hex, map) => { const m = new THREE.MeshBasicMaterial({ color: map ? 0xffffff : hex, map: map || null, depthTest: false, fog: false }); m.userData.base = new THREE.Color(map ? 0xffffff : hex); heldMats.push(m); return m; };
+  const box = (hex, w, h, d, x, y, z, parent, map) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), vm(hex, map)); m.position.set(x, y, z); m.renderOrder = 30; (parent || g).add(m); return m; };
+  const SKIN = 0xc48a5a, SLEEVE = 0x2fa8b8;
+  if (!id) {                                    // the Minecraft (Steve) arm: skin forearm + cyan sleeve, tilted up-left like the real game
+    const arm = new THREE.Group();
+    box(SKIN, 0.09, 0.09, 0.2, 0, 0, -0.1, arm);           // hand + forearm
+    box(SLEEVE, 0.1, 0.1, 0.22, 0, 0, 0.11, arm);          // sleeve
+    arm.rotation.set(0.6, 0.35, 0); arm.position.set(-0.02, 0.06, 0.02); g.add(arm);
+    g.userData.base = [0, 0, 0];
+  } else if (id <= PLAYABLE) {                  // block: textured cube held in the hand
+    const t = BLOCKS[id].t, top = tileTexture(t[0]), bot = tileTexture(t[1]), sd = tileTexture(t[2]);
+    const mats = [vm(0, sd), vm(0, sd), vm(0, top), vm(0, bot), vm(0, sd), vm(0, sd)];
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.2), mats); m.renderOrder = 30; m.rotation.set(0.25, 0.7, 0); m.position.set(0, 0.02, 0); g.add(m);
+    box(SKIN, 0.09, 0.09, 0.22, 0.03, -0.16, 0.12, g);      // hand under the block
+  } else {
+    const it = ITEMS[id], tier = it.tier || 0xa0703a, brown = 0x6b4a25;
+    const tool = new THREE.Group();
+    if (id === 20) box(brown, 0.05, 0.55, 0.05, 0, 0.2, 0, tool);
+    else if (id === 21 || id === 22) {
+      box(brown, 0.05, 0.22, 0.05, 0, -0.05, 0, tool);       // handle
+      box(0xc9a83a, 0.22, 0.045, 0.07, 0, 0.07, 0, tool);    // guard
+      box(tier, 0.075, 0.6, 0.02, 0, 0.4, 0, tool);          // blade
+      box(0xffffff, 0.02, 0.56, 0.022, 0.02, 0.4, 0, tool);  // highlight
+      box(tier, 0.05, 0.05, 0.02, 0, 0.72, 0, tool);         // tip
+    } else {
+      box(brown, 0.05, 0.62, 0.05, 0, 0.22, 0, tool);        // pickaxe handle
+      box(tier, 0.42, 0.07, 0.06, 0, 0.55, 0, tool);         // head
+      box(tier, 0.07, 0.1, 0.06, -0.24, 0.5, 0, tool); box(tier, 0.07, 0.1, 0.06, 0.24, 0.5, 0, tool);
+    }
+    box(SKIN, 0.1, 0.1, 0.1, 0, -0.08, 0.02, tool);          // fist gripping the handle
+    tool.scale.setScalar(0.8); tool.rotation.set(0.1, -0.2, -0.25); g.add(tool);
+  }
+  return g;
+}
+function updateHeld(dt) {
+  if (!heldRoot) return;
+  heldRoot.visible = state === 'play';
+  const id = hotbar[hotSel] | 0;
+  if (id !== heldId) {
+    heldId = id; while (heldRoot.children.length) heldRoot.remove(heldRoot.children[0]); heldMats.length = 0;
+    heldRoot.add(buildHeld(id)); swingT = 0.001;               // little "equip" swing
+  }
+  if (swingT < 1) swingT = Math.min(1, swingT + dt / 0.3);
+  else if (anyOf(act.mine) && (target || mobTargeted)) swingT = 0.001;    // keep swinging while mining
+  const sp = Math.hypot(player.vx, player.vz); heldBob += dt * (player.onGround ? sp * 2.2 : 0);
+  const s = Math.sin(Math.min(1, swingT) * Math.PI), isArm = !id;
+  heldRoot.position.set(0.36 + Math.sin(heldBob) * 0.012, -0.32 - Math.abs(Math.cos(heldBob)) * 0.014 - s * 0.05, -0.62 - s * 0.12);
+  heldRoot.rotation.set(-s * 1.15, -s * 0.25, s * 0.15 * (isArm ? 1 : -1));
+  const l = 0.25 + 0.75 * lightLevel;
+  for (const m of heldMats) m.color.copy(m.userData.base).multiplyScalar(l);
 }
 
 /* =========================================================
@@ -1040,6 +1214,7 @@ function jumpPress() {
   input.jump = true;
 }
 function toggleFly() {
+  if (survival() && !player.fly) { toast('Flying is creative-only'); return; }
   player.fly = !player.fly; player.vy = 0;
   $('bFly').style.background = player.fly ? 'rgba(90,200,255,.55)' : '';
   $('bDown').classList.toggle('off', !player.fly);
@@ -1137,24 +1312,64 @@ function renderHotbar() {
   const s = $('slots'); s.innerHTML = '';
   hotbar.forEach((id, i) => {
     const d = document.createElement('div'); d.className = 'slot' + (i === hotSel ? ' sel' : '');
-    d.innerHTML = '<img src="' + blockIcon(id) + '" alt=""><i>' + (i + 1) + '</i>';
+    d.innerHTML = (id ? '<img src="' + blockIcon(id) + '" alt="">' : '') + '<i>' + (i + 1) + '</i>' + (survival() && id ? '<b>' + (inv[id] || 0) + '</b>' : '');
     s.appendChild(d);
   });
 }
+let invTab = 'items';
+function giveItem(id, n) {
+  inv[id] = (inv[id] || 0) + n;
+  if (survival() && hotbar.indexOf(id) < 0) { const e = hotbar.indexOf(0); if (e >= 0) hotbar[e] = id; }
+  renderHotbar();
+}
+function takeItem(id, n) {
+  inv[id] = (inv[id] || 0) - n;
+  if (inv[id] <= 0) { delete inv[id]; const i = hbS.indexOf(id); if (i >= 0) hbS[i] = 0; }
+  renderHotbar();
+}
 function buildInventory() {
-  const g = $('invGrid'); g.innerHTML = '';
-  for (let id = 1; id <= PLAYABLE; id++) {
-    const b = document.createElement('button'); b.className = 'ibtn';
-    b.innerHTML = '<img src="' + blockIcon(id) + '" alt=""><span>' + BLOCKS[id].n + '</span>';
-    b.addEventListener('click', () => { hotbar[hotSel] = id; renderHotbar(); toast(BLOCKS[id].n); });
-    g.appendChild(b);
+  const g = $('invGrid'), cl = $('craftList'); g.innerHTML = ''; cl.innerHTML = '';
+  $('tabCraft').style.display = survival() ? '' : 'none';
+  if (!survival()) invTab = 'items';
+  g.style.display = invTab === 'items' ? 'grid' : 'none'; cl.style.display = invTab === 'craft' ? 'flex' : 'none';
+  $('tabItems').classList.toggle('sel', invTab === 'items'); $('tabCraft').classList.toggle('sel', invTab === 'craft');
+  $('invSub').textContent = invTab === 'craft' ? 'Tap Craft to make items from what you carry'
+    : survival() ? (Object.keys(inv).length ? 'Tap an item to put it in the selected hotbar slot' : 'Empty: break blocks to collect them') : 'Tap a block to put it in the selected hotbar slot';
+  if (invTab === 'items') {
+    const ids = survival() ? Object.keys(inv).map(Number).sort((a, b) => a - b) : Array.from({ length: PLAYABLE }, (_, i) => i + 1);
+    ids.forEach(id => {
+      const b = document.createElement('button'); b.className = 'ibtn';
+      b.innerHTML = '<img src="' + blockIcon(id) + '" alt=""><span>' + itemName(id) + (survival() ? ' x' + inv[id] : '') + '</span>';
+      b.addEventListener('click', () => { hotbar[hotSel] = id; renderHotbar(); toast(itemName(id)); });
+      g.appendChild(b);
+    });
+  } else {
+    RECIPES.forEach(r => {
+      const ok = r.need.every(q => (inv[q[0]] || 0) >= q[1]);
+      const row = document.createElement('div'); row.className = 'craft';
+      row.innerHTML = '<img src="' + blockIcon(r.out) + '" alt=""><div class="info">' + itemName(r.out) + ' x' + r.n + '<div class="need">' +
+        r.need.map(q => q[1] + ' ' + itemName(q[0]) + ' (' + (inv[q[0]] || 0) + ')').join(' + ') + '</div></div>';
+      const b = document.createElement('button'); b.className = 'pbtn small'; b.textContent = 'Craft'; b.disabled = !ok;
+      b.addEventListener('click', () => {
+        if (!r.need.every(q => (inv[q[0]] || 0) >= q[1])) return;
+        r.need.forEach(q => takeItem(q[0], q[1])); giveItem(r.out, r.n); toast('Crafted ' + itemName(r.out)); buildInventory();
+      });
+      row.appendChild(b); cl.appendChild(row);
+    });
   }
+}
+function applyMode() {
+  hotbar = survival() ? hbS : hbC;
+  if (survival() && player.fly) toggleFly();
+  $('bFly').classList.toggle('off', survival());
+  heldId = -2; renderHotbar(); buildInventory();
 }
 function setState(s) {
   state = s;
   document.body.classList.toggle('playing', s === 'play' || s === 'inv');
   $('menu').classList.toggle('show', s === 'menu');
   $('inv').classList.toggle('show', s === 'inv');
+  if (s === 'inv') buildInventory();
   if (s !== 'play') { resetInput(); if (document.pointerLockElement && s !== 'play') { try { document.exitPointerLock(); } catch (e) {} } }
   if (s === 'menu') { $('btnPlay').textContent = started ? 'Resume' : 'Play'; showSettings(false); saveGame(); }
 }
@@ -1163,7 +1378,7 @@ function showSettings(on) { $('settings').classList.toggle('show', on); $('mainb
 function syncSettingsUI() {
   $('setRD').value = S.rd; $('vRD').textContent = S.rd;
   $('setSens').value = S.sens; $('vSens').textContent = S.sens.toFixed(1);
-  $('setFps').textContent = S.fps ? 'ON' : 'OFF'; $('setWem').textContent = S.wem ? 'ON' : 'OFF'; $('setFx').textContent = S.fx ? 'ON' : 'OFF';
+  $('setMode').textContent = survival() ? 'SURVIVAL' : 'CREATIVE'; $('setFps').textContent = S.fps ? 'ON' : 'OFF'; $('setWem').textContent = S.wem ? 'ON' : 'OFF'; $('setFx').textContent = S.fx ? 'ON' : 'OFF';
   $('fps').style.display = S.fps ? 'block' : 'none';
 }
 function saveSettings() { store.set(SAVE_SET, JSON.stringify(S)); }
@@ -1182,7 +1397,10 @@ function setupMenu() {
   $('btnBack').addEventListener('click', () => showSettings(false));
   $('setRD').addEventListener('input', e => { S.rd = +e.target.value; syncSettingsUI(); saveSettings(); applyRenderDistance(); });
   $('setSens').addEventListener('input', e => { S.sens = +e.target.value; syncSettingsUI(); saveSettings(); });
-  $('setWem').addEventListener('click', () => { S.wem = !S.wem; if (S.wem && !mob.alive) mob.respawnT = 3; syncSettingsUI(); saveSettings(); });
+  $('setMode').addEventListener('click', () => { S.mode = survival() ? 'creative' : 'survival'; saveSettings(); syncSettingsUI(); applyMode(); toast(survival() ? 'Survival mode' : 'Creative mode'); });
+  $('tabItems').addEventListener('click', () => { invTab = 'items'; buildInventory(); });
+  $('tabCraft').addEventListener('click', () => { invTab = 'craft'; buildInventory(); });
+  $('setWem').addEventListener('click', () => { S.wem = !S.wem; if (S.wem && !mob.alive) mob.respawnT = 60; syncSettingsUI(); saveSettings(); });
   $('setFx').addEventListener('click', () => { S.fx = !S.fx; syncSettingsUI(); saveSettings(); });
   $('setFps').addEventListener('click', () => { S.fps = !S.fps; syncSettingsUI(); saveSettings(); });
   $('invClose').addEventListener('click', () => setState('play'));
@@ -1195,7 +1413,7 @@ let dayTime = 0.3;
 function saveGame() {
   try {
     if (world.modsDirty) { if (store.set(SAVE_WORLD, JSON.stringify({ seed: world.seed, mods: world.mods }))) world.modsDirty = false; }
-    store.set(SAVE_PLAYER, JSON.stringify({ x: player.x, y: player.y, z: player.z, yaw: player.yaw, pitch: player.pitch, fly: player.fly, sel: hotSel, hotbar, time: dayTime }));
+    store.set(SAVE_PLAYER, JSON.stringify({ x: player.x, y: player.y, z: player.z, yaw: player.yaw, pitch: player.pitch, fly: player.fly, sel: hotSel, hotbar: hbC, hbS, inv, time: dayTime }));
   } catch (e) {}
 }
 function findSpawn() {
@@ -1216,7 +1434,8 @@ function newWorld() {
   const sp = findSpawn(); spawnPt = sp.slice();
   Object.assign(player, { x: sp[0], y: sp[1], z: sp[2], vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, placed: false });
   if (player.fly) toggleFly();
-  dayTime = 0.3; player.hp = 20; mob.alive = false; mob.respawnT = 5; mob.healOnRespawn = false; wq.clear();
+  dayTime = 0.3; player.hp = 20; mob.alive = false; mob.dying = false; mob.respawnT = 60; mob.healOnRespawn = false; wq.clear();
+  for (const k in inv) delete inv[k]; hbS.fill(0); applyMode();
   saveGame();
 }
 function loadGame() {
@@ -1225,7 +1444,9 @@ function loadGame() {
   else { setSeed((Math.random() * 2147483647) | 0); world.mods = {}; }
   if (p && isFinite(p.x) && isFinite(p.y) && isFinite(p.z) && w) {
     Object.assign(player, { x: p.x, y: p.y, z: p.z, yaw: p.yaw || 0, pitch: p.pitch || 0 });
-    if (Array.isArray(p.hotbar) && p.hotbar.length === 9) for (let i = 0; i < 9; i++) { const v = p.hotbar[i] | 0; if (v > 0 && v < BLOCKS.length) hotbar[i] = v; }
+    if (Array.isArray(p.hotbar) && p.hotbar.length === 9) for (let i = 0; i < 9; i++) { const v = p.hotbar[i] | 0; if (v > 0 && v <= PLAYABLE) hbC[i] = v; }
+    if (Array.isArray(p.hbS) && p.hbS.length === 9) for (let i = 0; i < 9; i++) { const v = p.hbS[i] | 0; if ((v > 0 && v <= PLAYABLE) || ITEMS[v]) hbS[i] = v; }
+    if (p.inv && typeof p.inv === 'object') for (const k in p.inv) { const v = p.inv[k] | 0, id = +k; if (v > 0 && ((id > 0 && id <= PLAYABLE) || ITEMS[id])) inv[id] = v; }
     hotSel = clamp(p.sel | 0, 0, 8); if (isFinite(p.time)) dayTime = p.time;
     if (p.fly) toggleFly();
   } else {
@@ -1235,7 +1456,7 @@ function loadGame() {
 }
 function loadSettings() {
   const s = loadJSON(SAVE_SET);
-  if (s) { S.rd = clamp(s.rd | 0 || 4, 2, 8); S.sens = clamp(+s.sens || 1, 0.3, 3); S.fps = !!s.fps; S.wem = s.wem !== false; S.fx = s.fx !== false; }
+  if (s) { S.rd = clamp(s.rd | 0 || 4, 2, 8); S.sens = clamp(+s.sens || 1, 0.3, 3); S.fps = !!s.fps; S.wem = s.wem !== false; S.fx = s.fx !== false; S.mode = s.mode === 'creative' ? 'creative' : 'survival'; }
 }
 
 /* =========================================================
@@ -1252,6 +1473,7 @@ function initRenderer() {
   scene.fog = new THREE.Fog(0x87c4ff, 30, 64);
   camera = new THREE.PerspectiveCamera(72, 1, 0.08, 600);
   camera.rotation.order = 'YXZ';
+  scene.add(camera); heldRoot = new THREE.Group(); camera.add(heldRoot);
   const tex = buildAtlas();
   matOpaque = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, alphaTest: 0.5 });
   matTrans = new THREE.MeshBasicMaterial({ map: tex, vertexColors: true, transparent: true, depthWrite: false });
@@ -1375,10 +1597,14 @@ function update(dt) {
     player.hpT = (player.hpT || 0) + dt;
     if (player.hpT > 6 && player.hp < 20) { player.hp++; player.hpT = 4.5; }
   }
-  updateMob(dt); renderHearts();
+  updateMob(dt); renderHearts(); updateHeld(dt);
   if (state !== 'menu') { waterAcc += dt; if (waterAcc >= 0.2) { waterAcc = 0; stepWater(250); } }
   camera.position.set(player.x, player.y + CFG.eye, player.z);
   camera.rotation.set(player.pitch, player.yaw, 0, 'YXZ');
+  if (shakeT > 0) {                                       // screen shake when the mace lands
+    shakeT = Math.max(0, shakeT - dt); const a = shakeT * 0.3;
+    camera.position.x += (Math.random() - 0.5) * a; camera.position.y += (Math.random() - 0.5) * a; camera.rotation.z = (Math.random() - 0.5) * a * 0.4;
+  }
 
   const pcx = Math.floor(player.x) >> 4, pcz = Math.floor(player.z) >> 4;
   if (pcx !== world.pcx || pcz !== world.pcz) refreshWanted(pcx, pcz);
@@ -1405,7 +1631,7 @@ function update(dt) {
  * 13. BOOT
  * ======================================================= */
 function preventBrowserGestures() {
-  document.addEventListener('touchmove', e => { if (!(e.target.closest && e.target.closest('input,#invGrid,.panel'))) e.preventDefault(); }, { passive: false });
+  document.addEventListener('touchmove', e => { if (!(e.target.closest && e.target.closest('input,#invGrid,#craftList,.panel'))) e.preventDefault(); }, { passive: false });
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(n => document.addEventListener(n, e => e.preventDefault()));
   document.addEventListener('contextmenu', e => e.preventDefault());
   document.addEventListener('selectstart', e => e.preventDefault());
@@ -1430,7 +1656,7 @@ function boot() {
   loadSettings(); syncSettingsUI();
   loadGame();
   refreshWanted(Math.floor(player.x) >> 4, Math.floor(player.z) >> 4);
-  renderHotbar(); buildInventory(); setHomeIcon();
+  applyMode(); setHomeIcon();
   preventBrowserGestures(); setupSurface(); setupButtons(); setupKeyboardMouse(); setupMenu();
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', () => setTimeout(onResize, 250));
@@ -1440,7 +1666,7 @@ function boot() {
   setState('menu');
   requestAnimationFrame(t => { last = t; frame(t); });
 }
-window.__vc = { setBlock, getBlock, player, mob };   // debug handle
+window.__vc = { setBlock, getBlock, player, mob, giveItem, inv, S, hbS, attackMob };   // debug handle
 boot();
 
 })();
