@@ -1,0 +1,1063 @@
+{
+  "_meta": {
+    "beschreibung": "50 Beispiel-Templates des Ereignis-Generators. Jedes Template erzeugt mindestens 4 (Auslöser) x 3 (Zuspitzung) = 12 Textvarianten, bevor Slots, Optionsvarianten und Kontexte multipliziert werden.",
+    "amt": "1 Gemeinderat, 2 Bürgermeister:in, 3 Oberbürgermeister:in, 4 Landtag, 5 Landesminister:in, 6 Ministerpräsident:in, 7 Bundestag, 8 Fraktionsvorsitz, 9 Parteivorsitz, 10 Kanzlerkandidat:in, 11 Kanzler:in",
+    "felder": "id, kat, ebene, amt[min,max], themen[], slots{alias:pool}, w (Basisgewicht), cd (Abklingzeit in Spieltagen), i (Intensität 1-3), a[] Auslöser, z[] Zuspitzung, q Frage, o[] Optionen {a: Archetyp, t: Text}, folge {id, nach:[min,max] Tage, wenn: [Archetypen]}"
+  },
+  "templates": [
+    {
+      "id": "KOM-001", "kat": "Kommunal", "ebene": "Kommune", "amt": [1, 3], "themen": ["Verkehr", "Wohnen"],
+      "slots": {"ort": "ort", "bauwerk": "bauwerk", "sum": "sum_k", "v": "verband", "m": "medium", "j": "zahl_j"}, "w": 1.2, "cd": 40, "i": 2,
+      "a": [
+        "In {ort} stellt ein Gutachten fest: {bauwerk} ist „akut sanierungsbedürftig, aber optisch noch ganz charmant“.",
+        "Im {m} steht es schwarz auf weiß: {bauwerk} in {ort} hat seit {j} Jahren keine Wartung mehr gesehen.",
+        "Bei Regen tropft es in {ort} jetzt auch durch {bauwerk.a}. Der Hausmeister hat den Eimer zum Dauerinventar erklärt.",
+        "{v} kippt vor laufender Kamera einen Eimer Wasser aus: „So sieht es in {bauwerk.d} aus!“"
+      ],
+      "z": [
+        "Die Sanierung würde {sum} kosten. Haushaltslage laut Kämmerei: „angespannt“ – wie immer.",
+        "Die Opposition fordert sofortiges Handeln, die Verwaltung ein Gutachten zum Gutachten.",
+        "{v} droht mit einer Unterschriftenliste, das {m} mit einer Serie."
+      ],
+      "q": "Wie gehst du mit {bauwerk.d} um?",
+      "o": [
+        {"a": "invest", "t": "Komplettsanierung beschließen"},
+        {"a": "dialog", "t": "Bürgerversammlung: Was ist uns das wert?"},
+        {"a": "aussitzen", "t": "Erst mal Gutachten Nr. 2 beauftragen"}
+      ],
+      "folge": {"id": "KOM-001", "nach": [20, 60], "wenn": ["aussitzen"]}
+    },
+    {
+      "id": "KOM-002", "kat": "Kommunal", "ebene": "Kommune", "amt": [1, 3], "themen": ["Klima", "Wohnen"],
+      "slots": {"ort": "ort", "p": "projekt", "v": "verband", "person": "person", "sum": "sum_k"}, "w": 1.1, "cd": 50, "i": 2,
+      "a": [
+        "{person} sammelt in {ort} Unterschriften gegen das Projekt „{p}“ – mit Klemmbrett, Thermoskanne und beeindruckender Ausdauer.",
+        "Auf dem Wochenmarkt in {ort} hängen über Nacht Plakate: „{p}? Nicht mit uns!“",
+        "{v} lädt zur Info-Veranstaltung über „{p}“. Es kommen 300 Leute, vorgesehen waren 40 Stühle.",
+        "Bei der Bürgerfragestunde zu „{p}“ geht es erstaunlich schnell von Sachargumenten zu Familiengeschichten."
+      ],
+      "z": [
+        "Das Projekt soll {sum} in die Stadt bringen – und angeblich auch ein paar Bäume fällen.",
+        "Ein Befürworter-Lager gründet spontan die Gegen-Bürgerinitiative „Pro {ort}“.",
+        "Die Verwaltung betont, alles sei rechtlich einwandfrei. Das beruhigt erfahrungsgemäß niemanden."
+      ],
+      "q": "Wie positionierst du dich zu „{p}“?",
+      "o": [
+        {"a": "durchgreifen", "t": "Projekt durchziehen, Gegner überstimmen"},
+        {"a": "dialog", "t": "Bürgerentscheid ansetzen"},
+        {"a": "gruen", "t": "Umplanen: kleiner, grüner, teurer"}
+      ]
+    },
+    {
+      "id": "KOM-003", "kat": "Kommunal", "ebene": "Kommune", "amt": [1, 3], "themen": ["Soziales"],
+      "slots": {"fest": "fest", "ort": "ort", "person": "person", "v": "verband", "st": "stimmung"}, "w": 1.0, "cd": 30, "i": 1,
+      "a": [
+        "Bei {fest} in {ort} reicht dir {person} einen Holzhammer: „Jetzt zeigen Sie mal, was Sie können.“",
+        "{fest} in {ort} beginnt mit dem Bürgermeister-Auftritt. Das Publikum ist {st}, das Bier dagegen bestens gelaunt.",
+        "Auf {fest} in {ort} wartet {v} schon mit Transparent. Immerhin stimmt die Rechtschreibung.",
+        "Du bist bei {fest} in {ort} eingeladen. Erwartet wird eine Rede von „maximal drei Minuten, aber mit Herz“."
+      ],
+      "z": [
+        "Alle Kameras sind auf dich gerichtet – und das Mikro ist bereits an.",
+        "Hinter dir flüstert jemand: „Im Vorjahr hat der Amtsinhaber es mit einem Schlag geschafft.“",
+        "Die Lokalpresse hat sich den besten Platz gesichert: direkt neben dem Bierfass."
+      ],
+      "q": "Wie trittst du auf?",
+      "o": [
+        {"a": "populaer", "t": "Volle Show: Ansage, Schlag, Runde für alle"},
+        {"a": "humor", "t": "Mit Selbstironie punkten"},
+        {"a": "delegieren", "t": "Kurz grüßen, Hände schütteln, weiter"}
+      ]
+    },
+    {
+      "id": "KOM-004", "kat": "Kommunal", "ebene": "Kommune", "amt": [1, 3], "themen": ["Verkehr", "Klima"],
+      "slots": {"ort": "ort", "v": "verband", "j": "zahl_j", "p": "zahl_p", "person": "person"}, "w": 1.1, "cd": 35, "i": 2,
+      "a": [
+        "Der Plan: In {ort} soll ein Radstreifen entstehen. Dafür müssten {p} Parkplätze weichen – ein Kulturkampf in Asphalt.",
+        "{v} fordert mehr Radwege in {ort}, der Gewerbeverein mehr Parkplätze. Beides gleichzeitig ist geometrisch ambitioniert.",
+        "Nach {j} Jahren Dauerbaustelle in {ort} soll nun „endgültig“ die Hauptstraße neu geordnet werden.",
+        "{person} parkt aus Protest zum dritten Mal auf dem Radstreifen, der noch gar nicht existiert."
+      ],
+      "z": [
+        "Der Stadtrat ist gespalten, die Hauptstraße ebenfalls – genau in der Mitte.",
+        "Eine Umfrage im Anzeiger ergibt: 52 Prozent dafür, 48 dagegen, 100 Prozent haben eine Meinung.",
+        "Der Handel warnt vor dem Untergang, die Kinder der Grundschule vor dem Autoverkehr."
+      ],
+      "q": "Wie löst du den Verkehrsstreit?",
+      "o": [
+        {"a": "gruen", "t": "Radstreifen bauen, Parkhaus als Ausgleich"},
+        {"a": "populaer", "t": "Parkplätze bleiben – Basta"},
+        {"a": "dialog", "t": "Verkehrsversuch auf Probe (6 Monate)"}
+      ]
+    },
+    {
+      "id": "KOM-005", "kat": "Kommunal", "ebene": "Kommune", "amt": [1, 3], "themen": ["Bildung", "Soziales"],
+      "slots": {"ort": "ort", "zs": "zahl_s", "sum": "sum_k", "v": "verband", "m": "medium"}, "w": 1.2, "cd": 45, "i": 2,
+      "a": [
+        "In {ort} fehlen Kita-Plätze. Der Elternbeirat legt eine Liste mit Namen vor, die länger ist als der Kitaplan.",
+        "{v} demonstriert mit Kinderwagen vor dem Rathaus in {ort}. Die Sprechchöre sind überraschend rhythmisch.",
+        "Das {m} titelt: „{zs} Kinder, null Plätze?“ Die Kämmerei widerspricht zaghaft bei der Zahl.",
+        "Eine Erzieherin aus {ort} kündigt – mit offenem Brief, der viral geht."
+      ],
+      "z": [
+        "Ein Neubau würde {sum} kosten und frühestens in drei Jahren stehen.",
+        "Der Fachkräftemangel bei Erzieher:innen macht auch den schönsten Neubau zum Rohbau.",
+        "Gleichzeitig fordert die Opposition, bitte nicht an der Bildung zu sparen – und nicht an den Steuern zu drehen."
+      ],
+      "q": "Was tust du gegen den Kita-Notstand?",
+      "o": [
+        {"a": "invest", "t": "Kita-Neubau und Gehaltszuschlag"},
+        {"a": "deal", "t": "Tagesmütter- und Betriebskita-Deal mit Firmen"},
+        {"a": "sparen", "t": "Notgruppen in bestehenden Räumen"}
+      ]
+    },
+    {
+      "id": "LAN-001", "kat": "Landespolitik", "ebene": "Land", "amt": [4, 6], "themen": ["Wirtschaft", "Verkehr"],
+      "slots": {"land": "land", "sum": "sum_m", "p": "projekt", "ort": "ort", "m": "medium"}, "w": 1.0, "cd": 45, "i": 2,
+      "a": [
+        "Das Land {land} stellt {sum} für das Projekt „{p}“ bereit – mit dem Vermerk „Verteilung folgt“.",
+        "Im {m} wird geleakt: Die Förderung für „{p}“ in {ort} war schon vergeben, bevor der Antrag gestellt wurde.",
+        "Der Ausschuss berät über {sum} für „{p}“. Jeder Wahlkreis findet, genau er sei gemeint.",
+        "Die Staatskanzlei lädt zum Spatenstich von „{p}“ in {ort}. Der Spaten wurde extra vergoldet."
+      ],
+      "z": [
+        "Drei Abgeordnete aus drei Ortschaften behaupten gleichzeitig, sie hätten das Geld „nach Hause geholt“.",
+        "Der Rechnungshof räuspert sich schon mal vorsorglich.",
+        "Die Opposition wittert Klüngel. Die Regierung wittert Opposition."
+      ],
+      "q": "Wie verteilst du die Landesmittel?",
+      "o": [
+        {"a": "deal", "t": "Nach Proporz und Parteifreundschaft"},
+        {"a": "transparenz", "t": "Offenes Vergabeverfahren mit Kriterien"},
+        {"a": "populaer", "t": "Alles in die eigene Heimatregion"}
+      ]
+    },
+    {
+      "id": "LAN-002", "kat": "Landespolitik", "ebene": "Land", "amt": [4, 6], "themen": ["Bildung"],
+      "slots": {"land": "land", "zs": "zahl_s", "ort": "ort", "v": "verband", "person": "person"}, "w": 1.0, "cd": 60, "i": 3,
+      "a": [
+        "Das {land}-Bildungsministerium plant, {zs} Lehrerstellen umzuschichten. Die Gewerkschaft nennt das „Umzug mit Ansage“.",
+        "In {ort} soll die Schule zusammengelegt werden. {person} sammelt Unterschriften, und zwar mit großer Wucht.",
+        "Die Bildungsreform in {land} bringt Gewinner und Verlierer – vor allem aber Elternabende.",
+        "{v} ruft zum Schulstreik auf. Die Schüler:innen nehmen das wörtlich."
+      ],
+      "z": [
+        "Eine Studie sagt, die Reform sei notwendig. Eine andere Studie sagt das Gegenteil. Beide wurden vom Land bezahlt.",
+        "Der Haushalt lässt wenig Spielraum, die Stimmung noch weniger.",
+        "Die Landeselternvertretung fordert ein Machtwort, die Kultusministerkonferenz ein Protokoll."
+      ],
+      "q": "Wie gehst du mit der Schulreform um?",
+      "o": [
+        {"a": "durchgreifen", "t": "Reform wie geplant umsetzen"},
+        {"a": "dialog", "t": "Bildungsgipfel einberufen"},
+        {"a": "invest", "t": "Reform mit Sonderfonds abfedern"}
+      ]
+    },
+    {
+      "id": "LAN-003", "kat": "Landespolitik", "ebene": "Land", "amt": [4, 6], "themen": ["Wirtschaft"],
+      "slots": {"land": "land", "sum": "sum_m", "ministerium": "ministerium", "person": "person"}, "w": 0.9, "cd": 70, "i": 3,
+      "a": [
+        "Beim Länderfinanzausgleich wird {land} zum Zahlmeister. {person} spricht von „fiskalischem Ehrenamt“.",
+        "Das {ministerium} des Landes meldet ein Haushaltsloch von {sum}. Ursache: „multiple Faktoren“.",
+        "Der Bund kürzt Zuweisungen, {land} soll die Lücke von {sum} selbst schließen.",
+        "In der Länderrunde streiten alle über Geld, nur das Buffet ist unumstritten."
+      ],
+      "z": [
+        "Die Schuldenbremse drückt, die Wahlversprechen auch.",
+        "Die Landeshauptstadt kündigt an, notfalls Gebühren zu erhöhen. Das klingt schon nach Wahlkampf.",
+        "Die Opposition rechnet vor, die Regierung rechnet anders vor."
+      ],
+      "q": "Wie stopfst du das Haushaltsloch?",
+      "o": [
+        {"a": "sparen", "t": "Kürzungsliste quer durch alle Ressorts"},
+        {"a": "invest", "t": "Neue Schulden für Zukunftsinvestitionen"},
+        {"a": "konter", "t": "Den Bund öffentlich in die Pflicht nehmen"}
+      ]
+    },
+    {
+      "id": "BUN-001", "kat": "Bundespolitik", "ebene": "Bund", "amt": [7, 11], "themen": ["Wirtschaft", "Klima"],
+      "slots": {"gesetz": "gesetz", "person": "person", "ministerium": "ministerium", "m": "medium_nat"}, "w": 1.2, "cd": 40, "i": 2,
+      "a": [
+        "Der Entwurf des {gesetz} liegt im Ausschuss – {person} sagt: „Da fehlen mir ein paar Kommata und ein paar Milliarden.“",
+        "Das {ministerium} legt den Referentenentwurf zum {gesetz} vor. Er umfasst 312 Seiten und einen Beipackzettel.",
+        "Im {m} wird das {gesetz} zerpflückt. Die Überschrift: „Gut gemeint, schlecht gemacht?“",
+        "Zwei Tage vor der Abstimmung über das {gesetz} fehlt dir noch eine Handvoll Stimmen."
+      ],
+      "z": [
+        "Die Fraktionsführung verlangt Geschlossenheit, die Basis verlangt Änderungen.",
+        "Lobbyisten stehen Schlange – und erstaunlich gut gelaunt.",
+        "Der Bundesrat hat bereits angekündigt, „sehr genau hinzuschauen“."
+      ],
+      "q": "Wie organisierst du die Mehrheit für das {gesetz}?",
+      "o": [
+        {"a": "deal", "t": "Kuhhandel mit den Wackelkandidaten"},
+        {"a": "dialog", "t": "Änderungsanträge einarbeiten"},
+        {"a": "durchgreifen", "t": "Fraktionsdisziplin einfordern"}
+      ]
+    },
+    {
+      "id": "BUN-002", "kat": "Bundespolitik", "ebene": "Bund", "amt": [7, 11], "themen": ["Sicherheit", "Wirtschaft"],
+      "slots": {"gesetz": "gesetz", "person": "person", "v": "verband", "zs": "zahl_s"}, "w": 1.0, "cd": 50, "i": 2,
+      "a": [
+        "{person} aus deiner Fraktion kündigt an, beim {gesetz} mit Nein zu stimmen – „aus Gewissensgründen und Wahlkreisgründen“.",
+        "Bei der namentlichen Abstimmung zum {gesetz} wackeln {zs} Stimmen. Nein, Moment, natürlich zwölf.",
+        "{v} verschickt Briefe an alle Abgeordneten zum {gesetz}. Einer davon enthält Pralinen.",
+        "Die Opposition legt einen Änderungsantrag zum {gesetz} vor, der verdächtig vernünftig klingt."
+      ],
+      "z": [
+        "Die Regierungsmehrheit hängt an einem Faden, der gerade beschließt, ein Gewissen zu haben.",
+        "Medien zählen live mit, wer wo sitzt und wer wen nicht anschaut.",
+        "Der Fraktionsgeschäftsführer schläft seit Tagen im Büro."
+      ],
+      "q": "Wie behandelst du die Abweichler:innen?",
+      "o": [
+        {"a": "durchgreifen", "t": "Ansage: Wer abweicht, verliert Ausschusssitze"},
+        {"a": "deal", "t": "Wahlkreis-Goodies anbieten"},
+        {"a": "dialog", "t": "Gewissensfreiheit gewähren"}
+      ]
+    },
+    {
+      "id": "BUN-003", "kat": "Bundespolitik", "ebene": "Bund", "amt": [7, 11], "themen": ["Wirtschaft"],
+      "slots": {"ministerium": "ministerium", "sum": "sum_g", "person": "person", "gesetz": "gesetz"}, "w": 1.0, "cd": 55, "i": 3,
+      "a": [
+        "In der Haushaltswoche fehlen {sum}. Das {ministerium} rät „kreative Buchungslösungen“.",
+        "Die Bereinigungssitzung dauert bis vier Uhr nachts. Um drei kommt {person} auf die Idee, alles zu verschieben.",
+        "Im Haushalt klafft wegen des {gesetz} ein Loch von {sum}. Es wird als „Positionsanpassung“ geführt.",
+        "Der Rechnungshof mahnt: {sum} Risiko im Bundeshaushalt. Das Risiko weist die Mahnung zurück."
+      ],
+      "z": [
+        "Jedes Ressort fordert mehr, jedes Ressort spart nur bei den anderen.",
+        "Die Kanzlerrunde wird als „konstruktiv“ beschrieben – das meint, niemand hat geworfen.",
+        "Die Schuldenregel ist wie ein Mietvertrag: Alle kennen die Klauseln, niemand hat Lust, sie zu lesen."
+      ],
+      "q": "Wo setzt du die Kürzungen an?",
+      "o": [
+        {"a": "sparen", "t": "Rasenmäher: zehn Prozent überall"},
+        {"a": "invest", "t": "Schwerpunkte retten, Rest strecken"},
+        {"a": "populaer", "t": "Sozialkürzungen ausschließen, Risiko vertagen"}
+      ]
+    },
+    {
+      "id": "BUN-004", "kat": "Bundespolitik", "ebene": "Bund", "amt": [7, 11], "themen": ["Digitalisierung"],
+      "slots": {"ministerium": "ministerium", "person": "person", "m": "medium_nat", "gesetz": "gesetz"}, "w": 0.9, "cd": 40, "i": 1,
+      "a": [
+        "In der Regierungsbefragung fragt {person} nach dem Stand des {gesetz}. Die Antwort beginnt mit „Zunächst einmal“ und endet nicht mehr.",
+        "Die Kleine Anfrage zum {ministerium} liefert eine Antwort, die erstaunlich wenig beantwortet.",
+        "Im {m} wird ein Protokoll zitiert, das nie hätte erscheinen sollen.",
+        "Die Aktuelle Stunde zum {gesetz} beginnt mit fünf Minuten Geschäftsordnung."
+      ],
+      "z": [
+        "Die Zuschauerränge sind leer, der Livestream erstaunlich voll.",
+        "Die Opposition hat Zwischenrufe vorbereitet, die Regierung Stichworte auf Karteikarten.",
+        "Das {m} hat zwei Journalist:innen im Saal und einen Kalauer vorbereitet."
+      ],
+      "q": "Wie nutzt du die Gelegenheit?",
+      "o": [
+        {"a": "konter", "t": "Scharf nachfragen und die Schwächen vorführen"},
+        {"a": "transparenz", "t": "Fakten vorlegen, sachlich bleiben"},
+        {"a": "humor", "t": "Mit trockenem Humor punkten"}
+      ]
+    },
+    {
+      "id": "WIR-001", "kat": "Wirtschaft", "ebene": "Kommune", "amt": [2, 6], "themen": ["Wirtschaft"],
+      "slots": {"firma": "firma", "zs": "zahl_s", "ort": "ort", "sum": "sum_k", "m": "medium", "person": "person"}, "w": 1.3, "cd": 40, "i": 3,
+      "a": [
+        "{firma} aus {ort} droht mit Verlagerung: {zs} Arbeitsplätze stehen auf dem Spiel, sagt Inhaber:in {person}.",
+        "Das {m} berichtet: {firma} sucht ein neues Gelände – „nicht zwingend in {ort}“.",
+        "{person} von {firma} lädt dich in die Werkshalle: „Sehen Sie selbst, warum wir hier nicht mehr investieren.“",
+        "Der Betriebsrat von {firma} meldet sich: Es gibt Gerüchte über Stellenabbau von {zs} Stellen."
+      ],
+      "z": [
+        "Das Unternehmen fordert {sum} an Zuschüssen und „Planungssicherheit“. Das Zweite ist schwieriger.",
+        "Die Konkurrenzgemeinde lockt schon mit Rabatten und einem Werbefilm mit Drohnenflug.",
+        "Die Gewerbesteuer von {firma} macht einen nicht unerheblichen Teil deines Haushalts aus."
+      ],
+      "q": "Wie hältst du {firma} im Ort?",
+      "o": [
+        {"a": "deal", "t": "Steuerrabatt im Hinterzimmer aushandeln"},
+        {"a": "invest", "t": "Gewerbegebiet erschließen, Anbindung verbessern"},
+        {"a": "aussitzen", "t": "Nicht erpressbar sein – abwarten"}
+      ],
+      "folge": {"id": "WIR-001", "nach": [15, 45], "wenn": ["aussitzen"]}
+    },
+    {
+      "id": "WIR-002", "kat": "Wirtschaft", "ebene": "Land", "amt": [4, 11], "themen": ["Wirtschaft", "Bildung"],
+      "slots": {"branche": "branche", "zs": "zahl_s", "v": "verband", "land": "land"}, "w": 1.0, "cd": 50, "i": 2,
+      "a": [
+        "In der Branche {branche} fehlen in {land} rund {zs} Fachkräfte – zumindest laut {v}.",
+        "{v} schlägt Alarm: Der Nachwuchs für {branche} bleibt aus. Gründe gibt es viele, einer davon ist Pendelzeit.",
+        "Die Azubi-Zahlen in {branche} sinken zum dritten Mal in Folge. Die Lehrstellenbörse meldet „Leerlauf“.",
+        "Eine Unternehmerrunde aus {branche} verlangt von {land} „endlich Taten statt Tagungen“."
+      ],
+      "z": [
+        "Die Wirtschaft fordert Einwanderung, die Kommunen fordern Wohnraum, der Arbeitsmarkt fordert beides.",
+        "Die Industrie fordert weniger Bürokratie und schickt 14 Formulare mit der Forderung.",
+        "Ein Thinktank empfiehlt ein Bündel von elf Maßnahmen. Sieben widersprechen sich."
+      ],
+      "q": "Wie begegnest du dem Fachkräftemangel?",
+      "o": [
+        {"a": "invest", "t": "Ausbildungsoffensive und Zuschüsse"},
+        {"a": "deal", "t": "Pakt mit Kammern und Gewerkschaften"},
+        {"a": "delegieren", "t": "Kommission einsetzen"}
+      ]
+    },
+    {
+      "id": "WIR-003", "kat": "Wirtschaft", "ebene": "Bund", "amt": [5, 11], "themen": ["Wirtschaft", "Klima"],
+      "slots": {"branche": "branche", "p": "zahl_p", "sum": "sum_g", "gesetz": "gesetz"}, "w": 0.9, "cd": 60, "i": 3,
+      "a": [
+        "Die Energiepreise treffen {branche} besonders hart: Die Kosten sind um {p} Prozent gestiegen.",
+        "Der Industrieverband fordert ein Entlastungspaket über {sum}. Die Forderung kam per Eilbote.",
+        "Die Branche {branche} warnt vor Abwanderung ins Ausland. Ein Werbespot aus Übersee lädt bereits ein.",
+        "Nach dem {gesetz} fragen sich viele in {branche}: Und was kommt dann?"
+      ],
+      "z": [
+        "Die Klimaziele bleiben, die Stimmung sinkt, die Rechnungen steigen.",
+        "Die Opposition nennt es Deindustrialisierung, die Regierung nennt es Transformation.",
+        "Gewerkschaft und Arbeitgeber sind sich einig – das ist beunruhigend."
+      ],
+      "q": "Wie reagierst du auf die Energiepreise?",
+      "o": [
+        {"a": "invest", "t": "Industriestrompreis subventionieren"},
+        {"a": "gruen", "t": "Beschleunigter Ausbau erneuerbarer Energie"},
+        {"a": "sparen", "t": "Markt regeln lassen und Steuern senken"}
+      ]
+    },
+    {
+      "id": "WIR-004", "kat": "Wirtschaft", "ebene": "Kommune", "amt": [2, 6], "themen": ["Digitalisierung", "Wirtschaft"],
+      "slots": {"p": "projekt", "ort": "ort", "sum": "sum_k", "person": "person", "m": "medium"}, "w": 0.8, "cd": 60, "i": 2,
+      "a": [
+        "Ein Start-up aus {ort} will mit „{p}“ die Stadt digitalisieren und benötigt dafür erstmal {sum}.",
+        "{person} präsentiert „{p}“ im Rathaus: eine App, die das Ordnungsamt ersetzen soll. Das Ordnungsamt ist wenig begeistert.",
+        "Das {m} lobt die Gründerszene in {ort} – die Gründer sitzen derweil noch im Coworking im Keller.",
+        "Bei der Gründermesse fragt jemand: „Und die Glasfaser?“ Alle im Saal schweigen solidarisch."
+      ],
+      "z": [
+        "Ein Investor aus der Großstadt zeigt Interesse, möchte aber „Flexibilität beim Datenschutz“.",
+        "Die Verwaltung sucht noch den Drucker für die Antragsformulare.",
+        "Die Jugend ist begeistert, die Senior:innen sind es eher bei der Brötchentaste."
+      ],
+      "q": "Was machst du mit der Digitalisierungsoffensive?",
+      "o": [
+        {"a": "invest", "t": "Anschubfinanzierung und Pilotprojekt"},
+        {"a": "transparenz", "t": "Nur mit offenen Standards und Datenschutz"},
+        {"a": "sparen", "t": "Erst Glasfaser, dann Apps"}
+      ]
+    },
+    {
+      "id": "AUS-001", "kat": "Außen- und Europapolitik", "ebene": "EU", "amt": [6, 11], "themen": ["Außenpolitik", "Wirtschaft"],
+      "slots": {"gesetz": "gesetz", "land": "land", "person": "person", "m": "medium_nat"}, "w": 1.0, "cd": 55, "i": 2,
+      "a": [
+        "Brüssel legt die Richtlinie zum {gesetz} vor. Der Text umfasst 47 Artikel und eine Fußnote, die alles ändert.",
+        "Beim EU-Gipfel hängt die Einigung am {gesetz}. {person} verlässt den Raum „nur kurz“ – seit drei Stunden.",
+        "Das {m} vermutet, {land} werde die EU-Vorgaben „großzügig interpretieren“.",
+        "Ein Kompromisspapier zum {gesetz} kursiert. Es enthält drei Mal das Wort „flexibel“ und einmal „verbindlich“."
+      ],
+      "z": [
+        "Frankreich will mehr, Polen will weniger, und alle wollen Ausnahmen.",
+        "Die Verhandlungen dauern bis nach Mitternacht – bei Kaffee, Keksen und Kampfbereitschaft.",
+        "Zuhause wartet die Presse mit der Frage: „Was bekommen wir dafür?“"
+      ],
+      "q": "Wie positionierst du Deutschland in Brüssel?",
+      "o": [
+        {"a": "deal", "t": "Kompromiss: Wir geben dort nach, nehmen da mit"},
+        {"a": "konter", "t": "Veto androhen und Zugeständnisse erzwingen"},
+        {"a": "transparenz", "t": "Offen Bedenken benennen, Brücken bauen"}
+      ]
+    },
+    {
+      "id": "AUS-002", "kat": "Außen- und Europapolitik", "ebene": "Welt", "amt": [5, 11], "themen": ["Außenpolitik", "Wirtschaft"],
+      "slots": {"branche": "branche", "sum": "sum_g", "person": "person", "m": "medium_nat"}, "w": 0.9, "cd": 70, "i": 2,
+      "a": [
+        "Ein Handelsabkommen über {sum} steht bevor. {person} vom Verband der Branche {branche} jubelt, der Rest stöhnt.",
+        "Das Staatsbankett verlangt vom Gast nur drei Dinge: Lächeln, Schlucken, Mitdiskutieren.",
+        "Ein Staatsbesuch steht an. Protokollchef:in {person} möchte „maximal drei Überraschungen“.",
+        "Das {m} spekuliert, das Handelsabkommen sei nur ein „Geschenkkorb mit Kleingedrucktem“."
+      ],
+      "z": [
+        "Menschenrechtsorganisationen fordern klare Worte, die Wirtschaft fordert klare Verträge.",
+        "Ein Fettnäpfchen steht exakt vor dem Buffet.",
+        "Die Delegation ist 120 Personen stark. Davon sind 41 Journalist:innen, 12 Lobbyist:innen und einer ein Dolmetscher."
+      ],
+      "q": "Wie gehst du mit dem Abkommen um?",
+      "o": [
+        {"a": "deal", "t": "Unterzeichnen – Wirtschaft first"},
+        {"a": "transparenz", "t": "Menschenrechts- und Umweltklauseln fordern"},
+        {"a": "aussitzen", "t": "Verhandlungen vertagen"}
+      ]
+    },
+    {
+      "id": "AUS-003", "kat": "Außen- und Europapolitik", "ebene": "Welt", "amt": [6, 11], "themen": ["Außenpolitik", "Sicherheit"],
+      "slots": {"sum": "sum_g", "person": "person", "m": "medium_nat", "branche": "branche"}, "w": 0.7, "cd": 90, "i": 3,
+      "a": [
+        "Ein Energielieferant droht, die Verträge zu kündigen. Es geht um {sum} und um Prinzipien.",
+        "{person} warnt vor Sanktionen, die „uns mehr schaden als den anderen“. Das {m} fragt: Wem dann?",
+        "Die Verbündeten verlangen Haltung. Die Branche {branche} verlangt Gas.",
+        "Bei einem Krisengipfel liegt ein Sanktionspaket auf dem Tisch. Gewicht: zwei Kilo. Wirkung: unklar."
+      ],
+      "z": [
+        "Innenpolitisch will niemand frieren, außenpolitisch will niemand nachgeben.",
+        "Die Verbündeten beobachten, wie du dich verhältst – und die Medien beobachten die Verbündeten.",
+        "Ein Kompromiss existiert, aber niemand will ihn Kompromiss nennen."
+      ],
+      "q": "Wie reagierst du auf die Drohung?",
+      "o": [
+        {"a": "durchgreifen", "t": "Sanktionen mittragen, Folgen abfedern"},
+        {"a": "deal", "t": "Stille Diplomatie und Sonderlösung"},
+        {"a": "gruen", "t": "Energieunabhängigkeit beschleunigen"}
+      ]
+    },
+    {
+      "id": "SIC-001", "kat": "Innere Sicherheit und Migration", "ebene": "Kommune", "amt": [2, 6], "themen": ["Sicherheit"],
+      "slots": {"ort": "ort", "v": "verband", "person": "person", "m": "medium", "bauwerk": "bauwerk"}, "w": 1.1, "cd": 40, "i": 2,
+      "a": [
+        "Am Abend häufen sich in {ort} Sachbeschädigungen rund um {bauwerk.a}. Die Anwohner:innen sind alarmiert.",
+        "{v} fordert mehr Sicherheit in {ort}. Das {m} zählt 14 zerstörte Bänke und einen verschwundenen Brunnen.",
+        "{person} sagt im Interview: „Nach 20 Uhr traue ich mich nicht mehr zu {bauwerk.d}.“ Die Aussage geht rum.",
+        "Der Stammtisch „Klare Kante“ fordert eine Bürgerwehr. Die Polizei bittet höflich um Verzicht."
+      ],
+      "z": [
+        "Die Polizei verweist auf Personalmangel, die Stadt auf die Polizei.",
+        "Kameras würden {bauwerk.d} überwachen, aber auch die Eisdiele nebenan.",
+        "Jugendsozialarbeiter:innen warnen vor Symbolpolitik und einem zu schnellen Urteil."
+      ],
+      "q": "Was unternimmst du für die Sicherheit?",
+      "o": [
+        {"a": "durchgreifen", "t": "Videoüberwachung und Ordnungsdienst"},
+        {"a": "dialog", "t": "Streetwork und Jugendtreff ausbauen"},
+        {"a": "delegieren", "t": "Runder Tisch mit Polizei und Anwohnern"}
+      ]
+    },
+    {
+      "id": "SIC-002", "kat": "Innere Sicherheit und Migration", "ebene": "Kommune", "amt": [2, 6], "themen": ["Migration", "Wohnen"],
+      "slots": {"ort": "ort", "zs": "zahl_s", "bauwerk": "bauwerk", "v": "verband", "m": "medium"}, "w": 1.0, "cd": 60, "i": 3,
+      "a": [
+        "Das Land weist {ort} kurzfristig {zs} Geflüchtete zu. Eine Unterkunft gibt es nicht.",
+        "Wegen der Zuweisungen muss {bauwerk} in {ort} zeitweise als Unterkunft dienen. {v} protestiert, andere helfen mit.",
+        "Das {m} berichtet: Die Stimmung in {ort} ist „geteilt, aber erstaunlich hilfsbereit“.",
+        "Bei der Bürgerversammlung zur Unterbringung ist die Halle voll. Mikrofone werden zu Waffen."
+      ],
+      "z": [
+        "Die Kommunen fühlen sich vom Bund alleingelassen, der Bund von den Kommunen unterschätzt.",
+        "Ehrenamtliche organisieren bereits Sprachkurse und Kleiderkammer – das Amt noch die Zuständigkeit.",
+        "Die Opposition nutzt das Thema, die Regierung die Gelegenheit, nichts zu sagen."
+      ],
+      "q": "Wie organisierst du die Unterbringung?",
+      "o": [
+        {"a": "dialog", "t": "Dezentral, mit Bürgerbeteiligung und Ehrenamt"},
+        {"a": "durchgreifen", "t": "Schnell, zentral, pragmatisch"},
+        {"a": "konter", "t": "Land öffentlich auffordern, Mittel bereitzustellen"}
+      ]
+    },
+    {
+      "id": "SIC-003", "kat": "Innere Sicherheit und Migration", "ebene": "Land", "amt": [4, 6], "themen": ["Sicherheit"],
+      "slots": {"land": "land", "zs": "zahl_s", "v": "verband", "sum": "sum_m", "m": "medium"}, "w": 1.0, "cd": 55, "i": 2,
+      "a": [
+        "Die Polizeigewerkschaft in {land} verlangt {zs} zusätzliche Stellen und bessere Ausrüstung.",
+        "Nach einem Einsatz bemängelt {v} die Überlastung der Streifen. Das {m} druckt das Foto eines leeren Streifenwagens.",
+        "Bei der Innenministerkonferenz wird erstmals über {sum} für Sicherheit gestritten. Keiner will zahlen.",
+        "Ein Bericht zeigt: Die Aufklärungsquote sinkt. Die Kriminalitätsstatistik steigt. Die Schlagzeile schreibt sich selbst."
+      ],
+      "z": [
+        "Mehr Polizei, mehr Prävention oder beides – die Kasse erlaubt höchstens eins.",
+        "Die Opposition wirft dir Sparen am falschen Ende vor, die Gewerkschaft Sparen am richtigen.",
+        "Die Polizeischulen sind voll, die Besoldungstabellen leer."
+      ],
+      "q": "Wie stärkst du die Polizei?",
+      "o": [
+        {"a": "invest", "t": "Stellen, Ausrüstung, Gehaltsplus"},
+        {"a": "transparenz", "t": "Reform der Strukturen und mehr Prävention"},
+        {"a": "sparen", "t": "Effizienzgewinne statt neuer Stellen"}
+      ]
+    },
+    {
+      "id": "SIC-004", "kat": "Innere Sicherheit und Migration", "ebene": "Land", "amt": [2, 6], "themen": ["Sicherheit", "Soziales"],
+      "slots": {"ort": "ort", "person": "person", "v": "verband", "zs": "zahl_s", "m": "medium"}, "w": 0.9, "cd": 50, "i": 2,
+      "a": [
+        "In {ort} sind für Samstag zwei Demonstrationen angemeldet. Beide wollen auf dem Marktplatz stehen.",
+        "{v} ruft zur Gegendemo auf. Erwartet werden {zs} Teilnehmende, erwartet wird auch Regen.",
+        "Der Kreiswahlleiter warnt vor Eskalation. Das {m} warnt vor einem Sommerloch.",
+        "{person} meldet eine Kundgebung an – Motto: „Gegen alles, außer gegen mich“."
+      ],
+      "z": [
+        "Polizei, Ordnungsamt und Gastronomen wollen jeweils etwas anderes: Ruhe, Regeln, Umsatz.",
+        "Die Versammlungsfreiheit ist hohes Gut, der Marktplatz ein kleines.",
+        "Die Bilder des Tages werden sich in den Kommentarspalten länger halten als der Einsatz."
+      ],
+      "q": "Wie organisierst du den Einsatz?",
+      "o": [
+        {"a": "durchgreifen", "t": "Räumlich trennen, Polizei präsent"},
+        {"a": "dialog", "t": "Gespräch mit beiden Seiten vorab"},
+        {"a": "humor", "t": "Stadtfest am selben Platz als Puffer"}
+      ]
+    },
+    {
+      "id": "KRI-001", "kat": "Krisen und Katastrophen", "ebene": "Kommune", "amt": [1, 6], "themen": ["Klima", "Sicherheit"],
+      "slots": {"ort": "ort", "wetter": "wetter", "zs": "zahl_s", "v": "verband", "m": "medium"}, "w": 1.0, "cd": 80, "i": 3,
+      "a": [
+        "Nach {wetter} steigt der Pegel in {ort} stündlich. Die Feuerwehr bittet um Sandsäcke und Geduld.",
+        "{v} meldet: Keller in {ort} laufen voll, {zs} Haushalte sind betroffen.",
+        "Das {m} sendet live aus {ort}. Die Reporterin steht knietief im Wasser – ein eindrucksvolles Bild.",
+        "Der Katastrophenalarm wird ausgelöst, die Sirene ist alt, aber laut."
+      ],
+      "z": [
+        "Der Krisenstab tagt, die Handyakkus sterben.",
+        "Während du entscheidest, werden die Bilder von dir bereits geprüft: Sitzen die Stiefel?",
+        "Nachbargemeinden bitten um Hilfe, die eigene Kasse ebenfalls."
+      ],
+      "q": "Wie führst du durch die Krise?",
+      "o": [
+        {"a": "durchgreifen", "t": "Krisenstab leiten, Evakuierung anordnen"},
+        {"a": "populaer", "t": "Selbst mit Gummistiefeln anpacken"},
+        {"a": "delegieren", "t": "Zuständigkeit an Kreis und Land melden"}
+      ]
+    },
+    {
+      "id": "KRI-002", "kat": "Krisen und Katastrophen", "ebene": "Land", "amt": [4, 6], "themen": ["Klima", "Wirtschaft"],
+      "slots": {"land": "land", "wetter": "wetter", "v": "verband", "sum": "sum_m", "branche": "branche"}, "w": 0.9, "cd": 90, "i": 2,
+      "a": [
+        "Nach {wetter} droht in {land} ein Ernteausfall. {v} spricht von „existenzieller Lage“ für {branche}.",
+        "Die Waldbrandstufe in {land} steigt auf Maximum, die Feuerwehr auf Überstunden.",
+        "{v} verlangt Nothilfe: {sum} für die Betriebe. Die Formulare dazu liegen vor, aber niemand kennt die Zuständigkeit.",
+        "Ein Landrat fordert, das Katastrophengebiet auszurufen. Der Nachbar sagt das auch, nur etwas später."
+      ],
+      "z": [
+        "Die Kasse ist knapp, das Wetter nicht.",
+        "Der Bund möchte erstmal Daten, die Betroffenen lieber Geld.",
+        "Die Medien schicken Drohnen, die Verwaltung schickt Formulare."
+      ],
+      "q": "Wie hilfst du den Betroffenen?",
+      "o": [
+        {"a": "invest", "t": "Nothilfefonds sofort auszahlen"},
+        {"a": "gruen", "t": "Hilfe an Klimaanpassung koppeln"},
+        {"a": "delegieren", "t": "Antragsverfahren abwarten"}
+      ]
+    },
+    {
+      "id": "KRI-003", "kat": "Krisen und Katastrophen", "ebene": "Bund", "amt": [5, 11], "themen": ["Digitalisierung", "Sicherheit", "Gesundheit"],
+      "slots": {"ort": "ort", "zs": "zahl_s", "sum": "sum_g", "person": "person", "m": "medium_nat"}, "w": 0.8, "cd": 90, "i": 3,
+      "a": [
+        "Ein Cyberangriff legt die Krankenhäuser in {ort} lahm: {zs} Patient:innen werden verlegt.",
+        "Hacker fordern {sum} in Kryptowährung. Die IT-Abteilung fordert Kaffee und einen Plan B.",
+        "Das {m} meldet: Sensible Daten kursieren im Netz. {person} spricht von „Risikobewertung“.",
+        "Die Verwaltung in {ort} arbeitet wieder mit Stift und Papier. Die Schlangen sind lang."
+      ],
+      "z": [
+        "Die Opposition wirft dir Versäumnisse bei der IT-Sicherheit vor, die Verwaltung dir Haushaltsentscheidungen.",
+        "Internationale Partner bieten Hilfe an – und Hinweise, dass das absehbar war.",
+        "Die Bevölkerung ist verunsichert. In den Apotheken wird Bargeld verlangt."
+      ],
+      "q": "Wie managst du den Cyberangriff?",
+      "o": [
+        {"a": "durchgreifen", "t": "Krisenstab, Bundeswehr-IT, keine Verhandlung"},
+        {"a": "transparenz", "t": "Offen informieren und Fehler benennen"},
+        {"a": "deal", "t": "Still verhandeln, um Schlimmeres zu verhindern"}
+      ]
+    },
+    {
+      "id": "KRI-004", "kat": "Krisen und Katastrophen", "ebene": "Land", "amt": [4, 11], "themen": ["Verkehr", "Wirtschaft"],
+      "slots": {"wetter": "wetter", "v": "verband", "zs": "zahl_s", "person": "person", "m": "medium"}, "w": 1.0, "cd": 60, "i": 2,
+      "a": [
+        "Wegen {wetter} steht der Bahnverkehr still: {zs} Fahrgäste stranden in Hallen mit schlechten Stühlen.",
+        "Ein Stromausfall legt Teile der Region lahm. {person} versichert: „Das Netz ist sicher – überwiegend.“",
+        "Das {m} zählt 37 Zugausfälle in einer Woche. Die Bahn spricht von „Betriebsrauschen“.",
+        "{v} fordert ein Krisenkonzept für den Blackout-Fall. Das Konzept existiert – als Entwurf."
+      ],
+      "z": [
+        "Die Pendler:innen sind verärgert, der Wirtschaftsverkehr gefährdet.",
+        "Bund, Land und Bahn erklären sich jeweils für „nicht zuständig, aber hilfsbereit“.",
+        "Die Ersatzbusse sind da, leider im Ersatzbuskonzept nicht vorgesehen."
+      ],
+      "q": "Wie reagierst du auf das Chaos?",
+      "o": [
+        {"a": "invest", "t": "Notfallfonds und Ersatzverkehre bezahlen"},
+        {"a": "konter", "t": "Bahn öffentlich zur Rechenschaft ziehen"},
+        {"a": "dialog", "t": "Mobilitätsgipfel mit allen Beteiligten"}
+      ]
+    },
+    {
+      "id": "MED-001", "kat": "Medien", "ebene": "Bund", "amt": [1, 11], "themen": ["Medien"],
+      "slots": {"person": "person", "m": "medium", "jahr": "zahl_j", "v": "verband"}, "w": 1.2, "cd": 40, "i": 2,
+      "a": [
+        "Ein Foto von vor {jahr} Jahren taucht auf: du, ein Bierglas, eine Kopfbedeckung, die man heute „mutig“ nennt.",
+        "{person} veröffentlicht einen alten Beitrag von dir. Er ist nicht falsch – er ist nur schlecht gealtert.",
+        "Das {m} fragt: „Was wusste die Kandidatin / der Kandidat?“ – ohne zu sagen, wovon es spricht.",
+        "{v} schreibt einen offenen Brief an dich, unterschrieben von {jahr} Leuten, die du nicht kennst."
+      ],
+      "z": [
+        "Die Kommentarspalten haben zu diesem Thema in Rekordzeit dreizehn Meinungen.",
+        "Das Hashtag wächst schneller als dein Dementi.",
+        "Dein Pressesprecher sagt: „Wir haben ein Fenster von zwei Stunden.“"
+      ],
+      "q": "Wie reagierst du auf den Shitstorm?",
+      "o": [
+        {"a": "transparenz", "t": "Offen Fehler einräumen und sich erklären"},
+        {"a": "konter", "t": "Gegenangriff auf die Quelle"},
+        {"a": "aussitzen", "t": "Sturm vorbeiziehen lassen"}
+      ]
+    },
+    {
+      "id": "MED-002", "kat": "Medien", "ebene": "Kommune", "amt": [1, 11], "themen": ["Medien", "Integrität"],
+      "slots": {"person": "person", "m": "medium", "firma": "firma", "sum": "sum_k"}, "w": 1.0, "cd": 60, "i": 3,
+      "a": [
+        "{person} vom {m} hat Unterlagen: Dein Verband hat {sum} von {firma} erhalten. Es wird „nachgefragt“.",
+        "Das {m} kündigt für morgen eine Enthüllung an. Der Anwalt von {firma} hat schon angerufen.",
+        "Ein Vermerk über ein Abendessen mit {firma} taucht auf. Das Dessert kostete mehr als die Spende.",
+        "Eine anonyme Quelle spielt dem {m} eine Kontoauszugsliste zu. Die Zahlen stimmen nur teilweise."
+      ],
+      "z": [
+        "Die Opposition fordert Aufklärung, die eigene Fraktion fordert Ruhe.",
+        "Das Thema landet in den Talkshows. Dort wird es mit Schaubildern erklärt, die nichts erklären.",
+        "{firma} erklärt sich „tief besorgt“ – über die Berichterstattung."
+      ],
+      "q": "Wie gehst du mit der Enthüllung um?",
+      "o": [
+        {"a": "transparenz", "t": "Alle Unterlagen offenlegen"},
+        {"a": "konter", "t": "Verleumdungsklage und Gegenoffensive"},
+        {"a": "deal", "t": "Hinter den Kulissen Journalisten beruhigen"}
+      ],
+      "folge": {"id": "PER-004", "nach": [10, 40], "wenn": ["deal", "konter"]}
+    },
+    {
+      "id": "MED-003", "kat": "Medien", "ebene": "Bund", "amt": [1, 11], "themen": ["Digitalisierung", "Medien"],
+      "slots": {"person": "person", "m": "medium", "zs": "zahl_s", "st": "stimmung"}, "w": 1.0, "cd": 40, "i": 2,
+      "a": [
+        "Ein Video kursiert: Du sagst einen Satz, den du nie gesagt hast – mit erstaunlich viel Überzeugung.",
+        "Ein Meme zeigt dich als Zeichentrickfigur. Es hat {zs} Teilungen und ist, zugegeben, recht gut.",
+        "{person} postet eine Collage von dir mit dem Titel „Das ist also unsere Hoffnung?“ Es ist {st} in den Kommentaren.",
+        "Das {m} erklärt in einem Faktencheck, warum du nichts gesagt hast, was du gesagt haben könntest."
+      ],
+      "z": [
+        "Dein Social-Media-Team bietet drei Varianten an: ernst, sarkastisch oder „selbstironisch-cringe“.",
+        "Die Jugend findet es lustig, die Älteren finden es besorgniserregend.",
+        "Der Fake ist nach zwei Stunden aufgeflogen, aber der Schaden hat längst Mittagspause."
+      ],
+      "q": "Wie reagierst du auf das Video?",
+      "o": [
+        {"a": "transparenz", "t": "Faktencheck und rechtliche Schritte"},
+        {"a": "humor", "t": "Mit eigenem Gegenmeme kontern"},
+        {"a": "aussitzen", "t": "Ignorieren und hoffen"}
+      ]
+    },
+    {
+      "id": "MED-004", "kat": "Medien", "ebene": "Bund", "amt": [6, 11], "themen": ["Medien"],
+      "slots": {"m": "medium_nat", "person": "person", "thema": "thema", "st": "stimmung"}, "w": 1.1, "cd": 30, "i": 2,
+      "a": [
+        "Die Talkshow im {m} lädt dich ein – Thema: {thema}. Dein Gegenüber ist {person}, bekannt für Zwischenrufe.",
+        "{person} fordert dich zum TV-Duell über {thema}. Das Studio ist {st}, die Quote garantiert.",
+        "Die Moderation kündigt an: „Wir werden heute nicht locker lassen.“ Das klingt wie eine Drohung.",
+        "Vor der Sendung gibt dir dein Team Stichwörter auf einem Zettel. Ein Stichwort lautet „Atmen“."
+      ],
+      "z": [
+        "Das Publikum ist im Saal, die Kommentarspalten im Netz, die Nerven dazwischen.",
+        "Jede Antwort ist nach 40 Sekunden zu Ende, jeder Fehler für immer auf Video.",
+        "Der Gegner hat Fakten, Humor und wahrscheinlich Pfefferminzbonbons."
+      ],
+      "q": "Wie gehst du ins Duell?",
+      "o": [
+        {"a": "konter", "t": "Angriffslustig und konfrontativ"},
+        {"a": "transparenz", "t": "Sachlich mit Faktenwissen"},
+        {"a": "humor", "t": "Charmant und schlagfertig"}
+      ]
+    },
+    {
+      "id": "PER-001", "kat": "Persönliches", "ebene": "Bund", "amt": [1, 11], "themen": ["Integrität"],
+      "slots": {"person": "person", "m": "medium", "jahr": "zahl_j", "v": "verband"}, "w": 0.8, "cd": 120, "i": 3,
+      "a": [
+        "Ein Plagiatsjäger findet in deiner Abschlussarbeit vor {jahr} Jahren 41 „unmarkierte Gedankenparallelen“.",
+        "{person} behauptet, Teile deiner Doktorarbeit klängen „bemerkenswert vertraut“. Das {m} fragt nach.",
+        "Dein Professor von damals lebt noch und erinnert sich, wie er sagte: „Bitte zitieren Sie richtig.“",
+        "{v} fordert die Überprüfung deiner akademischen Laufbahn. Die Universität prüft „zeitnah“, also in einem Jahr."
+      ],
+      "z": [
+        "Die Partei fragt, ob sie sich Sorgen machen muss. Du sagst nein. Die Partei macht sich trotzdem Sorgen.",
+        "Die Universität kündigt eine Kommission an. Die Kommission tagt nicht öffentlich, aber das {m} schon.",
+        "Kommentatoren entdecken die Wörter „Vertrauensverlust“ und „Gewissensfrage“."
+      ],
+      "q": "Wie gehst du mit den Vorwürfen um?",
+      "o": [
+        {"a": "transparenz", "t": "Selbst prüfen lassen, Ergebnis veröffentlichen"},
+        {"a": "konter", "t": "Vorwürfe als Schmutzkampagne zurückweisen"},
+        {"a": "aussitzen", "t": "Nichts sagen, Kommission abwarten"}
+      ]
+    },
+    {
+      "id": "PER-002", "kat": "Persönliches", "ebene": "Bund", "amt": [1, 11], "themen": ["Gesundheit"],
+      "slots": {"person": "person", "st": "stimmung", "jahreszeit": "jahreszeit", "m": "medium"}, "w": 0.9, "cd": 100, "i": 2,
+      "a": [
+        "Dein Arzt warnt: Die Stresswerte sind auf einem Niveau, das „für einen Menschen unüblich, für Politik aber typisch“ ist.",
+        "{person} aus deinem Team bemerkt {jahreszeit}: Du hast die Schlafdauer auf vier Stunden reduziert und die Kaffeemenge verdoppelt.",
+        "Bei einer Rede verschluckst du dich plötzlich. Die Stimmung im Saal ist {st}, dein Körper ruft SOS.",
+        "Das {m} berichtet über deine Arbeitstage: „19 Stunden, 14 Termine, 0 Mittagspausen“."
+      ],
+      "z": [
+        "Dein Kalender ist voll, dein Akku ist leer, deine Familie auch.",
+        "Ein Burnout ist kein Kampfbegriff, aber gerade ein sehr naheliegendes Wort.",
+        "Die Partei findet, eine Pause wäre „grundsätzlich denkbar, aber jetzt ungünstig“."
+      ],
+      "q": "Wie gehst du mit der Erschöpfung um?",
+      "o": [
+        {"a": "delegieren", "t": "Termine abgeben, zwei Tage Pause"},
+        {"a": "populaer", "t": "Durchhalten – jetzt erst recht"},
+        {"a": "transparenz", "t": "Offen über Belastung sprechen"}
+      ]
+    },
+    {
+      "id": "PER-003", "kat": "Persönliches", "ebene": "Kommune", "amt": [1, 11], "themen": ["Familie"],
+      "slots": {"person": "person", "ort": "ort", "st": "stimmung", "fest": "fest"}, "w": 1.0, "cd": 40, "i": 1,
+      "a": [
+        "Dein Kind hat heute Einschulung. Gleichzeitig beginnt in {ort} {fest}. Beide Termine sind „unverschiebbar“.",
+        "{person} aus deiner Familie sagt leise: „Du bist jetzt so oft weg, dass sogar der Hund Termine anmeldet.“",
+        "Der Hochzeitstag fällt auf einen Wahlkampfabend. Die Stimmung daheim ist {st}.",
+        "Dein Partner / deine Partnerin bittet um ein Gespräch – „nur fünf Minuten“. Der Terminkalender lacht."
+      ],
+      "z": [
+        "Die Fotografen sind vor Ort, sie wollen das Familienbild im Wahlkampf.",
+        "Dein Team rät zum Termin, dein Herz zum Familienabend – beides ist nicht unvernünftig.",
+        "Die Familie sitzt bereit. Die Wähler:innen auch."
+      ],
+      "q": "Wofür entscheidest du dich?",
+      "o": [
+        {"a": "dialog", "t": "Familie – der Wahlkampf kann kurz warten"},
+        {"a": "populaer", "t": "Wahltermin – Familie gleich danach"},
+        {"a": "humor", "t": "Familie zum Termin mitnehmen"}
+      ]
+    },
+    {
+      "id": "PER-004", "kat": "Persönliches", "ebene": "Bund", "amt": [2, 11], "themen": ["Integrität", "Wirtschaft"],
+      "slots": {"firma": "firma", "sum": "sum_k", "person": "person", "m": "medium"}, "w": 1.0, "cd": 70, "i": 3,
+      "a": [
+        "{firma} möchte dir {sum} spenden. Es sei „nur Unterstützung für gute Politik“.",
+        "{person} sagt beim Abendessen: „Wir haben ein Budget von {sum} für Politikerinnen und Politiker mit Weitblick.“",
+        "Das {m} fragt, warum sich {firma} ausgerechnet für dich interessiert. Die Antwort ist kompliziert.",
+        "Dein Schatzmeister flüstert: „Die Kasse ist leer – und {firma} sitzt im Nebenzimmer.“"
+      ],
+      "z": [
+        "Gesetzlich ist alles zulässig, moralisch wird es diskutiert.",
+        "Die Partei könnte das Geld gebrauchen. Die Wähler:innen würden es vermutlich nicht.",
+        "Das Parteiengesetz verlangt Transparenz. Die Realität verlangt Kaffee."
+      ],
+      "q": "Was machst du mit der Spende?",
+      "o": [
+        {"a": "transparenz", "t": "Annehmen und sofort veröffentlichen"},
+        {"a": "deal", "t": "Annehmen, nicht zu laut reden"},
+        {"a": "gruen", "t": "Ablehnen und öffentlich betonen"}
+      ],
+      "folge": {"id": "MED-002", "nach": [10, 40], "wenn": ["deal"]}
+    },
+    {
+      "id": "PAR-001", "kat": "Partei", "ebene": "Kommune", "amt": [1, 9], "themen": ["Partei"],
+      "slots": {"person": "person", "v": "verband", "m": "medium", "ort": "ort"}, "w": 1.2, "cd": 45, "i": 2,
+      "a": [
+        "{person} aus dem Ortsverband {ort} sagt im {m}: „Wir brauchen frischen Wind.“ Gemeint bist du.",
+        "Die Rivalin / der Rivale {person} sammelt Stimmen für den Posten, den du gerade hast.",
+        "Bei der Mitgliederversammlung in {ort} fliegt die Tagesordnung aus dem Fenster. Die Ansprache folgt.",
+        "{v} fordert eine Urwahl. Gemeint ist ein Wettbewerb, bei dem dein Name bisher fehlt."
+      ],
+      "z": [
+        "Flüsternde Kreise bilden sich im Flur, meist bei Kaffee.",
+        "Jemand verteilt Flugblätter gegen dich. Die Rechtschreibung ist schlecht, die Argumente nicht.",
+        "Ein Bündnis aus Enttäuschten und Ehrgeizigen wächst, wie immer."
+      ],
+      "q": "Wie begegnest du der Intrige?",
+      "o": [
+        {"a": "konter", "t": "Offene Konfrontation auf der Versammlung"},
+        {"a": "deal", "t": "Posten anbieten, Rivalen einbinden"},
+        {"a": "aussitzen", "t": "Stillhalten und Mehrheiten zählen"}
+      ]
+    },
+    {
+      "id": "PAR-002", "kat": "Partei", "ebene": "Bund", "amt": [7, 11], "themen": ["Partei"],
+      "slots": {"thema": "thema", "person": "person", "v": "verband", "gesetz": "gesetz"}, "w": 1.0, "cd": 60, "i": 2,
+      "a": [
+        "Auf dem Parteitag steht ein Antrag zum Thema {thema} auf der Tagesordnung – es ist ein Streit der Flügel.",
+        "{person} bringt einen Änderungsantrag zum {gesetz} ein, der die Parteiführung in Verlegenheit bringt.",
+        "{v} der Partei droht mit Abstimmungsniederlage, wenn das Thema {thema} nicht aufgenommen wird.",
+        "Kurz vor dem Parteitag leakt jemand das Protokoll der Vorstandssitzung. Es enthält Kekse und Beschimpfungen."
+      ],
+      "z": [
+        "Die Delegierten sind müde, die Fronten verhärtet, das Buffet leer.",
+        "Der Parteitag wird live übertragen. Jeder Zwischenruf ist damit zitierbar.",
+        "Die Basis fordert Klartext, die Führung Formulierungshilfe."
+      ],
+      "q": "Wie lenkst du den Parteitag?",
+      "o": [
+        {"a": "dialog", "t": "Kompromissformel vermitteln"},
+        {"a": "durchgreifen", "t": "Führungslinie mit Machtwort durchsetzen"},
+        {"a": "populaer", "t": "Basis mit Mitgliederentscheid einbinden"}
+      ]
+    },
+    {
+      "id": "PAR-003", "kat": "Partei", "ebene": "Bund", "amt": [8, 11], "themen": ["Partei"],
+      "slots": {"person": "person", "zs": "zahl_s", "v": "verband", "thema": "thema"}, "w": 0.8, "cd": 90, "i": 3,
+      "a": [
+        "Die Partei lässt die Basis über {thema} abstimmen: {zs} Mitglieder sind bereits online, der Server ebenfalls.",
+        "{person} startet einen Mitgliederentscheid zur Kandidatur. Das Ergebnis wird am Sonntag erwartet.",
+        "{v} ruft zu einem Basisvotum gegen die Parteilinie auf. Die Führung nennt das „demokratische Bereicherung“.",
+        "Der Mitgliederentscheid wird knapp. Die Auszähler:innen sind aufgeregt, die Kameras auch."
+      ],
+      "z": [
+        "Die Basis ist laut, die Führung leise. Das Wahlergebnis könnte beides verändern.",
+        "Die Delegierten rechnen schon Koalitionen durch, die Mitglieder noch Beitragsrückstände.",
+        "Jede Stimme zählt – und wird in den sozialen Medien kommentiert."
+      ],
+      "q": "Wie stellst du dich dem Mitgliederentscheid?",
+      "o": [
+        {"a": "dialog", "t": "Tour durch die Ortsverbände"},
+        {"a": "transparenz", "t": "Offene Streitrunde im Livestream"},
+        {"a": "deal", "t": "Delegationen einzeln überzeugen"}
+      ]
+    },
+    {
+      "id": "KOA-001", "kat": "Koalition", "ebene": "Bund", "amt": [7, 11], "themen": ["Koalition"],
+      "slots": {"gesetz": "gesetz", "person": "person", "m": "medium_nat", "ministerium": "ministerium"}, "w": 1.2, "cd": 40, "i": 2,
+      "a": [
+        "Der Koalitionspartner zweifelt am {gesetz}: „So nicht, und wenn, dann anders.“",
+        "{person} vom Koalitionspartner gibt im {m} zu Protokoll, das {ministerium} sei „ein Sanierungsfall“.",
+        "Im Koalitionsausschuss fliegt das {gesetz} zwischen Tee und Tischkante hin und her.",
+        "Beim Mittagessen sagt {person}: „Wir lassen uns nicht vorführen.“ Die Suppe wird kalt."
+      ],
+      "z": [
+        "Jeder sagt „Wir sind uns im Ziel einig“ und meint damit „aber nicht im Weg, im Zeitplan und im Ton“.",
+        "Die Opposition reibt sich die Hände, die Medien schreiben „Ampel auf Gelb“ oder eine andere Farbe.",
+        "Wenn der Koalitionsausschuss scheitert, droht Schlimmeres: noch ein Koalitionsausschuss."
+      ],
+      "q": "Wie schlichtest du den Koalitionsstreit?",
+      "o": [
+        {"a": "deal", "t": "Kompromiss: Wir nehmen Ihr Thema, Sie unseres"},
+        {"a": "durchgreifen", "t": "Machtwort der Kanzlerin / des Kanzlers"},
+        {"a": "delegieren", "t": "Vermittler:innen einsetzen"}
+      ]
+    },
+    {
+      "id": "KOA-002", "kat": "Koalition", "ebene": "Bund", "amt": [9, 11], "themen": ["Koalition"],
+      "slots": {"ministerium": "ministerium", "person": "person", "v": "verband", "st": "stimmung"}, "w": 1.0, "cd": 100, "i": 3,
+      "a": [
+        "In der Nachtsitzung der Koalitionsverhandlung geht es um das {ministerium}. Um 3 Uhr morgens ist die Stimmung {st}.",
+        "{person} verlangt das {ministerium}. Nicht als Verhandlungsmasse, sondern „aus Prinzip“.",
+        "Die Verhandlungsdelegation von {v} verlässt den Raum, „kurz frische Luft schnappen“. Dauer: zwei Stunden.",
+        "Das {ministerium} wird zum Zankapfel. Jede Seite bringt Argumente mit, die andere Seite Gegenargumente."
+      ],
+      "z": [
+        "Die Kompromissliste wächst, der Kaffeevorrat nicht.",
+        "Die roten Linien sind mit Filzstift gezogen. Der Filzstift ist fast leer.",
+        "Draußen warten Kameras, drinnen Erschöpfung."
+      ],
+      "q": "Wie verhandelst du das Ministerium?",
+      "o": [
+        {"a": "deal", "t": "Tauschgeschäft: Das Ministerium gegen ein anderes Ressort"},
+        {"a": "durchgreifen", "t": "Rote Linie ziehen und hart bleiben"},
+        {"a": "dialog", "t": "Die Pause nutzen und vertrauensbildend sprechen"}
+      ]
+    },
+    {
+      "id": "KOA-003", "kat": "Koalition", "ebene": "Bund", "amt": [10, 11], "themen": ["Koalition"],
+      "slots": {"person": "person", "m": "medium_nat", "gesetz": "gesetz", "zs": "zahl_s"}, "w": 0.7, "cd": 120, "i": 3,
+      "a": [
+        "Die Koalition wankt: Bei der Abstimmung zum {gesetz} fehlen {zs} Stimmen der Regierungsfraktionen. Nein, Moment: acht.",
+        "{person} verlässt die Regierung. Das {m} nennt es „Kabinettsumbildung, die keiner wollte“.",
+        "Die Opposition fordert ein konstruktives Misstrauensvotum – sie ist sich nur nicht über den konstruktiven Teil einig.",
+        "Dein Umfeld rät zur Vertrauensfrage. Deine Nerven raten zum Kaffee."
+      ],
+      "z": [
+        "Die Uhr tickt: Nach der Vertrauensfrage kann alles passieren, und zwar meistens gleichzeitig.",
+        "Jede Stimme ist ein Machtfaktor, jeder Abweichler ein Drehbuch.",
+        "Die Medien zählen mit: pro, contra, enthalten, vermisst."
+      ],
+      "q": "Wie reagierst du auf die Regierungskrise?",
+      "o": [
+        {"a": "konter", "t": "Vertrauensfrage stellen"},
+        {"a": "deal", "t": "Kabinett umbilden und Partner einbinden"},
+        {"a": "dialog", "t": "Sondierung mit der Opposition"}
+      ]
+    },
+    {
+      "id": "GES-001", "kat": "Gesellschaft und Kultur", "ebene": "Kommune", "amt": [1, 11], "themen": ["Gesellschaft"],
+      "slots": {"thema": "thema", "zs": "zahl_s", "v": "verband", "ort": "ort"}, "w": 1.1, "cd": 35, "i": 2,
+      "a": [
+        "Vor dem Rathaus in {ort} demonstrieren {zs} Menschen zum Thema {thema}. Es gibt Plakate, Trillerpfeifen und Thermoskannen.",
+        "{v} ruft zur Kundgebung zum Thema {thema} auf. Es wird laut, aber erstaunlich höflich.",
+        "Eine Demonstration zum Thema {thema} legt den Verkehr in {ort} lahm. Die Busse fahren trotzdem pünktlich – in die falsche Richtung.",
+        "Zum Thema {thema} gibt es in {ort} heute vier Demos zugleich. Die Polizei nennt das „Mosaik“."
+      ],
+      "z": [
+        "Die Organisatoren laden dich zum Gespräch ein – auf die Bühne, mit Mikro.",
+        "Die Presse wartet, die Polizei wartet, der Kaffeestand verkauft aus.",
+        "Jede Reaktion wird als Positionierung gelesen – auch das Schweigen."
+      ],
+      "q": "Wie gehst du mit der Demonstration um?",
+      "o": [
+        {"a": "dialog", "t": "Auf die Bühne – Gespräch suchen"},
+        {"a": "populaer", "t": "Solidarität erklären und Forderungen aufgreifen"},
+        {"a": "aussitzen", "t": "Zurückhaltung: die Verwaltung regelt das"}
+      ]
+    },
+    {
+      "id": "GES-002", "kat": "Gesellschaft und Kultur", "ebene": "Bund", "amt": [1, 11], "themen": ["Gesellschaft", "Sport"],
+      "slots": {"ort": "ort", "v": "verband", "person": "person", "sum": "sum_k", "st": "stimmung"}, "w": 1.0, "cd": 50, "i": 1,
+      "a": [
+        "Die Europameisterschaft steht an. In {ort} soll ein Public Viewing stattfinden – Kosten: {sum}.",
+        "{v} möchte das Public Viewing in {ort} ausrichten und fragt dich nach Genehmigungen, Toiletten und Seelsorge.",
+        "Die Stimmung vor dem Halbfinale ist {st}. {person} fragt, ob du mitgrillst.",
+        "Das Spiel beginnt um 21 Uhr, die Lärmschutzverordnung endet um 22. Es steht unentschieden."
+      ],
+      "z": [
+        "Die Kneipen sind begeistert, die Nachbarschaft weniger.",
+        "Ein Sieg bringt Ausgelassenheit, eine Niederlage Ausschreitungen – statistisch vermutlich Bratwurstbuden.",
+        "Die Fanmeile kostet {sum}, bringt aber Bilder, die kein Wahlplakat schaffen könnte."
+      ],
+      "q": "Wie gehst du mit dem Fußballfest um?",
+      "o": [
+        {"a": "populaer", "t": "Großes Public Viewing – Stadt bezahlt"},
+        {"a": "deal", "t": "Sponsoren für das Fest gewinnen"},
+        {"a": "sparen", "t": "Kleine Variante mit Vereinen"}
+      ]
+    },
+    {
+      "id": "GES-003", "kat": "Gesellschaft und Kultur", "ebene": "Kommune", "amt": [2, 6], "themen": ["Kultur", "Gesellschaft"],
+      "slots": {"ort": "ort", "person": "person", "v": "verband", "m": "medium"}, "w": 0.9, "cd": 60, "i": 2,
+      "a": [
+        "In {ort} entbrennt Streit um die Umbenennung einer Straße. {person} nennt es „Vergangenheitsbewältigung“, {v} „Wortklauberei“.",
+        "Das Denkmal auf dem Marktplatz von {ort} wird plötzlich zum Streitfall. Sogar die Tauben sind uneins.",
+        "Das {m} startet eine Leserumfrage: „Soll die Hauptstraße umbenannt werden?“ Das Ergebnis: Ja, nein, weiß nicht.",
+        "{v} verlangt, bei der Gedenkfeier nur „angemessene“ Reden zu halten. Die Definition von angemessen ist offen."
+      ],
+      "z": [
+        "Der Heimatverein fühlt sich übergangen, der Geschichtsverein übergeordnet.",
+        "Kultur ist, wenn alle streiten und die Stadt trotzdem schöner wird – manchmal.",
+        "Jede Haltung kostet Stimmen, jede Zurückhaltung auch."
+      ],
+      "q": "Wie gehst du mit dem Kulturstreit um?",
+      "o": [
+        {"a": "dialog", "t": "Bürgerdialog und Historikerkommission"},
+        {"a": "durchgreifen", "t": "Stadtratsbeschluss durchsetzen"},
+        {"a": "aussitzen", "t": "Vertagen und Beruhigungsprogramm"}
+      ]
+    },
+    {
+      "id": "POS-001", "kat": "Positives", "ebene": "Kommune", "amt": [1, 11], "themen": ["Kultur"],
+      "slots": {"ort": "ort", "person": "person", "m": "medium", "sum": "sum_k", "branche": "branche"}, "w": 0.8, "cd": 70, "i": 1,
+      "a": [
+        "{ort} wird für „besonders lebenswerte Stadtentwicklung“ ausgezeichnet. Preisgeld: {sum}.",
+        "Das {m} kürt {ort} zur „überraschend charmanten Stadt“. Die Plakate dazu sind leider schon verbraucht.",
+        "Die Branche {branche} in {ort} gewinnt einen Innovationspreis. {person} dankt „dem ganzen Team und dem Rathaus“.",
+        "Eine Jury aus Fachleuten lobt die Bürgerbeteiligung in {ort}. Die Bürger sind überrascht."
+      ],
+      "z": [
+        "Das Foto mit dem Pokal wäre ein Plakat wert.",
+        "Die Opposition versichert, der Erfolg sei „trotz“ deiner Politik entstanden.",
+        "Die Verwaltung plant bereits die nächste Feier, inklusive Kaffeemaschine."
+      ],
+      "q": "Wie nutzt du den Erfolg?",
+      "o": [
+        {"a": "humor", "t": "Stadtfest für alle – mit Bescheidenheit"},
+        {"a": "populaer", "t": "Siegesplakate und Pressekampagne"},
+        {"a": "transparenz", "t": "Erfolg an alle Beteiligten weitergeben"}
+      ]
+    },
+    {
+      "id": "POS-002", "kat": "Positives", "ebene": "Kommune", "amt": [2, 11], "themen": ["Wirtschaft"],
+      "slots": {"ort": "ort", "sum": "sum_k", "firma": "firma", "zs": "zahl_s", "m": "medium"}, "w": 0.8, "cd": 80, "i": 2,
+      "a": [
+        "{firma} siedelt sich in {ort} an: {zs} neue Arbeitsplätze, {sum} an Investitionen.",
+        "Die Gewerbesteuer in {ort} liegt dieses Jahr überraschend über Plan. Die Kämmerei ist „verhalten optimistisch“.",
+        "Das {m} berichtet: In {ort} sinkt die Arbeitslosigkeit zum ersten Mal seit Jahren. Die Zahl wird mehrfach überprüft.",
+        "Ein Investor baut in {ort}. Mit dem Spatenstich ist auch die Erwartung angewachsen."
+      ],
+      "z": [
+        "Die Frage ist, was mit dem Geld passiert. Jeder Ortsteil hat eine Idee.",
+        "Dein Team rät: „Nicht angeben, Ergebnisse zeigen.“ Die Kameras raten: „Bitte angeben.“",
+        "Mit Wohlstand kommen Ansprüche. Das Erste sind Parkplätze."
+      ],
+      "q": "Was machst du mit dem Boom?",
+      "o": [
+        {"a": "invest", "t": "In Schulen, Straßen und Kitas investieren"},
+        {"a": "sparen", "t": "Schulden tilgen und Rücklagen bilden"},
+        {"a": "populaer", "t": "Gebühren senken – alle profitieren"}
+      ]
+    },
+    {
+      "id": "POS-003", "kat": "Positives", "ebene": "Land", "amt": [2, 11], "themen": ["Koalition"],
+      "slots": {"person": "person", "thema": "thema", "m": "medium", "sum": "sum_m"}, "w": 0.7, "cd": 90, "i": 2,
+      "a": [
+        "Überraschend bietet dir {person} aus dem gegnerischen Lager Zusammenarbeit beim Thema {thema} an.",
+        "Eine parteiübergreifende Initiative zum Thema {thema} gründet sich. Sie beginnt mit Kaffee und endet nicht mit Streit.",
+        "Das {m} schreibt von einer „überraschenden Allianz“. Die Allianz trägt Anzüge und Zuversicht.",
+        "Ein Kompromisspaket zum Thema {thema} im Umfang von {sum} liegt auf dem Tisch. Niemand hat geschrien."
+      ],
+      "z": [
+        "Die eigene Partei ist skeptisch, die Wähler:innen neugierig.",
+        "Diese Kooperation könnte alles ändern – oder ein sehr gutes Foto ergeben.",
+        "Der Vorschlag hat Haken, aber wenige, die sich nicht aushandeln lassen."
+      ],
+      "q": "Wie gehst du mit dem Angebot um?",
+      "o": [
+        {"a": "dialog", "t": "Annehmen und gemeinsam Projekt starten"},
+        {"a": "deal", "t": "Annehmen, aber mit Gegenleistung"},
+        {"a": "aussitzen", "t": "Zögern und abwarten"}
+      ]
+    },
+    {
+      "id": "ABS-001", "kat": "Absurdes und Satirisches", "ebene": "Kommune", "amt": [1, 11], "themen": ["Absurdes"],
+      "slots": {"tier": "tier", "ort": "ort", "v": "verband", "m": "medium", "bauwerk": "bauwerk"}, "w": 0.4, "cd": 120, "i": 1,
+      "a": [
+        "In {ort} hat {tier} die Regie übernommen: Der Verkehr steht, die Stadt schaut zu.",
+        "Laut {m} sitzt {tier} seit Stunden vor {bauwerk.d} in {ort} und weigert sich, zu gehen.",
+        "{v} fordert: „Das Tier muss bleiben.“ Das Ordnungsamt fordert: „Das Tier muss gehen.“",
+        "{tier} hat in {ort} den Stadtrat besucht – und bekommt schon Applaus für seine Wortmeldungen."
+      ],
+      "z": [
+        "Das Video hat inzwischen mehr Klicks als der Haushaltsplan.",
+        "Die Feuerwehr ist im Einsatz, der Tierschutzverein ebenfalls, die Presse sowieso.",
+        "Dein Amtsblatt beschließt: Wir können das nicht ignorieren. Und wir können es nicht lösen."
+      ],
+      "q": "Wie löst du das Tierproblem?",
+      "o": [
+        {"a": "humor", "t": "Ehrenbürgerschaft verleihen"},
+        {"a": "delegieren", "t": "Ordnungsamt und Tierschutz koordinieren"},
+        {"a": "durchgreifen", "t": "Zügig einfangen und abtransportieren"}
+      ]
+    },
+    {
+      "id": "ABS-002", "kat": "Absurdes und Satirisches", "ebene": "Kommune", "amt": [1, 11], "themen": ["Absurdes"],
+      "slots": {"ort": "ort", "zs": "zahl_s", "ministerium": "ministerium", "m": "medium", "j": "zahl_j"}, "w": 0.4, "cd": 120, "i": 1,
+      "a": [
+        "Ein Formular aus dem {ministerium} verlangt, dass man in {ort} für eine Hundemarke einen Brandschutznachweis vorlegt.",
+        "Die Verwaltung von {ort} hat {zs} Anträge liegen, die erst bearbeitet werden, wenn das Papier für den Drucker genehmigt ist.",
+        "Das {m} zitiert aus einer Verordnung: „Sitzgelegenheiten im Freien bedürfen einer Sitzgenehmigung.“",
+        "Seit {j} Jahren steht in {ort} ein Schild „Baustelle“. Eine Baustelle wurde nie gefunden."
+      ],
+      "z": [
+        "Die Bürger lachen, weinen oder beides.",
+        "Das Ganze wäre lustig, wenn es nicht rechtskräftig wäre.",
+        "Eine Bürgerin fragt: „Ist das Satire?“ Das Amt fragt zurück: „Wo ist Ihr Antrag?“"
+      ],
+      "q": "Wie gehst du mit dem Bürokratiewahnsinn um?",
+      "o": [
+        {"a": "humor", "t": "Verordnung öffentlich vorlesen und abschaffen"},
+        {"a": "transparenz", "t": "Bürokratieabbau-Offensive starten"},
+        {"a": "aussitzen", "t": "Es ist eben Deutschland"}
+      ]
+    },
+    {
+      "id": "ABS-003", "kat": "Absurdes und Satirisches", "ebene": "Kommune", "amt": [1, 11], "themen": ["Absurdes"],
+      "slots": {"person": "person", "ort": "ort", "v": "verband", "fest": "fest", "sum": "sum_k"}, "w": 0.4, "cd": 120, "i": 1,
+      "a": [
+        "{person} beantragt in {ort}, dass {fest} künftig „ohne Lärm, ohne Menschen und ohne Bier“ stattfindet.",
+        "{v} fordert, den Kreisverkehr von {ort} „spirituell aufzuwerten“. Kosten: {sum}.",
+        "{person} bittet den Stadtrat, die Zeitumstellung für {ort} allein abzuschaffen. Erstaunlich viele Stimmen dafür.",
+        "Ein Bürgerantrag will den Marktplatz in {ort} zur „Denkpause-Zone“ erklären. Handys verboten, Gedanken erlaubt."
+      ],
+      "z": [
+        "Die Verwaltung prüft den Antrag wohlwollend, der Rechtsausschuss weniger.",
+        "Die Opposition nimmt es ernst, weil es schwierig ist, es nicht ernst zu nehmen.",
+        "Das ganze Städtchen spricht darüber, weil es ja sonst nichts zu reden gibt."
+      ],
+      "q": "Wie behandelst du den Bürgerantrag?",
+      "o": [
+        {"a": "humor", "t": "Wohlwollend zur Abstimmung stellen"},
+        {"a": "dialog", "t": "Ein Gespräch mit dem Antragsteller suchen"},
+        {"a": "delegieren", "t": "An den Ausschuss verweisen"}
+      ]
+    }
+  ]
+}
