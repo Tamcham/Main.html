@@ -123,6 +123,7 @@ body.playing #hotbar { display: flex; }
 #invGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; width: min(560px, 92vw); overflow-y: auto; touch-action: pan-y; max-height: 60vh; padding: 4px; }
 .ibtn { flex-direction: column; min-height: 84px; padding: 6px; font-size: 12px; font-family: inherit; font-weight: bold; cursor: pointer; touch-action: manipulation; }
 .ibtn img { width: 44px; height: 44px; image-rendering: pixelated; }
+#wtimer { position: absolute; left: 50%; top: calc(58px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); background: rgba(80,10,140,.75); border: 3px solid #d8b83a; padding: 6px 14px; font-size: 16px; text-shadow: 2px 2px 0 #000; white-space: nowrap; display: none; }
 #hearts { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--slot) + 30px + env(safe-area-inset-bottom, 0px)); font-size: 20px; letter-spacing: 1px; text-shadow: 2px 2px 0 #000; white-space: nowrap; }
 #hearts .e { color: rgba(255,255,255,.25); }
 #hearts .f { color: #ff3b3b; }
@@ -139,6 +140,7 @@ body.playing #hotbar { display: flex; }
   <div id="fps"></div>
   <div id="toast"></div>
   <div id="hearts" class="hud-only"></div>
+  <div id="wtimer"></div>
   <div id="joyHint"></div>
   <div class="gb hud-only" id="bBreak">BREAK</div>
   <div class="gb hud-only" id="bPlace">PLACE</div>
@@ -779,6 +781,7 @@ const mob = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, yaw: 0, hp: 20, alive: fals
   onGround: false, inWater: false, flash: 0, walk: 0, root: null, body: null, armR: null, armL: null, legR: null, legL: null, bar: null, mats: [] };
 let mobTargeted = false, atkCd = 0, lightLevel = 1, spawnPt = [0.5, 30, 0.5];
 const MOB_HP = 20;
+mob.healOnRespawn = false;
 
 function makeMob() {
   const root = new THREE.Group(), body = new THREE.Group();
@@ -790,22 +793,24 @@ function makeMob() {
   // head with a procedural angry face on the front (+Z)
   const fc = document.createElement('canvas'); fc.width = fc.height = 8;
   const g = fc.getContext('2d');
-  g.fillStyle = '#d9a066'; g.fillRect(0, 0, 8, 8);
-  g.fillStyle = '#4a2f1b'; g.fillRect(0, 0, 8, 2); g.fillRect(0, 2, 1, 2); g.fillRect(7, 2, 1, 2);
-  g.fillStyle = '#fff'; g.fillRect(1, 4, 2, 1); g.fillRect(5, 4, 2, 1);
-  g.fillStyle = '#c00'; g.fillRect(2, 4, 1, 1); g.fillRect(5, 4, 1, 1);
-  g.fillStyle = '#2a1408'; g.fillRect(1, 3, 2, 1); g.fillRect(5, 3, 2, 1); g.fillRect(3, 6, 2, 1);
+  g.fillStyle = '#7a16c9'; g.fillRect(0, 0, 8, 8);
+  g.fillStyle = '#1a0026'; g.fillRect(0, 3, 1, 1); g.fillRect(7, 3, 1, 1);          // eyes
+  g.fillRect(2, 4, 1, 1); g.fillRect(5, 4, 1, 1); g.fillRect(2, 5, 4, 1);           // U-shaped mouth
   const ft = new THREE.CanvasTexture(fc); ft.magFilter = ft.minFilter = THREE.NearestFilter; ft.generateMipmaps = false;
-  const skin = new THREE.MeshBasicMaterial({ color: 0xd9a066 }); skin.userData.base = new THREE.Color(0xd9a066);
+  const skin = new THREE.MeshBasicMaterial({ color: 0x7a16c9 }); skin.userData.base = new THREE.Color(0x7a16c9);
   const face = new THREE.MeshBasicMaterial({ map: ft }); face.userData.base = new THREE.Color(0xffffff);
   mob.mats.push(skin, face);
   const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), [skin, skin, skin, skin, face, skin]);
   head.position.y = 1.65; body.add(head);
-  mk(0x6a3fb5, 0.55, 0.7, 0.3, 0, 1.05, 0);                                   // hoodie
-  mob.legR = new THREE.Group(); mob.legR.position.set(-0.14, 0.7, 0); body.add(mob.legR); mk(0x24346b, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legR);
-  mob.legL = new THREE.Group(); mob.legL.position.set(0.14, 0.7, 0); body.add(mob.legL); mk(0x24346b, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legL);
-  mob.armL = new THREE.Group(); mob.armL.position.set(0.4, 1.38, 0); body.add(mob.armL); mk(0x6a3fb5, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armL);
-  mob.armR = new THREE.Group(); mob.armR.position.set(-0.4, 1.38, 0); body.add(mob.armR); mk(0x6a3fb5, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armR);
+  mk(0x7a16c9, 0.55, 0.7, 0.3, 0, 1.05, 0);                                   // body
+  // gold crown with a magenta gem
+  mk(0xc9a83a, 0.54, 0.1, 0.54, 0, 1.93, 0);
+  [[-0.2, -0.2], [0, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0.2]].forEach(o => mk(0xc9a83a, 0.1, 0.14, 0.1, o[0], 2.05, o[1]));
+  mk(0xd02be0, 0.12, 0.12, 0.06, 0, 1.93, 0.28);
+  mob.legR = new THREE.Group(); mob.legR.position.set(-0.14, 0.7, 0); body.add(mob.legR); mk(0x6a10b0, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legR);
+  mob.legL = new THREE.Group(); mob.legL.position.set(0.14, 0.7, 0); body.add(mob.legL); mk(0x6a10b0, 0.25, 0.7, 0.25, 0, -0.35, 0, mob.legL);
+  mob.armL = new THREE.Group(); mob.armL.position.set(0.4, 1.38, 0); body.add(mob.armL); mk(0x7a16c9, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armL);
+  mob.armR = new THREE.Group(); mob.armR.position.set(-0.4, 1.38, 0); body.add(mob.armR); mk(0x7a16c9, 0.2, 0.7, 0.2, 0, -0.3, 0, mob.armR);
   // the mace: handle + spiked head, pointing "down" from the hand until the arm is raised
   const mace = new THREE.Group(); mace.position.set(0, -0.62, 0); mace.rotation.x = Math.PI; mob.armR.add(mace);
   mk(0x5a3a1a, 0.08, 0.85, 0.08, 0, 0.42, 0, mace);
@@ -836,7 +841,7 @@ function attackMob() {
   let dx = mob.x - player.x, dz = mob.z - player.z; const l = Math.hypot(dx, dz) || 1;
   mob.vx = dx / l * 8; mob.vz = dz / l * 8; mob.vy = 5; mob.kbT = 0.3;
   if (mob.state === 'windup') mob.state = 'chase';
-  if (mob.hp <= 0) { mob.alive = false; mob.respawnT = 12; toast('Wemmbu defeated!'); }
+  if (mob.hp <= 0) { mob.alive = false; mob.respawnT = 60; mob.healOnRespawn = true; toast('Wemmbu defeated! Back in 1 minute'); }
 }
 let lastHearts = -1;
 function renderHearts() {
@@ -850,7 +855,7 @@ function hurtPlayer(dmg, dx, dz) {
   if (player.hp <= 0) {
     toast('Wemmbu maced you!'); player.hp = 20;
     Object.assign(player, { x: spawnPt[0], y: spawnPt[1], z: spawnPt[2], vx: 0, vy: 0, vz: 0, placed: false });
-    mob.alive = false; mob.respawnT = 6;
+    mob.alive = false; mob.respawnT = 6; mob.healOnRespawn = false;
   }
 }
 function rayMob(ox, oy, oz, dx, dy, dz) {          // ray vs the mob's AABB (slab test)
@@ -865,9 +870,22 @@ function rayMob(ox, oy, oz, dx, dy, dz) {          // ray vs the mob's AABB (sla
 }
 function updateMob(dt) {
   if (!mob.root) return;
-  if (!S.wem) { mob.alive = false; mob.root.visible = false; return; }
+  const tEl = $('wtimer');
+  if (!S.wem) { mob.alive = false; mob.root.visible = false; tEl.style.display = 'none'; return; }
   if (state !== 'play') { mob.root.visible = mob.alive; return; }
-  if (!mob.alive) { mob.root.visible = false; mob.respawnT -= dt; if (mob.respawnT <= 0) spawnMob(); return; }
+  if (!mob.alive) {
+    mob.root.visible = false; mob.respawnT -= dt;
+    if (mob.healOnRespawn) {                                   // 1-minute countdown after a kill
+      const sec = Math.max(0, Math.ceil(mob.respawnT));
+      tEl.textContent = 'Wemmbu returns in ' + Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); tEl.style.display = 'block';
+    }
+    if (mob.respawnT <= 0) {
+      spawnMob();
+      if (mob.alive && mob.healOnRespawn) { mob.healOnRespawn = false; player.hp = 20; toast('Timer over: you are healed, Wemmbu is back!'); }
+    }
+    return;
+  }
+  tEl.style.display = 'none';
   const p = player;
   let dx = p.x - mob.x, dz = p.z - mob.z; const dist = Math.hypot(dx, dz) || 1, dy = p.y - mob.y;
   if (dist > 70 || !loadedAt(Math.floor(mob.x), Math.floor(mob.z))) { mob.alive = false; mob.respawnT = 0.5; return; }
@@ -1198,7 +1216,7 @@ function newWorld() {
   const sp = findSpawn(); spawnPt = sp.slice();
   Object.assign(player, { x: sp[0], y: sp[1], z: sp[2], vx: 0, vy: 0, vz: 0, yaw: 0, pitch: 0, placed: false });
   if (player.fly) toggleFly();
-  dayTime = 0.3; player.hp = 20; mob.alive = false; mob.respawnT = 5; wq.clear();
+  dayTime = 0.3; player.hp = 20; mob.alive = false; mob.respawnT = 5; mob.healOnRespawn = false; wq.clear();
   saveGame();
 }
 function loadGame() {
