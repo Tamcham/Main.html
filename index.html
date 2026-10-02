@@ -22,7 +22,9 @@
   --nav-h:64px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg0);color:var(--txt);font-family:var(--font);font-size:16px;overscroll-behavior:none;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+html{font-size:16px}
+body{font-size:1rem}
+html,body{margin:0;height:100%;background:var(--bg0);color:var(--txt);font-family:var(--font);overscroll-behavior:none;overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 body{background:radial-gradient(1200px 800px at 20% -10%,#2b1a6e55,transparent 60%),radial-gradient(900px 700px at 110% 110%,#0e749033,transparent 60%),linear-gradient(160deg,var(--bg1),var(--bg0) 70%)}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
 input,select{font:inherit;color:inherit}
@@ -65,7 +67,7 @@ body[data-mode=mobile] .btn.sm{min-height:44px}
 /* =====================================================================
    APP LAYOUT
    ===================================================================== */
-#app{position:fixed;inset:0;display:grid;grid-template-columns:210px 1fr;grid-template-rows:auto 1fr;padding:var(--sai-t) var(--sai-r) var(--sai-b) var(--sai-l)}
+#app{position:fixed;inset:0;display:grid;grid-template-columns:13rem 1fr;grid-template-rows:auto 1fr;padding:var(--sai-t) var(--sai-r) var(--sai-b) var(--sai-l)}
 #hud{grid-column:1/-1;display:flex;gap:10px;align-items:center;padding:8px 14px;background:rgba(8,8,24,.7);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);z-index:20;flex-wrap:wrap}
 #hud .logo{font-weight:700;font-size:1.25rem;letter-spacing:.5px;background:linear-gradient(90deg,#ffd24a,#ff7ab8);-webkit-background-clip:text;background-clip:text;color:transparent;margin-right:auto;white-space:nowrap}
 .hud-item{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:99px;background:var(--panel);border:1px solid var(--line);min-height:40px;white-space:nowrap}
@@ -81,12 +83,12 @@ body[data-mode=mobile] .btn.sm{min-height:44px}
 #nav button{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r-m);text-align:left;color:var(--dim);transition:background .15s,color .15s,transform .1s;position:relative}
 #nav button:hover{background:var(--panel2);color:var(--txt)}
 #nav button.active{background:linear-gradient(90deg,rgba(124,92,255,.45),rgba(34,211,238,.18));color:#fff;box-shadow:inset 0 0 0 1px var(--line)}
-#nav button .ico{font-size:1.3rem;width:28px;text-align:center}
+#nav button .ico{font-size:1.3rem;width:1.8rem;text-align:center;flex:none}
 #nav button .kbd{margin-left:auto;font-size:.72rem;opacity:.5;border:1px solid var(--line);border-radius:5px;padding:0 5px}
 #nav button.city{background:linear-gradient(90deg,#f59e0b,#ef4444);color:#fff;margin-top:6px;font-weight:600}
 #nav .badge{position:absolute;right:10px;top:8px;min-width:18px;height:18px;border-radius:9px;background:var(--bad);font-size:.7rem;display:flex;align-items:center;justify-content:center;padding:0 4px}
 #view{overflow:auto;padding:18px;position:relative;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
-#view>section{max-width:1280px;margin:0 auto;animation:viewIn .35s ease}
+#view>section{max-width:80rem;margin:0 auto;animation:viewIn .35s ease}
 @keyframes viewIn{from{opacity:0;transform:translateY(10px)}}
 .view-title{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .view-title h2{font-size:1.6rem}
@@ -108,11 +110,11 @@ body[data-mode=mobile] #view{padding:12px}
    PACK SHOP
    ===================================================================== */
 .grid{display:grid;gap:16px}
-.pack-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.pack-grid{grid-template-columns:repeat(auto-fill,minmax(15.5rem,1fr))}
 body[data-mode=mobile] .pack-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .pack-tile{position:relative;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:center;transition:transform .2s,box-shadow .2s;overflow:hidden}
 .pack-tile:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 28px var(--pc,#7c5cff)44}
-.pack-art{--pc:#7c5cff;position:relative;width:128px;height:176px;border-radius:12px 12px 10px 10px;background:linear-gradient(160deg,var(--pc),#1a1446 130%);box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 0 0 2px rgba(255,255,255,.25),0 0 22px color-mix(in srgb,var(--pc) 55%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;overflow:hidden;transform-style:preserve-3d}
+.pack-art{--pc:#7c5cff;position:relative;width:8rem;height:11rem;border-radius:12px 12px 10px 10px;background:linear-gradient(160deg,var(--pc),#1a1446 130%);box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 0 0 2px rgba(255,255,255,.25),0 0 22px color-mix(in srgb,var(--pc) 55%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;overflow:hidden;transform-style:preserve-3d}
 .pack-art::before,.pack-art::after{content:"";position:absolute;left:0;right:0;height:14px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.35) 0 4px,rgba(0,0,0,.25) 4px 8px)}
 .pack-art::before{top:0}.pack-art::after{bottom:0}
 .pack-art .pe{font-size:3.2rem;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
@@ -429,8 +431,20 @@ body[data-mode=mobile] .hero-row{grid-template-columns:1fr;gap:10px}
 .card .rot,.bigpack,#cutCanvas{will-change:transform}
 .offer-chip{position:relative}
 .offer-chip b{position:absolute;right:-4px;top:-4px;min-width:20px;height:20px;border-radius:10px;background:var(--bad);font-size:.72rem;display:flex;align-items:center;justify-content:center;padding:0 4px}
+@media (max-height:520px){
+  body[data-mode=mobile] #app{grid-template-columns:calc(76px + var(--sai-l)) 1fr;grid-template-rows:auto 1fr;padding-left:0}
+  body[data-mode=mobile] #nav{order:0;flex-direction:column;justify-content:flex-start;border-top:0;border-right:1px solid var(--line);padding:4px 4px 4px calc(4px + var(--sai-l));overflow-y:auto;overflow-x:hidden}
+  body[data-mode=mobile] #nav button{flex:none;min-height:54px;width:100%}
+  body[data-mode=mobile] #hud{padding:3px 8px}
+  body[data-mode=mobile] .hud-item{min-height:30px}
+  body[data-mode=mobile] #hud .icon-btn{width:30px;height:30px;min-height:30px}
+  body[data-mode=mobile] #view{padding:8px 12px}
+  body[data-mode=mobile] .view-title{margin-bottom:8px}
+  .modal{max-height:100%}
+}
 ::-webkit-scrollbar{width:10px;height:10px}::-webkit-scrollbar-thumb{background:#ffffff33;border-radius:99px}
 @media (min-width:2200px){html{font-size:20px}}
+@media (min-width:3200px){html{font-size:26px}}
 </style>
 </head>
 <style>
@@ -2373,7 +2387,7 @@ const UI = {
     const ovFlash = (col, a, ms) => { const f = $('#flash', ov); f.style.background = col; if (!S().settings.reduceFx) f.animate([{ opacity: a }, { opacity: 0 }], { duration: ms }); };
     const hit = e => { if (stage !== 'tear') return; down = { x: e.clientX, y: e.clientY, last: e.clientX }; moved = 0; try { bp.setPointerCapture(e.pointerId); } catch (x) { } Audio.rustle(); };
     bp.addEventListener('pointerdown', hit);
-    bp.addEventListener('pointermove', e => { if (!down || stage !== 'tear') return; const dx = Math.abs(e.clientX - down.last) + Math.abs(e.clientY - down.y) * 0.002; down.last = e.clientX; moved += dx; setProg(prog + dx / (bp.getBoundingClientRect().width * 1.05)); });
+    bp.addEventListener('pointermove', e => { if (!down || stage !== 'tear') return; const dx = Math.abs(e.clientX - down.last) + Math.abs(e.clientY - down.y) * 0.002; down.last = e.clientX; moved += dx; setProg(prog + dx / (bp.getBoundingClientRect().width * 0.7)); });
     bp.addEventListener('pointerup', () => { if (down && moved < 14 && stage === 'tear') { const t0 = prog, t1 = Math.min(1, prog + 0.34); let k = 0; const iv = setInterval(() => { k += 0.2; setProg(lerp(t0, t1, k)); if (k >= 1) clearInterval(iv); }, 30); Audio.rustle(); } down = null; });
     function showCards() {
       cardsEl.classList.remove('hidden'); const sz = 'min(340px,78vw,calc(52vh * .714))'; cardsEl.style.cssText = `width:${sz};aspect-ratio:5/7;position:relative`; cardsEl.innerHTML = ''; hint.textContent = 'Tippe die Karte an oder wische – aufdecken!'; hint.style.bottom = 'calc(80px + var(--sai-b))';
@@ -2389,7 +2403,7 @@ const UI = {
       busy = true; const rc = res.cards[i], c = items[i].el, t = rc.card.tier, isBest = i === n - 1 && t >= 4;
       hint.textContent = '';
       if (isBest) await Cutscene.play(rc.card, ov); else if (t >= 2) { Cutscene.quickFx(rc.card, ov); }
-      c.classList.add('revealing'); Audio.reveal(t); await sleep(260); c.classList.remove('down', 'revealing'); items[i].state = 'shown'; items[i].tilt = Card3D.attach(c, { max: 18 }); c.style.pointerEvents = 'auto';
+      c.style.transition = 'transform .3s'; c.style.transform = 'translateX(-50%) translateY(0) rotate(0deg) scale(1)'; c.classList.add('revealing'); Audio.reveal(t); await sleep(260); c.classList.remove('down', 'revealing'); items[i].state = 'shown'; items[i].tilt = Card3D.attach(c, { max: 18 }); c.style.pointerEvents = 'auto';
       if (rc.isNew) { Audio.sparkle(7); const nt = el('div', { style: 'position:absolute;top:calc(12% + var(--sai-t));left:0;right:0;text-align:center;font-size:1.5rem;font-weight:700;color:#ffe27a;text-shadow:0 0 18px #ff7a45;animation:pop .7s;pointer-events:none;z-index:70' }, '✨ NEU ENTDECKT ✨'); ov.append(nt); setTimeout(() => nt.remove(), 1800); }
       cap.innerHTML = `<div class="tc${t}" style="font-weight:700;font-size:1.3rem">${rc.card.name}</div><div class="dim">${RAR[t].name} · 🪙 ${fmt(rc.card.value)}${rc.count > 1 ? ' · Duplikat ×' + rc.count : ''}</div>`;
       if (t >= 5 && !S().settings.reduceFx) c.animate([{ filter: 'brightness(2)' }, { filter: 'brightness(1)' }], { duration: 700 });
@@ -2420,10 +2434,10 @@ const UI = {
       const acts = el('div', { class: 'row wrap', style: 'justify-content:center' });
       if (dupes.length) acts.append(el('button', { class: 'btn sec', onclick: e => { let g = 0; dupes.forEach(d => { g += PackEngine.quickSell(d.card.id, 1); }); UI.toast(`💰 +${fmt(g)} Coins`, 'gold'); UI.floatText('+' + fmt(g), '#4ade80'); UI.refreshHud(); e.currentTarget.classList.add('off'); e.currentTarget.textContent = 'Verkauft ✔'; } }, `💰 ${dupes.length} Duplikat(e) verkaufen (+${fmt(dupVal)})`));
       const again = Economy.packPrice(pack); acts.append(el('button', { class: 'btn gold ' + (s.coins < again ? 'off' : ''), onclick: () => { finish(); setTimeout(() => UI.buyPack(pack.id), 50); } }, `Nochmal: ${pack.name} (${fmt(again)} 🪙)`), el('button', { class: 'btn', id: 'sumDone', onclick: finish }, 'Fertig')); sum.append(acts);
-      ov.append(sum); setTimeout(() => $('#sumDone', ov)?.focus(), 100); Ach.check(); UI.refreshHud();
+      ov.append(sum); setTimeout(() => $('#sumDone', ov)?.focus({ preventScroll: true }), 100); Ach.check(); UI.refreshHud();
     }
     // Falls Overlay extern geschlossen werden muss
-    ov._finish = finish;
+    ov._finish = finish; ov._state = () => ({ stage, cur, busy, n });
     return new Promise(r => { resolveAll = r; });
   },
   /* ---------- Album-Abschluss ---------- */
@@ -2748,7 +2762,11 @@ window.Dev = Dev;
 <style>
 @keyframes cardIn{from{opacity:0;transform:translateX(-50%) translateY(90px) scale(.7)}}
 #packOv.cut-on .topbar,#packOv.cut-on .reveal-actions,#packOv.cut-on .hint,#packOv.cut-on .tearbar{display:none}
-#packOv .summary{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:70;width:min(1100px,96vw)}
+#packOv .summary{position:absolute;left:50%;top:calc(50% + 26px);transform:translate(-50%,-50%);z-index:70;width:min(1100px,96vw);max-height:calc(100% - 70px)}
+#packOv .summary .btn{white-space:normal}
+#packOv .summary .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+#packOv .summary .kpi{padding:8px}#packOv .summary .kpi b{font-size:1rem}
+body[data-mode=mobile] #packOv .summary{padding:12px}
 #packOv.cut-hide .packcards,#packOv.cut-hide #cardCap{opacity:0;transition:opacity .4s}
 #packOv #cardCap{position:relative;z-index:5;margin-top:4px}
 kbd{display:inline-block;padding:1px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;font-size:.82em;background:var(--panel)}
