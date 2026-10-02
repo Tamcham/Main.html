@@ -689,13 +689,13 @@ const Device = {
 };
 
 /* ------------------------------ STORE / SAVE ------------------------------ */
-const SAVE_KEY = 'dogpacks_save', SAVE_VERSION = 3;
+const SAVE_KEY = 'dogpacks_save', SAVE_VERSION = 4;
 const Store = (() => {
   let S = null, timer = null, memFallback = null;
   const defaults = () => ({
     v: SAVE_VERSION, created: Date.now(), coins: 1000, luck: 1, xp: 0, level: 1,
-    cards: {}, disc: {}, pity: {},
-    stats: { packs: 0, spent: 0, earned: 0, pulled: 0, bestId: 0, bestTier: 0, value: 0, trades: 0, quicksold: 0, playMs: 0, tierPulled: new Array(13).fill(0), packsByType: {}, bones: 0, quests: 0, newCards: 0, maxCoins: 1000, dotd: 0 },
+    cards: {}, disc: {}, pity: {}, ed: {}, ems: {},
+    stats: { packs: 0, spent: 0, earned: 0, pulled: 0, bestId: 0, bestTier: 0, value: 0, trades: 0, quicksold: 0, playMs: 0, tierPulled: new Array(13).fill(0), packsByType: {}, bones: 0, quests: 0, newCards: 0, maxCoins: 1000, dotd: 0, edPulled: {} },
     settings: { vol: 0.7, muted: false, music: true, mode: 'auto', shortCut: false, reduceFx: false, name: 'Hundefreund', color: '#ff7a45', outfit: 0, tutorial: false, dotdSeen: '' },
     daily: { last: '', streak: 0, claimed: '', qDay: '', quests: [], boneDay: '', bones: [] },
     emerg: { at: 0, tick: 0, seen: 0, lastAfford: 100, remain: 0 },
@@ -705,6 +705,7 @@ const Store = (() => {
   });
   const migrations = {
     1: o => { o.stats = o.stats || {}; o.stats.dotd = o.stats.dotd || 0; o.dotd = o.dotd || { day: '', claimed: false }; return o; },
+    3: o => { o.ed = o.ed || {}; o.ems = o.ems || {}; o.stats = o.stats || {}; o.stats.edPulled = o.stats.edPulled || {}; return o; },
     2: o => { o.emerg = Object.assign({ at: 0, tick: 0, seen: 0, lastAfford: 100 }, o.emerg || {}); o.history = o.history || []; return o; }
   };
   function fill(def, obj) {
@@ -721,6 +722,7 @@ const Store = (() => {
   }
   function sanitize(o) {
     o.coins = Math.max(0, Math.floor(+o.coins || 0)); o.luck = clamp(+o.luck || 1, 1, 10);
+    for (const k of Object.keys(o.ed || {})) { const m = o.ed[k]; if (!m || typeof m !== 'object' || !o.cards[k]) { delete o.ed[k]; continue; } for (const e of Object.keys(m)) if (!(Math.floor(+m[e]) > 0)) delete m[e]; else m[e] = Math.floor(+m[e]); if (!Object.keys(m).length) delete o.ed[k]; }
     for (const k of Object.keys(o.cards)) { const n = Math.floor(+o.cards[k]); if (!(n > 0) || !(+k >= 1 && +k <= 999)) delete o.cards[k]; else o.cards[k] = n; }
     return o;
   }
@@ -854,6 +856,43 @@ const CHEAPEST_PACK = Math.min(...PACKS.map(p => p.price));
 /* ------------------------------ BUS ------------------------------ */
 const Bus = { h: {}, on(e, f) { (this.h[e] = this.h[e] || []).push(f); }, emit(e, ...a) { (this.h[e] || []).slice().forEach(f => { try { f(...a); } catch (x) { console.error(x); } }); } };
 
+/* ------------------------------ SPECIAL EDITIONS ------------------------------ */
+/* Zusätzliche Ebene über den 999 Karten: jede gezogene Karte kann (unabhängig von ihrer Seltenheit)
+   als Special Edition erscheinen. Specials zählen als Kopie im Album, sind aber nicht tausch-/quick-sellbar. */
+const EDITIONS = [
+  { id: 'shiny', name: 'Shiny', icon: '✨', color: '#7df9ff', p: 1 / 40, mult: 5 },
+  { id: 'gold', name: 'Gold', icon: '🥇', color: '#ffd24a', p: 1 / 150, mult: 20 },
+  { id: 'diamond', name: 'Diamant', icon: '💎', color: '#b9f2ff', p: 1 / 600, mult: 100 },
+  { id: 'prisma', name: 'Prisma', icon: '🌈', color: '#ff7ad9', p: 1 / 2500, mult: 500 }
+];
+const ED_BY = Object.fromEntries(EDITIONS.map(e => [e.id, e]));
+const ED_BOOST = [1, 1.15, 1.35, 1.7, 2.1, 2.7, 3.4, 4.2];       // höhere Packs = bessere Edition-Chance
+const ED_MS = [[1, 2000, 0.05], [5, 8000, 0.1], [25, 50000, 0.2], [100, 300000, 0.4], [500, 3000000, 0.8]];
+const Ed = {
+  count(id, e) { const m = S().ed[id]; return (m && m[e]) || 0; },
+  total(id) { const m = S().ed[id]; return m ? Object.values(m).reduce((a, b) => a + b, 0) : 0; },
+  spare(id) { return Math.max(0, (S().cards[id] || 0) - this.total(id)); },     // frei verfügbare (nicht-special) Exemplare
+  has(id) { return !!S().ed[id]; },
+  owned(id) { return EDITIONS.filter(e => this.count(id, e.id) > 0); },
+  distinct(e) { let n = 0; for (const k in S().ed) if (S().ed[k][e]) n++; return n; },
+  copies() { let n = 0; for (const k in S().ed) n += this.total(+k); return n; },
+  probs(pack) { const idx = PACKS.indexOf(pack), lf = Math.min(2.5, Math.pow(Economy.effLuck(), 0.3)); return EDITIONS.map(e => ({ ed: e, p: Math.min(0.5, e.p * ED_BOOST[Math.max(0, idx)] * lf) })); },
+  roll(pack, rnd = Math.random) { const pr = this.probs(pack), x = rnd(); let acc = 0; for (let i = pr.length - 1; i >= 0; i--) { acc += pr[i].p; if (x < acc) return pr[i].ed; } return null; },
+  value(card, e) { return card.value * ED_BY[e].mult; },
+  sellValue(card, e) { return Math.floor(card.value * ED_BY[e].mult * Economy.QUICKSELL); },
+  extraValue() { let v = 0; for (const k in S().ed) { const c = CardDB.get(+k); for (const e in S().ed[k]) v += c.value * (ED_BY[e].mult - 1) * S().ed[k][e]; } return v; },
+  add(id, e) { const s = S(); (s.ed[id] = s.ed[id] || {})[e] = (s.ed[id][e] || 0) + 1; s.stats.edPulled[e] = (s.stats.edPulled[e] || 0) + 1; },
+  sell(id, e) {
+    const s = S(), c = CardDB.get(id); if (this.count(id, e) < 1 || (s.cards[id] || 0) < 1) return 0;
+    const g = this.sellValue(c, e); s.ed[id][e]--; if (!s.ed[id][e]) delete s.ed[id][e]; if (!Object.keys(s.ed[id]).length) delete s.ed[id];
+    s.cards[id]--; if (s.cards[id] <= 0) delete s.cards[id];
+    Economy.add(g, true); s.stats.quicksold++; Store.save(true); Audio.coins(4); Bus.emit('stateChanged'); return g;
+  },
+  msStatus(e) { const n = this.distinct(e), s = S(); return ED_MS.map(([k, coins, luck]) => ({ n: k, coins: Math.round(coins * ED_BY[e].mult / 5), luck, done: !!s.ems[e + '_' + k], can: n >= k && !s.ems[e + '_' + k] })); },
+  claimMs(e, k) { const m = this.msStatus(e).find(x => x.n === k), s = S(); if (!m || !m.can) return false; s.ems[e + '_' + k] = Date.now(); Economy.add(m.coins, true); Economy.addLuck(m.luck); Economy.addXp(40 * (EDITIONS.findIndex(x => x.id === e) + 1)); Audio.fanfare(7); Store.save(true); Bus.emit('toast', `${ED_BY[e].icon} ${ED_BY[e].name}-Meilenstein ${k}: +${fmt(m.coins)} Coins`, 'gold'); Bus.emit('stateChanged'); return true; },
+  claimable() { let n = 0; EDITIONS.forEach(e => n += this.msStatus(e.id).filter(m => m.can).length); return n; }
+};
+
 /* ------------------------------ ECONOMY ------------------------------ */
 const MAX_LUCK = 10;
 const Economy = {
@@ -864,7 +903,7 @@ const Economy = {
   packPrice(p) { return Math.max(1, Math.round(p.price * (1 - this.salePct()))); },
   unique() { return Object.keys(S().cards).length; },
   total() { return Object.values(S().cards).reduce((a, b) => a + b, 0); },
-  collectionValue() { let v = 0; for (const id in S().cards) v += CardDB.get(+id).value * S().cards[id]; return v; },
+  collectionValue() { let v = 0; for (const id in S().cards) v += CardDB.get(+id).value * S().cards[id]; return v + Ed.extraValue(); },
   add(n, silent) {
     n = Math.floor(n); if (!(n > 0)) return 0;
     const s = S(); s.coins += n; s.stats.earned += n; if (s.coins > s.stats.maxCoins) s.stats.maxCoins = s.coins;
@@ -954,6 +993,8 @@ const ACH = [];
   A('quest1', '📜', 'Aufgabenheld', 'Schließe eine Tagesaufgabe ab.', s => s.stats.quests >= 1, 300);
   A('quest25', '📜', 'Aufgaben-Profi', 'Schließe 25 Aufgaben ab.', s => s.stats.quests >= 25, 8000);
   A('fav', '❤️', 'Lieblingshund', 'Wähle eine Favoriten-Karte.', s => s.fav > 0, 150);
+  EDITIONS.forEach(e => A('ed_' + e.id, e.icon, `${e.name} Edition`, `Ziehe eine ${e.name}-Special-Edition.`, s => (s.stats.edPulled[e.id] || 0) > 0, 1000 * e.mult));
+  A('ed10', '🌟', 'Special-Sammler', 'Besitze 10 Special-Edition-Karten.', s => Ed.copies() >= 10, 25000);
   A('trader', '🧑‍💼', 'Echter Händler', 'Erreiche den Händler-Rang „Händler“.', s => s.trade.xp >= 100, 1000);
 })();
 const Ach = {
@@ -1037,7 +1078,8 @@ const PackEngine = {
     for (const c of cards) {
       const isNew = !s.disc[c.id]; if (isNew) { s.disc[c.id] = Date.now(); newCount++; }
       s.cards[c.id] = (s.cards[c.id] || 0) + 1;
-      res.cards.push({ card: c, isNew, count: s.cards[c.id] }); res.value += c.value;
+      const ed = Ed.roll(pack); if (ed) { Ed.add(c.id, ed.id); res.edCount = (res.edCount || 0) + 1; Economy.addLuck(0.03 * (EDITIONS.indexOf(ed) + 1), true); Economy.addXp(15 * (EDITIONS.indexOf(ed) + 1)); if (!res.bestEd || ed.mult > ED_BY[res.bestEd.ed].mult) res.bestEd = { card: c, ed: ed.id }; }
+      res.cards.push({ card: c, isNew, count: s.cards[c.id], edition: ed ? ed.id : null }); res.value += ed ? Ed.value(c, ed.id) : c.value;
       s.stats.tierPulled[c.tier]++; if (c.tier >= 3) rare3++;
       if (!res.best || c.tier > res.best.tier || (c.tier === res.best.tier && c.value > res.best.value)) res.best = c;
       if (c.id === dotdId && !s.dotd.claimed) { s.dotd = { day: todayStr(), claimed: true }; res.dotd = c; res.bonusCoins = Math.round(c.value * 3); s.stats.dotd++; }
@@ -1065,26 +1107,26 @@ const PackEngine = {
   chances(pack, packId) { const pity = S().pity[pack.id] || 0; return this.weights(pack, Economy.effLuck(), pity).map(x => x * 100); },
   baseChances(pack) { return this.weights(pack, 1, 0).map(x => x * 100); },
   quickSell(id, n = 1) {
-    const s = S(), c = CardDB.get(id); const own = s.cards[id] || 0;
-    if (!c || !isInt(n) || n < 1 || own - n < 1) return 0;           // letztes Exemplar bleibt im Album
+    const s = S(), c = CardDB.get(id); const own = Ed.spare(id);
+    if (!c || !isInt(n) || n < 1 || own - n < 1 || (s.cards[id] || 0) - n < 1) return 0;           // letztes Exemplar bleibt im Album, Specials sind geschützt
     s.cards[id] -= n; const coins = Math.floor(c.value * Economy.QUICKSELL) * n;
     Economy.add(coins, true); s.stats.quicksold += n; Quests.progress('sell', n); Ach.check(); Store.save(true); Audio.coins(3);
     Bus.emit('stateChanged'); return coins;
   },
   quickSellAllDupes(maxTier = 12) {
     let tot = 0, n = 0; const s = S();
-    for (const k of Object.keys(s.cards)) { const c = CardDB.get(+k); if (c.tier <= maxTier && s.cards[k] > 1) { const q = s.cards[k] - 1; const g = this.quickSell(+k, q); tot += g; n += q; } }
+    for (const k of Object.keys(s.cards)) { const c = CardDB.get(+k); const sp = Ed.spare(+k); if (c.tier <= maxTier && sp > 1) { const q = sp - 1; const g = this.quickSell(+k, q); tot += g; n += q; } }
     return { coins: tot, n };
   }
 };
 
 /* ------------------------------ CARD RENDERER ------------------------------ */
 function renderCard(card, o = {}) {
-  const { size = 'md', owned = true, count = 0, down = false, isNew = false, fav = false, flipped = false, odds = true, hov = false, onclick = null } = o;
+  const { size = 'md', owned = true, count = 0, down = false, isNew = false, fav = false, flipped = false, odds = true, hov = false, onclick = null, edition = null, marks = null } = o; const E = edition ? ED_BY[edition] : null;
   const locked = !owned, t = card.tier, r = RAR[t];
   const secretLocked = locked && card.secret;
   const name = locked ? '???' : card.name;
-  const root = el('div', { class: `card t${t} sz-${size}${locked ? ' locked' : ''}${card.secret ? ' secret' : ''}${down ? ' down' : ''}${flipped ? ' flipped' : ''}${hov ? ' hov' : ''}${card.trait === 'Holo' && t < 4 ? ' trh' : ''}${REDUCED_MQ.matches ? ' reduce' : ''}`, 'data-id': card.id, style: `--h:${card.hue}`, tabindex: onclick ? 0 : -1, role: onclick ? 'button' : null, 'aria-label': locked ? `Karte ${card.id}, nicht gesammelt` : `${card.name}, ${r.name}`, title: locked ? `#${card.id} – noch nicht entdeckt` : `${card.name} – ${r.name} – Wert ${fmt(card.value)}` });
+  const root = el('div', { class: `card t${t} sz-${size}${locked ? ' locked' : ''}${card.secret ? ' secret' : ''}${down ? ' down' : ''}${flipped ? ' flipped' : ''}${hov ? ' hov' : ''}${card.trait === 'Holo' && t < 4 ? ' trh' : ''}${E ? ' ed ed-' + E.id : ''}${REDUCED_MQ.matches ? ' reduce' : ''}`, 'data-id': card.id, style: `--h:${card.hue}`, tabindex: onclick ? 0 : -1, role: onclick ? 'button' : null, 'aria-label': locked ? `Karte ${card.id}, nicht gesammelt` : `${card.name}, ${r.name}`, title: locked ? `#${card.id} – noch nicht entdeckt` : `${card.name} – ${r.name} – Wert ${fmt(card.value)}` });
   const chanceTxt = fmtPct(card.chance) + ' · 1:' + fmt(Math.round(100 / card.chance));
   root.innerHTML = `<div class="rot"><div class="flip">
     <div class="face front"><div class="frame"><div class="inner">
@@ -1093,17 +1135,17 @@ function renderCard(card, o = {}) {
       <div class="nm">${name}</div>
       <div class="sub">${locked ? '—' : card.country}</div>
       <div class="rar">${secretLocked ? '???' : r.name}</div>
-      ${odds ? `<div class="odds"><span>🎲 ${secretLocked ? '???' : chanceTxt}</span><span>🪙 ${locked ? '?' : fmtShort(card.value)}</span></div>` : '<div style="height:.5em"></div>'}
-      <div class="fx fx-holo"></div><div class="fx fx-spark"></div><div class="fx fx-gal"></div><div class="fx fx-glare"></div>
+      ${odds ? `<div class="odds"><span>🎲 ${secretLocked ? '???' : chanceTxt}</span><span>🪙 ${locked ? '?' : fmtShort(E ? card.value * E.mult : card.value)}</span></div>` : '<div style="height:.5em"></div>'}
+      <div class="fx fx-holo"></div><div class="fx fx-spark"></div><div class="fx fx-gal"></div><div class="fx fx-ed"></div><div class="fx fx-glare"></div>${E ? `<div class="edbadge">${E.icon} ${E.name.toUpperCase()}</div>` : ''}
     </div></div>
-    ${isNew ? '<div class="ribbon">NEU!</div>' : ''}${count > 1 ? `<div class="cnt">×${count}</div>` : ''}${fav ? '<div class="fav">❤️</div>' : ''}
+    ${isNew ? '<div class="ribbon">NEU!</div>' : ''}${count > 1 ? `<div class="cnt">×${count}</div>` : ''}${fav ? '<div class="fav">❤️</div>' : ''}${marks && marks.length ? `<div class="edmark" title="Special Editions">${marks.map(m => ED_BY[m].icon).join('')}</div>` : ''}
     <div class="cover"></div></div>
     <div class="face back"><div class="frame"><div class="inner">
       <h4>${locked ? '???' : card.name}</h4>
       <div class="flav">„${locked ? '…' : card.flavor}“</div>
       ${locked ? '' : card.stats.map((v, i) => `<div class="stat"><span>${CardDB.STATN[i]}</span><span class="sb"><i style="width:${v}%"></i></span><b>${v}</b></div>`).join('')}
-      <div class="info"><span>${r.name}${card.trait ? ' · ' + card.trait : ''}</span><span>${locked ? '' : card.country}</span></div>
-      <div class="info"><span>Wert: ${locked ? '?' : fmt(card.value)} 🪙</span><span>${locked ? '' : card.breed}</span></div>
+      <div class="info"><span>${E ? E.icon + ' ' + E.name + '-Edition · ' : ''}${r.name}${card.trait ? ' · ' + card.trait : ''}</span><span>${locked ? '' : card.country}</span></div>
+      <div class="info"><span>Wert: ${locked ? '?' : fmt(E ? card.value * E.mult : card.value)} 🪙</span><span>${locked ? '' : card.breed}</span></div>
     </div></div></div>
   </div></div>`;
   if (onclick) { root.addEventListener('click', e => onclick(card, e)); root.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onclick(card, e); } }); }
@@ -1363,6 +1405,53 @@ const Cutscene = (() => {
       }
     };
   };
+  /* ---------- Special-Edition-Szenen ---------- */
+  const SCE = {};
+  const edSub = (card, ed) => `${card.name} · 1 : ${fmt(Math.round(1 / ed.p))}`;
+  const spark4 = (x, y, r, a, col) => { c.save(); c.translate(x, y); c.globalAlpha = a; c.fillStyle = col; c.globalCompositeOperation = 'lighter'; c.beginPath(); c.moveTo(0, -r); c.quadraticCurveTo(0, 0, r, 0); c.quadraticCurveTo(0, 0, 0, r); c.quadraticCurveTo(0, 0, -r, 0); c.quadraticCurveTo(0, 0, 0, -r); c.fill(); c.restore(); };
+  SCE.shiny = (col, card) => {
+    const ed = ED_BY.shiny, sp = Array.from({ length: 26 }, () => ({ x: R(), y: R(), s: 8 + R() * 22, p: R() * TAU, sp: 2 + R() * 3 }));
+    return {
+      dur: 3.2, cues: [[0, () => { Audio.riser(1.1, 0.1); X.vig(true); }], [1.0, () => { Audio.sparkle(14); Audio.reveal(6); X.flash(0.6, 500, '#bffcff'); X.title('SHINY!', col); X.sub(edSub(card, ed)); emit(W / 2, H * 0.45, 130, { speed: 520, colors: ['#7df9ff', '#fff', '#c8fbff'], life: 1.8, size: 3 }); }]],
+      draw(t) { const a = ease.out(seg(t, 0, 1)) * (1 - seg(t, 2.6, 3.2)); glow(W / 2, H * 0.45, 120 + 200 * a, col, 0.4 * a); sp.forEach(s => { const tw = Math.max(0, Math.sin(t * s.sp + s.p)); spark4(s.x * W, s.y * H, s.s * tw * a * 1.2, tw * a, '#c8fbff'); }); if (t > 1) ring(W / 2, H * 0.45, (t - 1) * 600, 5, col, 1 - seg(t, 1, 1.9)); }
+    };
+  };
+  SCE.gold = (col, card) => {
+    const ed = ED_BY.gold;
+    return {
+      dur: 4.2, cues: [[0, () => { Audio.riser(1.6, 0.12); X.vig(true); X.zoom(1.1, 1600); }], [1.5, () => { Audio.fanfare(7); Audio.coins(8); Audio.drum(0.7); X.flash(0.9, 700, '#fff0b0'); X.shake(500); X.title('GOLD EDITION', col); X.sub(edSub(card, ed)); }]],
+      draw(t) {
+        if (t < 3.6 && R() < (t < 1.5 ? 0.4 : 1)) emit(R() * W, -10, 4, { angle: Math.PI / 2, spread: 0.3, speed: 280 + R() * 300, g: 520, colors: ['#ffd24a', '#fff3b0', '#ffb000'], life: 2.4, size: 5, shape: 'r' });
+        rays(W / 2, H * 0.45, 16, Math.max(W, H), t * 0.5, '#ffd24a', 0.3 * ease.out(seg(t, 0.3, 1.5)) * (1 - seg(t, 3.4, 4.2)), 0.03);
+        if (t > 1.5) { ring(W / 2, H * 0.45, (t - 1.5) * 1000, 12, '#fff3b0', 1 - seg(t, 1.5, 2.4)); ring(W / 2, H * 0.45, (t - 1.5) * 700, 6, '#ffd24a', 1 - seg(t, 1.5, 2.8)); }
+        glow(W / 2, H * 0.45, 260 * ease.out(seg(t, 0, 1.5)), '#ffd24a', 0.35 * (1 - seg(t, 3.4, 4.2)));
+      }
+    };
+  };
+  SCE.diamond = (col, card) => {
+    const ed = ED_BY.diamond, shards = Array.from({ length: 44 }, () => ({ a: R() * TAU, v: 200 + R() * 700, r: R() * TAU, sr: (R() - 0.5) * 9, s: 10 + R() * 34 })), stars = makeStars(80);
+    return {
+      dur: 5.6, cues: [[0, () => { Audio.riser(1.8, 0.12); X.vig(true); Audio.choir(4, 0.05); }], [1.9, () => { Audio.thunder(); Audio.sparkle(16); X.flash(1, 900, '#e8fdff'); X.shake(600); X.title('DIAMANT EDITION', col); X.sub(edSub(card, ed)); Audio.fanfare(9); emit(W / 2, H * 0.45, 200, { speed: 600, colors: ['#b9f2ff', '#fff', '#7df9ff'], life: 2.4, size: 3 }); }]],
+      draw(t) {
+        c.fillStyle = `rgba(2,10,24,${0.7 * ease.out(seg(t, 0, 0.8))})`; c.fillRect(0, 0, W, H); drawStars(stars, t, '#cfeeff'); const cx = W / 2, cy = H * 0.45, m = Math.min(W, H);
+        if (t < 1.9) { const s = m * (0.04 + 0.2 * ease.out(seg(t, 0.2, 1.9))), shake = t > 1.3 ? (R() - 0.5) * 6 : 0; c.save(); c.translate(cx + shake, cy); c.globalCompositeOperation = 'lighter'; const g = c.createLinearGradient(-s, -s, s, s); g.addColorStop(0, '#fff'); g.addColorStop(0.5, '#7df9ff'); g.addColorStop(1, '#1b8aa8'); c.fillStyle = g; c.beginPath(); c.moveTo(0, -s); c.lineTo(s * 0.72, -s * 0.2); c.lineTo(0, s * 1.15); c.lineTo(-s * 0.72, -s * 0.2); c.closePath(); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.beginPath(); c.moveTo(-s * 0.72, -s * 0.2); c.lineTo(s * 0.72, -s * 0.2); c.moveTo(0, -s); c.lineTo(-s * 0.25, -s * 0.2); c.lineTo(0, s * 1.15); c.lineTo(s * 0.25, -s * 0.2); c.lineTo(0, -s); c.stroke(); c.restore(); glow(cx, cy, s * 2.2, '#7df9ff', 0.5); }
+        else { const e = t - 1.9, f = 1 - seg(t, 2.6, 5.2); c.globalCompositeOperation = 'lighter'; shards.forEach(h => { const d = h.v * (1 - Math.exp(-e * 2)) / 2, x = cx + Math.cos(h.a) * d, y = cy + Math.sin(h.a) * d + e * e * 30; c.save(); c.translate(x, y); c.rotate(h.r + h.sr * e); c.globalAlpha = f; c.fillStyle = ['#b9f2ff', '#fff', '#7df9ff'][Math.floor(h.s) % 3]; c.beginPath(); c.moveTo(0, -h.s); c.lineTo(h.s * 0.6, h.s * 0.5); c.lineTo(-h.s * 0.6, h.s * 0.5); c.closePath(); c.fill(); c.restore(); }); c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; ring(cx, cy, e * 900, 8, '#fff', 1 - seg(t, 1.9, 2.8)); rays(cx, cy, 18, Math.max(W, H), t * 0.4, '#b9f2ff', 0.2 * f, 0.03); glow(cx, cy, m * 0.5, '#7df9ff', 0.3 * f); }
+      }
+    };
+  };
+  SCE.prisma = (col, card) => {
+    const ed = ED_BY.prisma, stars = makeStars(100), cracks = makeCracks(14, Math.max(W, H) * 0.6);
+    return {
+      dur: 8, cues: [[0, () => { X.vig(true); Audio.riser(3.5, 0.14); Audio.choir(5, 0.05); }], [2.2, () => { Audio.whoosh(1, 0.3); X.flash(0.5, 400, '#ff7ad9'); }], [3.9, () => { Audio.bassDrop(0.9); Audio.thunder(); X.flash(1, 1400, '#fff'); X.shake(1000); X.title('PRISMA EDITION', '#ffb0f0'); X.sub(edSub(card, ed)); Audio.fanfare(11); emit(W / 2, H * 0.5, 320, { speed: 900, colors: ['#ff4d9d', '#ffe14d', '#4dff9d', '#4dc3ff', '#b14dff', '#fff'], life: 3, drag: 0.9, size: 4 }); }]],
+      draw(t) {
+        c.fillStyle = '#05010f'; c.fillRect(0, 0, W, H); drawStars(stars, t, '#fff', t < 3.9 ? 4 * seg(t, 1, 3.9) : 0); const cx = W / 2, cy = H * 0.5, m = Math.min(W, H);
+        c.globalCompositeOperation = 'lighter'; for (let i = 0; i < 9; i++) { const r = ((t * 0.5 + i / 9) % 1) * m * 0.8 * (t < 3.9 ? 1 : 1.6); c.strokeStyle = `hsla(${(t * 120 + i * 40) % 360},100%,60%,${(1 - r / (m * 1.3)) * 0.8 * (1 - seg(t, 6.5, 8))})`; c.lineWidth = 4 + i; c.beginPath(); c.arc(cx, cy, Math.max(1, r), 0, TAU); c.stroke(); } c.globalCompositeOperation = 'source-over';
+        if (t > 2.2) { const a = ease.out(seg(t, 2.2, 3.4)) * (1 - seg(t, 6.5, 8)); for (let i = 0; i < 7; i++) pillar(W * (0.08 + i * 0.14), `#${['ff4d9d', 'ffe14d', '4dff9d', '4dc3ff', 'b14dff', 'ff7ad9', '7df9ff'][i]}`, 0.35 * a, 26); }
+        if (t > 3.4 && t < 4.8) { drawCracks(cracks, cx, cy, ease.out(seg(t, 3.4, 4.2)), '#ff7ad9', 3); glitch(0.5); }
+        if (t > 3.9) { const e = t - 3.9, a = ease.out(seg(t, 3.9, 5)) * (1 - seg(t, 7, 8)); ring(cx, cy, e * 1100, 14, '#fff', 1 - seg(t, 3.9, 5)); drawSil(card.emoji, cx, cy, m * 0.42, `hsl(${(t * 200) % 360},100%,65%)`, a, 40); rays(cx, cy, 20, Math.max(W, H), t * 0.5, '#ff7ad9', 0.16 * a, 0.03); }
+      }
+    };
+  };
   /* ---------- Laufzeit ---------- */
   function resize() { const b = cv.getBoundingClientRect(); dpr = Math.min(window.devicePixelRatio || 1, Device.isMobile() ? 1.5 : 2); W = Math.max(2, b.width); H = Math.max(2, b.height); cv.width = W * dpr; cv.height = H * dpr; c.setTransform(dpr, 0, 0, dpr, 0, 0); }
   return {
@@ -1372,13 +1461,14 @@ const Cutscene = (() => {
     play(card, rootEl, opts = {}) {
       return new Promise(resolve => {
         root = rootEl; cv = $('#cutCanvas', root); c = cv.getContext('2d'); resize(); parts = []; skipFlag = false; running = true;
-        const t = card.tier, col = RAR[t].color;
-        const make = SC[t]; const sc = make ? make(col, card) : null;
+        const ed = opts.edition ? ED_BY[opts.edition] : null;
+        const t = card.tier, col = ed ? ed.color : RAR[t].color;
+        const make = ed ? SCE[ed.id] : SC[t]; const sc = make ? make(col, card) : null;
         const kScale = S().settings.shortCut ? 1.8 : 1;
-        root.classList.add('cut-on'); root.classList.toggle('cut-hide', t >= 7);
+        root.classList.add('cut-on'); root.classList.toggle('cut-hide', !!ed || t >= 7);
         const skipBtn = $('#cutSkip', root), layer = $('#cutLayer', root);
         skipBtn.classList.remove('on'); layer.classList.add('on');
-        const skipDelay = (t === 12 ? 4 : 2) * 1000 / (S().settings.shortCut ? 1.5 : 1);
+        const skipDelay = (t === 12 && !ed ? 4 : 2) * 1000 / (S().settings.shortCut ? 1.5 : 1);
         const skipT = setTimeout(() => skipBtn.classList.add('on'), skipDelay);
         const done = () => {
           clearTimeout(skipT); running = false; skipBtn.classList.remove('on'); layer.classList.remove('on'); root.classList.remove('cut-on');
@@ -1420,13 +1510,14 @@ const Cutscene = (() => {
 /* ------------------------------ ALBUM ------------------------------ */
 const MILESTONES = [[10, 300, 0.1], [25, 800, 0.15], [50, 2500, 0.2], [100, 8000, 0.3], [250, 40000, 0.4], [500, 200000, 0.6], [750, 600000, 0.8], [999, 5000000, 1.5]];
 const Album = {
-  st: { page: 0, rarity: 0, owned: 'all', q: '', country: '', sort: 'id' },
+  st: { page: 0, rarity: 0, owned: 'all', q: '', country: '', sort: 'id', mode: 'cards', edition: 'shiny' },
   pageSize() { return Device.isMobile() ? 6 : 9; },
   owns(id) { return (S().cards[id] || 0) > 0; },
   list() {
     const f = this.st, q = f.q.trim().toLowerCase(); const s = S();
     let arr = CardDB.cards.filter(c => {
       const own = (s.cards[c.id] || 0) > 0;
+      if (f.mode === 'special') { if (!Ed.count(c.id, f.edition)) return false; if (f.rarity && c.tier !== f.rarity) return false; if (f.country && c.country !== f.country) return false; if (q && !(c.name + ' ' + c.breed + ' ' + c.country + ' #' + c.id).toLowerCase().includes(q)) return false; return true; }
       if (f.rarity && c.tier !== f.rarity) return false;
       if (f.owned === 'owned' && !own) return false;
       if (f.owned === 'missing' && own) return false;
@@ -1451,18 +1542,26 @@ const Album = {
     const r = this.setReward(t); s.sets[t] = Date.now(); Economy.add(r.coins, true); Economy.addLuck(r.luck); Economy.addXp(30 * t); Audio.fanfare(6); Ach.check(); Store.save(true);
     Bus.emit('toast', `🧩 Set „${RAR[t].name}“ komplett! +${fmt(r.coins)} Coins`, 'gold'); Bus.emit('stateChanged'); return true;
   },
-  claimable() { let n = this.milestones().filter(m => m.can).length; for (let t = 1; t <= 12; t++) { const p = this.tierProgress(t); if (p.own >= p.total && !S().sets[t]) n++; } return n; },
+  claimable() { let n = this.milestones().filter(m => m.can).length + Ed.claimable(); for (let t = 1; t <= 12; t++) { const p = this.tierProgress(t); if (p.own >= p.total && !S().sets[t]) n++; } return n; },
   checkMilestoneToasts() { const n = this.claimable(); if (n > (this._lastClaimable || 0)) Bus.emit('toast', '🎁 Album-Belohnung bereit!', 'good'); this._lastClaimable = n; },
   render(host) {
     const f = this.st, mob = Device.isMobile(); host.innerHTML = '';
     const sec = el('section', { class: 'album' });
     const u = Economy.unique();
     sec.append(el('div', { class: 'view-title' }, el('h2', {}, '📖 Sticker-Album'), el('span', { class: 'chip' }, `${u} / 999`), el('span', { class: 'chip' }, fmtPct(u / 9.99))));
+    const tabsEl = el('div', { class: 'tabs' }, el('button', { class: f.mode === 'cards' ? 'active' : '', onclick: () => { f.mode = 'cards'; f.page = 0; this.render(host); } }, '📖 Karten'), el('button', { class: f.mode === 'special' ? 'active' : '', onclick: () => { f.mode = 'special'; f.page = 0; this.render(host); } }, `✨ Special Editions (${Ed.copies()})`));
+    sec.append(tabsEl); const special = f.mode === 'special';
     const top = el('div', { class: 'glass pad col', style: 'margin-bottom:14px' });
     top.append(el('div', { class: 'bar gold' }, el('i', { style: `width:${u / 9.99}%` })));
     const rp = el('div', { class: mob ? 'col' : 'grid', style: mob ? 'gap:4px' : 'grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:6px 18px' });
     for (let t = 1; t <= 12; t++) { const p = this.tierProgress(t); rp.append(el('div', { class: 'rar-prog' }, el('span', { class: 'tc' + t }, RAR[t].name), el('div', { class: 'bar' }, el('i', { style: `width:${p.own / p.total * 100}%;background:${RAR[t].color}` })), el('small', { class: 'dim mono' }, `${p.own}/${p.total}`))); }
     const det = el('details', {}, el('summary', { class: 'dim', style: 'cursor:pointer;min-height:32px' }, 'Fortschritt pro Seltenheit'), rp); if (!mob) det.open = true; top.append(det);
+    if (special) {
+      top.innerHTML = ''; top.append(el('div', { class: 'dim', style: 'font-size:.85rem' }, 'Special Editions sind zusätzliche, deutlich seltenere Varianten deiner Karten – sie entstehen beim Ziehen aus Packs.'));
+      const g = el('div', { class: 'grid', style: 'grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px' });
+      EDITIONS.forEach(e => { const n = Ed.distinct(e.id); g.append(el('button', { class: 'glass pad col', style: `text-align:left;gap:4px;${f.edition === e.id ? `border-color:${e.color};box-shadow:0 0 18px ${e.color}66` : ''}`, onclick: () => { f.edition = e.id; f.page = 0; this.render(host); } }, el('b', { style: `color:${e.color}` }, `${e.icon} ${e.name}`), el('small', { class: 'dim' }, `${n} / 999 · ×${e.mult} Wert · 1:${fmt(Math.round(1 / e.p))}`), el('div', { class: 'bar' }, el('i', { style: `width:${n / 9.99}%;background:${e.color}` })))); });
+      top.append(g);
+    }
     sec.append(top);
     const wrap = el('div', { class: 'album-wrap' });
     // Filter
@@ -1488,6 +1587,10 @@ const Album = {
     const sb = el('div', { class: 'ms-list', style: 'margin-top:12px' }); sb.append(el('b', {}, '🧩 Set-Belohnungen'));
     for (let t = 1; t <= 12; t++) { const p = this.tierProgress(t), r = this.setReward(t), done = !!S().sets[t], can = !done && p.own >= p.total; sb.append(el('div', { class: 'ms' + (done ? ' done' : can ? ' claim' : '') }, el('span', {}, done ? '✅' : can ? '🎁' : '🔒'), el('div', { class: 'grow' }, el('b', { class: 'tc' + t }, RAR[t].name), el('div', { class: 'dim', style: 'font-size:.74rem' }, `${p.own}/${p.total} · +${fmtShort(r.coins)} 🪙`)), can ? el('button', { class: 'btn gold sm', onclick: () => { this.claimSet(t); this.render(host); } }, 'Abholen') : null)); }
     msBox.append(sb);
+    if (special) {
+      msBox.innerHTML = ''; const E = ED_BY[f.edition]; msBox.append(el('h3', { style: 'margin-bottom:8px' }, `🎁 ${E.icon} ${E.name}-Meilensteine`)); const ml2 = el('div', { class: 'ms-list' });
+      Ed.msStatus(f.edition).forEach(m => ml2.append(el('div', { class: 'ms' + (m.done ? ' done' : m.can ? ' claim' : '') }, el('span', { style: 'font-size:1.3rem' }, m.done ? '✅' : m.can ? '🎁' : '🔒'), el('div', { class: 'grow' }, el('b', {}, `${m.n} verschiedene ${E.name}-Karten`), el('div', { class: 'dim', style: 'font-size:.78rem' }, `+${fmtShort(m.coins)} 🪙 · Luck +${m.luck}`)), m.can ? el('button', { class: 'btn gold sm', onclick: () => { Ed.claimMs(f.edition, m.n); this.render(host); } }, 'Abholen') : null))); msBox.append(ml2);
+    }
     const left = el('div', {}, fl, msBox);
     // Buch
     const book = el('div', { class: 'glass book', id: 'albumBook' });
@@ -1502,8 +1605,9 @@ const Album = {
     const mob = Device.isMobile();
     const pg = el('div', { class: `page ${mob ? 'cols2' : 'cols3'}${dir < 0 ? ' flipL' : ''}` });
     const s = S(); const size = mob ? (window.innerWidth >= 560 ? 'md' : 'sm') : 'md';
-    if (!arr.length) pg.append(el('p', { class: 'dim center', style: 'grid-column:1/-1;padding:40px 0' }, 'Keine Karten gefunden.'));
-    for (const c of arr.slice(f.page * ps, f.page * ps + ps)) pg.append(renderCard(c, { size, owned: (s.cards[c.id] || 0) > 0, count: s.cards[c.id] || 0, hov: true, fav: s.fav === c.id, onclick: card => UI.showCard(card) }));
+    const sp = f.mode === 'special';
+    if (!arr.length) pg.append(el('p', { class: 'dim center', style: 'grid-column:1/-1;padding:40px 0' }, sp ? `Noch keine ${ED_BY[f.edition].name}-Edition. Öffne Packs – höhere Packs haben bessere Chancen!` : 'Keine Karten gefunden.'));
+    for (const c of arr.slice(f.page * ps, f.page * ps + ps)) pg.append(sp ? renderCard(c, { size, owned: true, count: Ed.count(c.id, f.edition), hov: true, edition: f.edition, onclick: card => UI.showCard(card, f.edition) }) : renderCard(c, { size, owned: (s.cards[c.id] || 0) > 0, count: s.cards[c.id] || 0, hov: true, fav: s.fav === c.id, marks: Ed.owned(c.id).map(e => e.id), onclick: card => UI.showCard(card) }));
     book.append(pg);
     const nav = el('div', { class: 'page-nav' },
       el('button', { class: 'icon-btn', 'aria-label': 'Erste Seite', onclick: () => { f.page = 0; this.refresh(-1); } }, '⏮'),
@@ -1613,14 +1717,14 @@ const TradeAI = {
   validate(npc, offer) {
     const s = S(), st = this.state(npc);
     const chk = (list, owner, label) => {
-      const seen = new Set(); for (const e of list) { if (!e || !isInt(e.id) || !isInt(e.n) || e.n < 1 || !CardDB.get(e.id)) return 'Ungültige Karte.'; if (seen.has(e.id)) return 'Karte doppelt.'; seen.add(e.id); if (e.n > (owner[e.id] || 0)) return label; } return null;
+      const seen = new Set(); for (const e of list) { if (!e || !isInt(e.id) || !isInt(e.n) || e.n < 1 || !CardDB.get(e.id)) return 'Ungültige Karte.'; if (seen.has(e.id)) return 'Karte doppelt.'; seen.add(e.id); if (e.n > (typeof owner === 'function' ? owner(e.id) : (owner[e.id] || 0))) return label; } return null;
     };
     const o = offer; if (!o || !o.give || !o.get) return 'Ungültiges Angebot.';
     if (!isInt(o.give.coins) || !isInt(o.get.coins) || o.give.coins < 0 || o.get.coins < 0) return 'Ungültiger Coin-Betrag.';
     if (o.give.coins > s.coins) return 'Du hast nicht genug Coins.';
     if (o.get.coins > st.coins) return 'Der Händler hat nicht so viel Geld.';
     const stockCounts = {}; st.stock.forEach(id => stockCounts[id] = (stockCounts[id] || 0) + 1);
-    let e = chk(o.give.cards, s.cards, 'Du besitzt nicht genug Exemplare.'); if (e) return e;
+    let e = chk(o.give.cards, id => Ed.spare(id), 'Du besitzt nicht genug tauschbare Exemplare (Special Editions sind nicht tauschbar).'); if (e) return e;
     e = chk(o.get.cards, stockCounts, 'Karte nicht (mehr) im Bestand des Händlers.'); if (e) return e;
     const giveN = o.give.cards.length + (o.give.coins > 0 ? 1 : 0), getN = o.get.cards.length + (o.get.coins > 0 ? 1 : 0);
     if (!giveN && !getN) return 'Leerer Trade.'; if (!giveN) return 'Du musst etwas anbieten.'; if (!getN) return 'Wähle etwas vom Händler.';
@@ -1654,7 +1758,7 @@ const TradeAI = {
     if (ev.treasureAsk && ev.r < 1) return { type: 'refuse', text: `Das ist mein Schatz! ${CardDB.get(npc.treasure).name} gebe ich nur für ein extrem hohes Angebot her.` };
     const tryAsk = () => {
       // Karte des Spielers, die das Defizit deckt (kleinste passende), Wunschkarten bevorzugt
-      const cands = []; for (const k of Object.keys(s.cards)) { const id = +k; if (offered.has(id)) continue; const c = CardDB.get(id); const v = c.value * this.wishMod(npc, c) * (1 - 0.0); cands.push({ c, v }); }
+      const cands = []; for (const k of Object.keys(s.cards)) { const id = +k; if (offered.has(id) || Ed.spare(id) < 1) continue; const c = CardDB.get(id); const v = c.value * this.wishMod(npc, c) * (1 - 0.0); cands.push({ c, v }); }
       const fits = cands.filter(x => x.v * 0.85 >= deficit).sort((a, b) => a.v - b.v);
       if (fits.length && fits[0].c.tier <= ev.bestTier + 2) { const x = fits[0].c; return { type: 'ask', addCard: { id: x.id, n: 1 }, text: lineAsk(`„${x.name}“`) }; }
       const coins = Math.ceil(deficit * 1.02); if (coins <= s.coins - offer.give.coins && coins > 0 && coins <= Math.max(50, ev.npcValue * 0.9)) return { type: 'ask', addCoins: coins, text: lineAsk(`${fmt(coins)} Coins`) };
@@ -1717,11 +1821,11 @@ const TradeAI = {
 /* ------------------------------ NPC-ANGEBOTE (Benachrichtigungen) ------------------------------ */
 const Offers = {
   EXP_MS: 12 * 60000,
-  clean() { const s = S(), now = Date.now(); const n = s.offers.length; s.offers = s.offers.filter(o => o.exp > now && (s.cards[o.card] || 0) > 0); if (s.offers.length !== n) Bus.emit('offers'); },
+  clean() { const s = S(), now = Date.now(); const n = s.offers.length; s.offers = s.offers.filter(o => o.exp > now && Ed.spare(o.card) > 0); if (s.offers.length !== n) Bus.emit('offers'); },
   maybeCreate() {
     const s = S(); this.clean(); if (s.offers.length >= 5) return;
-    const owned = Object.keys(s.cards).map(Number); if (!owned.length) return;
-    const dups = owned.filter(id => s.cards[id] > 1); const pool = dups.length && Math.random() < 0.8 ? dups : owned;
+    const owned = Object.keys(s.cards).map(Number).filter(id => Ed.spare(id) > 0); if (!owned.length) return;
+    const dups = owned.filter(id => Ed.spare(id) > 1); const pool = dups.length && Math.random() < 0.8 ? dups : owned;
     const id = pick(pool); if (s.offers.some(o => o.card === id)) return;
     const c = CardDB.get(id), npc = pick(NPCS.filter(n => c.tier >= n.T.tiers[0] - 1 && c.tier <= n.T.tiers[1] + 1)); if (!npc) return;
     const coins = Math.max(5, Math.round(c.value * npc.T.offer * (0.95 + Math.random() * 0.2) * (dups.includes(id) ? 1 : 1.15)));
@@ -1730,7 +1834,7 @@ const Offers = {
   },
   accept(oid) {
     const s = S(), i = s.offers.findIndex(o => o.id === oid); if (i < 0) return { ok: false, error: 'Angebot abgelaufen.' };
-    const o = s.offers[i]; if ((s.cards[o.card] || 0) < 1 || o.exp < Date.now()) { s.offers.splice(i, 1); return { ok: false, error: 'Angebot nicht mehr gültig.' }; }
+    const o = s.offers[i]; if (Ed.spare(o.card) < 1 || o.exp < Date.now()) { s.offers.splice(i, 1); return { ok: false, error: 'Angebot nicht mehr gültig.' }; }
     const npc = NPC_BY_ID[o.npc], st = TradeAI.state(npc); if (st.coins < o.coins) return { ok: false, error: 'Der Händler ist gerade knapp bei Kasse.' };
     const r = TradeAI.execute(npc, { give: { cards: [{ id: o.card, n: 1 }], coins: 0 }, get: { cards: [], coins: o.coins } }, { force: true, noGate: true, kind: 'offer' });
     if (r.ok) { s.offers.splice(i, 1); Store.save(true); Bus.emit('offers'); } return r;
@@ -1761,9 +1865,9 @@ const NPCQuests = {
     Store.save();
   },
   of(npcId) { this.ensure(); const q = S().nq.list[npcId]; return q && !q.done ? q : null; },
-  matching(q) { return Object.keys(S().cards).map(Number).map(id => CardDB.get(id)).filter(c => c.breed === q.breed).sort((a, b) => (S().cards[b.id] - S().cards[a.id]) || (a.value - b.value)); },
+  matching(q) { return Object.keys(S().cards).map(Number).filter(id => Ed.spare(id) > 0).map(id => CardDB.get(id)).filter(c => c.breed === q.breed).sort((a, b) => (S().cards[b.id] - S().cards[a.id]) || (a.value - b.value)); },
   complete(npcId, cardId) {
-    const s = S(), q = s.nq.list[npcId]; if (!q || q.done || (s.cards[cardId] || 0) < 1 || CardDB.get(cardId).breed !== q.breed) return false;
+    const s = S(), q = s.nq.list[npcId]; if (!q || q.done || Ed.spare(cardId) < 1 || CardDB.get(cardId).breed !== q.breed) return false;
     s.cards[cardId]--; if (s.cards[cardId] <= 0) delete s.cards[cardId]; q.done = true;
     const st = TradeAI.state(NPC_BY_ID[npcId]); st.rep = clamp(st.rep + 10, 0, 100); Economy.add(q.coins, true); Economy.addLuck(0.04); Economy.addXp(30); Audio.deal(); Store.save(true); Bus.emit('stateChanged'); return q;
   }
@@ -2298,7 +2402,7 @@ const UI = {
     const base = PackEngine.baseChances(p), cur = PackEngine.chances(p), pity = S().pity[p.id] || 0;
     const tb = el('table', { class: 'odds-table' }, el('tr', {}, el('th', {}, 'Seltenheit'), el('th', { class: 'r' }, 'Basis'), el('th', { class: 'r' }, 'Aktuell')));
     RAR.slice(1).forEach(r => { if (base[r.t - 1] > 0) tb.append(el('tr', {}, el('td', {}, el('span', { class: 'dot', style: `--c:${r.color};background:${r.color}` }), r.name), el('td', { class: 'r' }, fmtPct(base[r.t - 1])), el('td', { class: 'r', style: cur[r.t - 1] > base[r.t - 1] * 1.01 ? 'color:var(--ok)' : '' }, fmtPct(cur[r.t - 1])))); });
-    UI.modal({ title: `${p.emoji} ${p.name} – Chancen`, body: [el('p', { class: 'dim' }, `Pro Karte · ${p.count} Karten · letzte Karte mind. ${RAR[p.minLast].name}. Luck ${fmtLuck(Economy.effLuck())}, Pity ${pity}/${PITY_MAX} (bei ${PITY_MAX} Packs ohne ${RAR[p.pityTier].name}+ garantiert).`), tb, el('p', { class: 'dim', style: 'font-size:.8rem' }, 'Der Luck-Multiplikator verschiebt Gewichte zu höheren Stufen; die Summe bleibt immer 100 %.')], actions: [{ label: 'Schließen', cls: 'sec' }] });
+    UI.modal({ title: `${p.emoji} ${p.name} – Chancen`, body: [el('p', { class: 'dim' }, `Pro Karte · ${p.count} Karten · letzte Karte mind. ${RAR[p.minLast].name}. Luck ${fmtLuck(Economy.effLuck())}, Pity ${pity}/${PITY_MAX} (bei ${PITY_MAX} Packs ohne ${RAR[p.pityTier].name}+ garantiert).`), tb, el('h4', { style: 'margin:12px 0 4px' }, '✨ Special-Edition-Chance pro Karte'), el('table', { class: 'odds-table' }, ...Ed.probs(p).map(x => el('tr', {}, el('td', {}, el('span', { style: `color:${x.ed.color}` }, x.ed.icon + ' ' + x.ed.name), el('small', { class: 'dim' }, ` ×${x.ed.mult} Wert`)), el('td', { class: 'r' }, `1 : ${fmt(Math.round(1 / x.p))}`), el('td', { class: 'r' }, fmtPct(x.p * 100))))), el('p', { class: 'dim', style: 'font-size:.8rem' }, 'Der Luck-Multiplikator verschiebt Gewichte zu höheren Stufen; die Summe bleibt immer 100 %. Special Editions werden unabhängig von der Seltenheit gewürfelt, sind nicht tauschbar und bringen ein Vielfaches des Kartenwerts.')], actions: [{ label: 'Schließen', cls: 'sec' }] });
   },
   async buyPack(id) {
     const p = PACK_BY_ID[id], price = Economy.packPrice(p), s = S();
@@ -2332,28 +2436,46 @@ const UI = {
   },
   sellDupesModal() {
     const s = S(); const sel = el('select', { class: 'inp' }, ...RAR.slice(1).map(r => el('option', { value: r.t }, `bis ${r.name}`))); sel.value = 4; const info = el('p', { class: 'dim' });
-    const upd = () => { let n = 0, c = 0; for (const k in s.cards) { const cd = CardDB.get(+k); if (cd.tier <= +sel.value && s.cards[k] > 1) { n += s.cards[k] - 1; c += (s.cards[k] - 1) * Math.floor(cd.value * Economy.QUICKSELL); } } info.textContent = `${n} Duplikate → +${fmt(c)} Coins (je 40 % des Werts, ein Exemplar bleibt immer im Album).`; return n; };
+    const upd = () => { let n = 0, c = 0; for (const k in s.cards) { const cd = CardDB.get(+k); const sp = Ed.spare(+k); if (cd.tier <= +sel.value && sp > 1) { n += sp - 1; c += (sp - 1) * Math.floor(cd.value * Economy.QUICKSELL); } } info.textContent = `${n} Duplikate → +${fmt(c)} Coins (je 40 % des Werts; ein Exemplar und alle Special Editions bleiben).`; return n; };
     sel.onchange = upd; upd();
     UI.modal({ title: '💰 Duplikate verkaufen', body: [el('label', { class: 'col dim' }, 'Stufen', sel), info], actions: [{ label: 'Abbrechen', cls: 'sec' }, { label: 'Verkaufen', cls: 'gold', onclick: () => { const r = PackEngine.quickSellAllDupes(+sel.value); if (r.n) { UI.toast(`💰 ${r.n} Karten verkauft: +${fmt(r.coins)} Coins`, 'gold'); UI.floatText('+' + fmt(r.coins), '#4ade80'); } else UI.toast('Keine Duplikate vorhanden.'); UI.rerender(); } }] });
   },
   /* ---------- Karten-Detail ---------- */
-  showCard(card) {
-    const s = S(), cnt = s.cards[card.id] || 0, owned = cnt > 0; let tilt = null;
-    const cardEl = renderCard(card, { size: 'xl', owned, count: cnt, odds: true, fav: s.fav === card.id }); cardEl.classList.add('tilting-ready'); tilt = Card3D.attach(cardEl, { max: 20 });
-    let flipped = false; const flip = () => { flipped = !flipped; cardEl.classList.toggle('flipped', flipped); Audio.click(); }; cardEl.addEventListener('click', flip);
-    const r = RAR[card.tier]; const info = el('div', { class: 'col', style: 'min-width:220px;flex:1' },
-      el('h3', { class: 'tc' + card.tier }, owned || !card.secret ? (owned ? card.name : '???') : '???'),
+  showCard(card, edition = null) {
+    const s = S(), cnt = s.cards[card.id] || 0, owned = cnt > 0; let tilt = null, curEd = edition && Ed.count(card.id, edition) ? edition : null, flipped = false;
+    const wrap = el('div', { style: 'padding:6px' });
+    const draw = () => {
+      if (tilt) tilt.destroy(); wrap.innerHTML = ''; flipped = false;
+      const cardEl = renderCard(card, { size: 'xl', owned, count: cnt, odds: true, fav: s.fav === card.id, edition: curEd }); tilt = Card3D.attach(cardEl, { max: 20 });
+      cardEl.addEventListener('click', flip); wrap.append(cardEl); wrap._card = cardEl;
+    };
+    const flip = () => { flipped = !flipped; wrap._card.classList.toggle('flipped', flipped); Audio.click(); };
+    draw();
+    const r = RAR[card.tier]; const eds = Ed.owned(card.id), spare = Ed.spare(card.id);
+    const info = el('div', { class: 'col', style: 'min-width:220px;flex:1' },
+      el('h3', { class: 'tc' + card.tier }, owned ? card.name : '???'),
       el('div', {}, el('span', { class: 'chip', style: `border-color:${r.color}` }, card.secret && !owned ? '???' : r.name), ' ', el('span', { class: 'chip' }, `#${String(card.id).padStart(3, '0')}`), card.trait && owned ? el('span', { class: 'chip' }, '✨ ' + card.trait) : null),
       owned ? el('div', { class: 'dim' }, `🌍 ${card.country} · Rasse: ${card.breed}`) : el('div', { class: 'dim' }, 'Noch nicht entdeckt – ziehe Packs oder handle mit NPCs.'),
       !(card.secret && !owned) ? el('div', {}, `🎲 Drop-Chance: ${fmtPct(card.chance)} (1 : ${fmt(Math.round(100 / card.chance))})`) : null,
       owned ? el('div', {}, `🪙 Wert: ${fmt(card.value)} · Quick-Sell: ${fmt(Math.floor(card.value * Economy.QUICKSELL))}`) : null,
-      owned ? el('div', {}, `Besitz: ×${cnt}`) : null,
+      owned ? el('div', {}, `Besitz: ×${cnt}${eds.length ? ` (davon ${cnt - spare} Special)` : ''}`) : null,
       owned ? el('i', { class: 'dim' }, `„${card.flavor}“`) : null);
+    if (owned) {
+      const edRow = el('div', { class: 'row wrap', style: 'gap:6px' }, el('small', { class: 'dim' }, 'Edition ansehen:'));
+      const chipBtn = (id, label, col) => { const b = el('button', { class: 'chip', style: `cursor:pointer;${(curEd || '') === (id || '') ? `border-color:${col || '#fff'};background:var(--panel2)` : ''}`, onclick: () => { curEd = id; draw(); $$('button', edRow).forEach(x => x.style.borderColor = ''); b.style.borderColor = col || '#fff'; } }, label); return b; };
+      edRow.append(chipBtn(null, 'Normal')); eds.forEach(e => edRow.append(chipBtn(e.id, `${e.icon} ${e.name} ×${Ed.count(card.id, e.id)}`, e.color)));
+      if (eds.length) { info.append(edRow); info.append(el('div', { class: 'dim', style: 'font-size:.8rem' }, 'Special Editions sind nicht tauschbar und vom Quick-Sell geschützt. Verkauf nur einzeln (40 % des Edition-Werts).')); }
+      else info.append(el('div', { class: 'dim', style: 'font-size:.8rem' }, `Noch keine Special Edition – Chancen: ${EDITIONS.map(e => e.icon + ' 1:' + fmt(Math.round(1 / e.p))).join(' · ')} pro gezogener Karte (Pack-abhängig).`));
+    }
     const acts = el('div', { class: 'row wrap' }, el('button', { class: 'btn sec sm', onclick: flip }, '🔄 Umdrehen'));
-    if (owned) { acts.append(el('button', { class: 'btn sec sm', onclick: () => { s.fav = s.fav === card.id ? 0 : card.id; Ach.check(); Store.save(); UI.toast(s.fav ? '❤️ Favorit gesetzt' : 'Favorit entfernt'); m.close(); UI.rerender(); } }, s.fav === card.id ? '💔 Favorit lösen' : '❤️ Favorit')); if (cnt > 1) acts.append(el('button', { class: 'btn gold sm', onclick: () => { const g = PackEngine.quickSell(card.id, 1); UI.toast(`💰 +${fmt(g)} Coins`, 'gold'); m.close(); UI.rerender(); } }, `💰 Verkaufen (+${fmt(Math.floor(card.value * Economy.QUICKSELL))})`)); }
+    if (owned) {
+      acts.append(el('button', { class: 'btn sec sm', onclick: () => { s.fav = s.fav === card.id ? 0 : card.id; Ach.check(); Store.save(); UI.toast(s.fav ? '❤️ Favorit gesetzt' : 'Favorit entfernt'); m.close(); UI.rerender(); } }, s.fav === card.id ? '💔 Favorit lösen' : '❤️ Favorit'));
+      if (spare > 1) acts.append(el('button', { class: 'btn gold sm', onclick: () => { const g = PackEngine.quickSell(card.id, 1); UI.toast(`💰 +${fmt(g)} Coins`, 'gold'); m.close(); UI.rerender(); } }, `💰 Verkaufen (+${fmt(Math.floor(card.value * Economy.QUICKSELL))})`));
+      eds.forEach(e => acts.append(el('button', { class: 'btn danger sm', onclick: async () => { if (await UI.confirm(`${e.icon} ${e.name}-Edition verkaufen?`, `Die Special Edition von „${card.name}“ wird für ${fmt(Ed.sellValue(card, e.id))} Coins verkauft und ist dann weg.`, 'Verkaufen', 'danger')) { const g = Ed.sell(card.id, e.id); UI.toast(`${e.icon} verkauft: +${fmt(g)} Coins`, 'gold'); m.close(); UI.rerender(); } } }, `${e.icon} verkaufen (+${fmtShort(Ed.sellValue(card, e.id))})`)));
+    }
     if (Device.touch && window.DeviceOrientationEvent) acts.append(el('button', { class: 'btn sec sm', onclick: async () => { UI.toast((await tilt.gyro()) ? 'Gyro aktiv – neige dein Gerät' : 'Gyro nicht verfügbar'); } }, '📱 Gyro'));
     info.append(acts);
-    const m = this.modal({ wide: true, body: el('div', { class: 'row wrap', style: 'justify-content:center;align-items:flex-start;gap:24px' }, el('div', { style: 'padding:6px' }, cardEl), info), onClose: () => tilt.destroy() });
+    const m = this.modal({ wide: true, body: el('div', { class: 'row wrap', style: 'justify-content:center;align-items:flex-start;gap:24px' }, wrap, info), onClose: () => tilt && tilt.destroy() });
   },
   /* ---------- PACK-OPENING ---------- */
   packOpening(res) {
@@ -2391,7 +2513,7 @@ const UI = {
     bp.addEventListener('pointerup', () => { if (down && moved < 14 && stage === 'tear') { const t0 = prog, t1 = Math.min(1, prog + 0.34); let k = 0; const iv = setInterval(() => { k += 0.2; setProg(lerp(t0, t1, k)); if (k >= 1) clearInterval(iv); }, 30); Audio.rustle(); } down = null; });
     function showCards() {
       cardsEl.classList.remove('hidden'); const sz = 'min(340px,78vw,calc(52vh * .714))'; cardsEl.style.cssText = `width:${sz};aspect-ratio:5/7;position:relative`; cardsEl.innerHTML = ''; hint.textContent = 'Tippe die Karte an oder wische – aufdecken!'; hint.style.bottom = 'calc(80px + var(--sai-b))';
-      res.cards.forEach((rc, i) => { const c = renderCard(rc.card, { size: 'xl', down: true, isNew: rc.isNew, count: rc.count > 1 ? rc.count : 0 }); c.style.cssText += `;position:absolute;left:50%;top:0;z-index:${100 - i};transform:translateX(-50%) translateY(${i * 5}px) rotate(${(i % 2 ? 1 : -1) * Math.min(i, 4) * 1.4}deg) scale(${1 - i * 0.012});animation:cardIn .5s ${i * 0.08}s backwards`; cardsEl.append(c); items.push({ el: c, state: 'down', tilt: null }); });
+      res.cards.forEach((rc, i) => { const c = renderCard(rc.card, { size: 'xl', down: true, isNew: rc.isNew, count: rc.count > 1 ? rc.count : 0, edition: rc.edition }); c.style.cssText += `;position:absolute;left:50%;top:0;z-index:${100 - i};transform:translateX(-50%) translateY(${i * 5}px) rotate(${(i % 2 ? 1 : -1) * Math.min(i, 4) * 1.4}deg) scale(${1 - i * 0.012});animation:cardIn .5s ${i * 0.08}s backwards`; cardsEl.append(c); items.push({ el: c, state: 'down', tilt: null }); });
       $$('.card', cardsEl).forEach(c => c.style.pointerEvents = 'none'); Audio.rustle(); const act = el('div', { class: 'reveal-actions' }, el('button', { class: 'btn sec', id: 'btnRevAll' }, '✨ Alle aufdecken')); ov.append(act); $('#btnRevAll', ov).onclick = revealAll; bindSwipe();
     }
     function bindSwipe() {
@@ -2403,9 +2525,10 @@ const UI = {
       busy = true; const rc = res.cards[i], c = items[i].el, t = rc.card.tier, isBest = i === n - 1 && t >= 4;
       hint.textContent = '';
       if (isBest) await Cutscene.play(rc.card, ov); else if (t >= 2) { Cutscene.quickFx(rc.card, ov); }
+      if (rc.edition) await Cutscene.play(rc.card, ov, { edition: rc.edition });
       c.style.transition = 'transform .3s'; c.style.transform = 'translateX(-50%) translateY(0) rotate(0deg) scale(1)'; c.classList.add('revealing'); Audio.reveal(t); await sleep(260); c.classList.remove('down', 'revealing'); items[i].state = 'shown'; items[i].tilt = Card3D.attach(c, { max: 18 }); c.style.pointerEvents = 'auto';
       if (rc.isNew) { Audio.sparkle(7); const nt = el('div', { style: 'position:absolute;top:calc(12% + var(--sai-t));left:0;right:0;text-align:center;font-size:1.5rem;font-weight:700;color:#ffe27a;text-shadow:0 0 18px #ff7a45;animation:pop .7s;pointer-events:none;z-index:70' }, '✨ NEU ENTDECKT ✨'); ov.append(nt); setTimeout(() => nt.remove(), 1800); }
-      cap.innerHTML = `<div class="tc${t}" style="font-weight:700;font-size:1.3rem">${rc.card.name}</div><div class="dim">${RAR[t].name} · 🪙 ${fmt(rc.card.value)}${rc.count > 1 ? ' · Duplikat ×' + rc.count : ''}</div>`;
+      cap.innerHTML = `${rc.edition ? `<div style="color:${ED_BY[rc.edition].color};font-weight:700">${ED_BY[rc.edition].icon} SPECIAL EDITION: ${ED_BY[rc.edition].name}</div>` : ''}<div class="tc${t}" style="font-weight:700;font-size:1.3rem">${rc.card.name}</div><div class="dim">${RAR[t].name} · 🪙 ${fmt(rc.edition ? Ed.value(rc.card, rc.edition) : rc.card.value)}${rc.count > 1 ? ' · Duplikat ×' + rc.count : ''}</div>`;
       if (t >= 5 && !S().settings.reduceFx) c.animate([{ filter: 'brightness(2)' }, { filter: 'brightness(1)' }], { duration: 700 });
       hint.textContent = i < n - 1 ? 'Weiter: tippen oder wischen' : 'Tippen für die Zusammenfassung'; busy = false;
     }
@@ -2414,6 +2537,7 @@ const UI = {
     async function revealAll() {
       if (busy || stage !== 'cards') return; busy = true; stage = 'revealing'; $('.reveal-actions', ov)?.remove();
       if (best.tier >= 4) await Cutscene.play(best, ov);
+      if (res.bestEd) await Cutscene.play(res.bestEd.card, ov, { edition: res.bestEd.ed });
       showSummary();
     }
     $('#packSkipAll', ov).onclick = () => { if (stage === 'tear') { setProg(1); } else if (stage === 'cards') revealAll(); else if (stage === 'summary') finish(); };
@@ -2422,13 +2546,14 @@ const UI = {
     function showSummary() {
       if (closed || stage === 'summary') return; stage = 'summary'; $('.reveal-actions', ov)?.remove(); $('#cutLayer', ov).classList.remove('on'); hint.textContent = ''; cap.innerHTML = ''; cardsEl.classList.add('hidden'); $('#packStage', ov).style.display = 'none'; $('#packSkipAll', ov).classList.add('hidden');
       Audio.setScene('menu'); if (best.tier >= 4) Audio.fanfare(Math.min(best.tier, 8)); const s = S();
-      const dupes = res.cards.filter(c => c.count > 1); const dupVal = dupes.reduce((a, c) => a + Math.floor(c.card.value * Economy.QUICKSELL), 0);
+      const dupes = res.cards.filter(c => c.count > 1 && Ed.spare(c.card.id) > 1); const dupVal = dupes.reduce((a, c) => a + Math.floor(c.card.value * Economy.QUICKSELL), 0);
       const sum = el('div', { class: 'glass summary' });
       sum.append(el('h2', { style: 'margin-bottom:4px' }, `${pack.emoji} ${pack.name} – Ergebnis`), el('div', { class: 'dim' }, `Beste Karte: `, el('b', { class: 'tc' + best.tier }, `${best.name} (${RAR[best.tier].name})`)));
-      const list = el('div', { class: 'sum-cards' }); res.cards.forEach((rc, i) => { const c = renderCard(rc.card, { size: Device.isMobile() ? 'xs' : 'sm', isNew: rc.isNew, count: rc.count > 1 ? rc.count : 0, hov: true, onclick: card => UI.showCard(card) }); c.style.animationDelay = i * 0.07 + 's'; list.append(c); }); sum.append(list);
+      const list = el('div', { class: 'sum-cards' }); res.cards.forEach((rc, i) => { const c = renderCard(rc.card, { size: Device.isMobile() ? 'xs' : 'sm', isNew: rc.isNew, count: rc.count > 1 ? rc.count : 0, hov: true, edition: rc.edition, onclick: card => UI.showCard(card, rc.edition) }); c.style.animationDelay = i * 0.07 + 's'; list.append(c); }); sum.append(list);
       const kp = el('div', { class: 'kpi-grid', style: 'margin:10px 0' });
       const kpi = (a, b) => kp.append(el('div', { class: 'glass kpi' }, el('small', {}, a), el('b', {}, b)));
-      kpi('Gesamtwert', '🪙 ' + fmt(res.value)); kpi('Neue Karten', `${res.newCount} von ${n}`); kpi('Album', `${Economy.unique()} / 999`); kpi('Luck', `${fmtLuck(res.luckBefore)} → ${fmtLuck(res.luckAfter)}${res.luckDropped ? ' (Rückfall)' : ''}`); kpi('Dupl.', `${dupes.length}`); sum.append(kp);
+      kpi('Gesamtwert', '🪙 ' + fmt(res.value)); kpi('Neue Karten', `${res.newCount} von ${n}`); kpi('Album', `${Economy.unique()} / 999`); kpi('Luck', `${fmtLuck(res.luckBefore)} → ${fmtLuck(res.luckAfter)}${res.luckDropped ? ' (Rückfall)' : ''}`); kpi('Dupl.', `${dupes.length}`); if (res.edCount) kpi('Special Editions', `${res.edCount} ✨`); sum.append(kp);
+      if (res.edCount) sum.append(el('div', { class: 'chip', style: `border-color:${ED_BY[res.bestEd.ed].color};margin-bottom:8px` }, `${ED_BY[res.bestEd.ed].icon} ${res.edCount} Special Edition${res.edCount > 1 ? 's' : ''} gezogen – ${res.bestEd.card.name} (${ED_BY[res.bestEd.ed].name})!`));
       if (res.dotd) sum.append(el('div', { class: 'chip', style: 'border-color:var(--gold);margin-bottom:8px' }, `🌟 Hund des Tages gezogen: +${fmt(res.bonusCoins)} Coins Bonus!`));
       sum.append(el('div', { class: 'bar gold', style: 'margin:6px auto 12px;max-width:520px' }, el('i', { style: `width:${Economy.unique() / 9.99}%` })));
       const acts = el('div', { class: 'row wrap', style: 'justify-content:center' });
@@ -2509,7 +2634,7 @@ Object.assign(UI, {
     const s = S(), st = s.stats; const sec = el('section', {}); sec.append(el('div', { class: 'view-title' }, el('h2', {}, '📊 Statistiken')));
     const best = st.bestId ? CardDB.get(st.bestId) : null; const ps = Math.floor(st.playMs / 1000), h = Math.floor(ps / 3600), m = Math.floor(ps % 3600 / 60);
     const kp = el('div', { class: 'kpi-grid' }); const k = (a, b) => kp.append(el('div', { class: 'glass kpi' }, el('small', {}, a), el('b', {}, b)));
-    k('Geöffnete Packs', fmt(st.packs)); k('Ausgegebene Coins', '🪙 ' + fmtShort(st.spent)); k('Verdiente Coins', '🪙 ' + fmtShort(st.earned)); k('Gezogene Karten', fmt(st.pulled)); k('Gesamtwert gezogen', '🪙 ' + fmtShort(st.value)); k('Sammlungswert', '🪙 ' + fmtShort(Economy.collectionValue())); k('Album', `${Economy.unique()} / 999`); k('Trades', fmt(st.trades)); k('Verkaufte Karten', fmt(st.quicksold)); k('Knochen', fmt(st.bones)); k('Spielzeit', `${h} h ${m} min`); k('Bester Luck', fmtLuck(s.luck)); k('Level', s.level); k('Händler-Rang', TradeAI.rank().title);
+    k('Geöffnete Packs', fmt(st.packs)); k('Ausgegebene Coins', '🪙 ' + fmtShort(st.spent)); k('Verdiente Coins', '🪙 ' + fmtShort(st.earned)); k('Gezogene Karten', fmt(st.pulled)); k('Gesamtwert gezogen', '🪙 ' + fmtShort(st.value)); k('Sammlungswert', '🪙 ' + fmtShort(Economy.collectionValue())); k('Album', `${Economy.unique()} / 999`); k('Trades', fmt(st.trades)); k('Special Editions', `${Ed.copies()} · ${EDITIONS.map(e => e.icon + (st.edPulled[e.id] || 0)).join(' ')}`); k('Verkaufte Karten', fmt(st.quicksold)); k('Knochen', fmt(st.bones)); k('Spielzeit', `${h} h ${m} min`); k('Bester Luck', fmtLuck(s.luck)); k('Level', s.level); k('Händler-Rang', TradeAI.rank().title);
     sec.append(kp);
     const row = el('div', { class: 'row wrap', style: 'margin-top:16px;align-items:flex-start' });
     const cc = el('div', { class: 'glass pad grow', style: 'min-width:280px' }, el('h3', {}, 'Gezogene Karten nach Seltenheit')); const cv = el('canvas', { class: 'chart', width: 900, height: 360 }); cc.append(cv); row.append(cc);
@@ -2556,6 +2681,7 @@ Object.assign(UI, {
     <h3>Packs & Chancen</h3><p>Es gibt 8 Pack-Typen. Jedes hat eine eigene Chancentabelle (ⓘ am Pack). Die letzte Karte hat immer eine garantierte Mindest-Seltenheit. Der <b>Pity-Balken</b> steigt, wenn du keine Karte ab der Pity-Stufe ziehst – nach ${PITY_MAX} Packs ist ein Treffer garantiert.</p>
     <h3>Luck-Multiplikator 🍀</h3><p>Startet bei x1,00 (Maximum x${MAX_LUCK}). Er verschiebt die Gewichte zugunsten höherer Seltenheiten (die Summe bleibt 100 %). Er steigt durch Packs, Album-Meilensteine, Trades, Quests und Tagesbelohnungen. Wer eine Karte ab „Mythisch“ zieht, verliert die Hälfte seines Bonus – aber nie alles.</p>
     <h3>Duplikate & Geld</h3><p>Quick-Sell bringt 40 % des Kartenwerts. Bessere Preise bekommst du beim Traden. Bist du <b>pleite</b> (weniger Coins als das billigste Pack), gibt es nach 24 Stunden Notfall-Coins für 3 Packs (maximal im Wert von 3 × Alpha-Pack). Der Timer läuft auch bei geschlossenem Spiel; eine zurückgestellte Uhr bringt nichts.</p>
+    <h3>Special Editions ✨🥇💎🌈</h3><p>Jede gezogene Karte kann zusätzlich als <b>Special Edition</b> erscheinen – unabhängig von ihrer Seltenheit: ✨ Shiny (≈ 1:40), 🥇 Gold (≈ 1:150), 💎 Diamant (≈ 1:600), 🌈 Prisma (≈ 1:2.500). Höhere Packs und mehr Luck erhöhen die Chance. Specials sind ein Vielfaches wert (×5 / ×20 / ×100 / ×500), haben eigene Cutscenes, Album-Tab und Meilensteine. Sie sind <b>nicht tauschbar</b> und vom Quick-Sell geschützt (nur einzeln im Kartendetail verkaufbar).</p>
     <h3>Live City 🏙️</h3><p>Laufe durch die Stadt, sprich Bewohner an (<kbd>E</kbd>), kaufe Packs im Pack-Shop, sammle Knochen 🦴, erledige Aufträge und beobachte Events (Hunde-Parade, Glückliche Stunde, Marktschreier). Steuerung: WASD/Pfeile, Shift = Rennen, Q/R oder Mausrad = Kamera, Esc = Menü. Mobil: Joystick + Buttons.</p>
     <h3>Traden</h3><ul><li>Der Wert steigt <b>exponentiell</b> mit der Seltenheit (≈ ×3,5 pro Stufe). Viele billige Karten wiegen nie eine seltene auf (Massen-Abwertung).</li><li>Jeder Bewohner verlangt einen Aufschlag (je nach Persönlichkeit 105–140 %), mag bestimmte Rassen/Länder und hütet einen „Schatz“.</li><li>Eine Karte, die mehr als 1 Stufe über deinem besten Angebot liegt, gibt es nur gegen deutlich mehr Gegenwert.</li><li>Bewohner machen Gegenangebote, haben aber nur 3–4 Verhandlungsrunden Geduld. Nach einem Trade gilt 2 Minuten Cooldown, pro Tag max. ${TradeAI.DAILY_LIMIT} Trades pro Bewohner.</li><li>Jeder Trade belohnt dich (Coins, Luck, Ruf, Handels-XP) – manchmal gibt es ein Überraschungsgeschenk.</li></ul>
     <h3>Tastenkürzel (PC)</h3><p><kbd>1</kbd>–<kbd>8</kbd> Menü · <kbd>←</kbd>/<kbd>→</kbd> Album-Seiten · <kbd>Enter</kbd>/<kbd>Leertaste</kbd> Pack aufreißen/aufdecken · <kbd>Esc</kbd> schließen</p>
@@ -2602,13 +2728,13 @@ Object.assign(UI, {
     const q = el('input', { class: 'inp', placeholder: '🔎 Meine Karten filtern …', 'aria-label': 'Karten filtern', style: 'min-height:36px', oninput: () => { filter.q = q.value.toLowerCase(); drawInv(); } });
     const header = el('div', { class: 'npc-head' }, el('div', { class: 'npc-av', style: `--bgc:${npc.color}` }, npc.face), el('div', { class: 'grow' }, el('b', { style: 'font-size:1.15rem' }, `${npc.name} `, el('span', { class: 'chip' }, npc.type)), el('div', { class: 'bar', style: 'margin:4px 0;max-width:260px' }, repBar), el('div', { class: 'dim', style: 'font-size:.78rem' }, `Sucht: 🐕 ${npc.wish.breeds.join(', ')} · 🌍 ${npc.wish.countries.join(', ')} · ⭐ ${npc.wish.tiers.map(t => RAR[t].name).join(', ')} · Schatz: 💎 ${CardDB.get(npc.treasure).name}`), pat), el('button', { class: 'icon-btn', 'aria-label': 'Trade schließen', onclick: close }, '✕'));
     win.append(header, speech, el('div', { class: 'col', style: 'gap:6px' }, vlabel, verdict));
-    const colG = el('div', { class: 'tcol', 'data-side': 'give' }, el('b', {}, '👤 Dein Angebot'), slotsG, el('label', { class: 'coinbox' }, '🪙', coinG, el('small', { class: 'dim' }, `von ${fmt(s.coins)}`), el('button', { class: 'btn sec sm', onclick: () => { coinG.value = offer.give.coins = Math.min(s.coins, offer.give.coins + Math.max(10, Math.ceil(s.coins / 10))); onChange(); } }, '+')), q, invG);
+    const colG = el('div', { class: 'tcol', 'data-side': 'give' }, el('b', {}, '👤 Dein Angebot'), slotsG, el('label', { class: 'coinbox' }, '🪙', coinG, el('small', { class: 'dim' }, `von ${fmt(s.coins)} · 🔒 Specials nicht tauschbar`), el('button', { class: 'btn sec sm', onclick: () => { coinG.value = offer.give.coins = Math.min(s.coins, offer.give.coins + Math.max(10, Math.ceil(s.coins / 10))); onChange(); } }, '+')), q, invG);
     const colN = el('div', { class: 'tcol', 'data-side': 'get' }, el('b', {}, `${npc.face} Angebot von ${npc.name.split(' ')[0]}`), slotsN, el('label', { class: 'coinbox' }, '🪙', coinN, el('small', { class: 'dim' }, `Kasse: ${fmt(st.coins)}`), el('button', { class: 'btn sec sm', onclick: () => { coinN.value = offer.get.coins = Math.min(st.coins, offer.get.coins + Math.max(10, Math.ceil(st.coins / 10))); onChange(); } }, '+')), el('small', { class: 'dim' }, 'Bestand (wechselt alle 30 Min.):'), invN);
     win.append(el('div', { class: 'trade-cols' }, colG, colN), ctrBox, el('div', { class: 'row wrap', style: 'justify-content:flex-end' }, btnReset, btnSend));
     // Drag & Drop (Desktop)
     [colG, colN].forEach(col => { col.addEventListener('dragover', e => { e.preventDefault(); col.classList.add('drop'); }); col.addEventListener('dragleave', () => col.classList.remove('drop')); col.addEventListener('drop', e => { e.preventDefault(); col.classList.remove('drop'); const [side, id] = (e.dataTransfer.getData('text/plain') || '').split(':'); if (side && side === col.dataset.side && id) add(side, +id); }); });
     const say = t => { speech.textContent = '„' + t + '“'; City.npcSay(npc.id, t); };
-    const own = id => (s.cards[id] || 0), stockCnt = id => st.stock.filter(x => x === id).length;
+    const own = id => Ed.spare(id), stockCnt = id => st.stock.filter(x => x === id).length;
     function add(side, id) { if (locked) return; const o = offer[side].cards, max = side === 'give' ? own(id) : stockCnt(id); if ((o[id] || 0) >= max) { Audio.error(); return; } o[id] = (o[id] || 0) + 1; counter = null; Audio.click(); onChange(); }
     function rem(side, id) { const o = offer[side].cards; if (!o[id]) return; o[id]--; if (!o[id]) delete o[id]; counter = null; Audio.click(); onChange(); }
     function reset() { offer.give = { cards: {}, coins: 0 }; offer.get = { cards: {}, coins: 0 }; coinG.value = coinN.value = 0; counter = null; ctrBox.classList.add('hidden'); onChange(); }
@@ -2621,7 +2747,7 @@ Object.assign(UI, {
       [['give', slotsG], ['get', slotsN]].forEach(([side, box]) => { box.innerHTML = ''; Object.entries(offer[side].cards).forEach(([id, n]) => { const w = el('div', { class: 'tmini' }, mini(side, +id, n, false), el('button', { class: 'rm', 'aria-label': 'Entfernen', onclick: () => rem(side, +id) }, '✕')); box.append(w); }); if (!box.children.length) box.append(el('span', { class: 'dim', style: 'font-size:.82rem;padding:8px' }, mob ? 'Tippe unten auf Karten …' : 'Karten hierher ziehen oder anklicken …')); });
     }
     function drawInv() {
-      invG.innerHTML = ''; let arr = Object.keys(s.cards).map(Number).map(id => CardDB.get(id)).filter(c => (!filter.q || (c.name + ' ' + c.country).toLowerCase().includes(filter.q))).sort((a, b) => b.value - a.value);
+      invG.innerHTML = ''; let arr = Object.keys(s.cards).map(Number).filter(id => Ed.spare(id) > 0).map(id => CardDB.get(id)).filter(c => (!filter.q || (c.name + ' ' + c.country).toLowerCase().includes(filter.q))).sort((a, b) => b.value - a.value);
       const shown = arr.slice(0, 60); shown.forEach(c => { const left = own(c.id) - (offer.give.cards[c.id] || 0); if (left <= 0) return; const m = mini('give', c.id, left, true); m.addEventListener('click', () => add('give', c.id)); invG.append(m); }); if (arr.length > 60) invG.append(el('small', { class: 'dim' }, `… +${arr.length - 60} weitere (Suche nutzen)`)); if (!arr.length) invG.append(el('small', { class: 'dim' }, 'Keine Karten vorhanden.'));
       invN.innerHTML = ''; Array.from(new Set(st.stock)).map(id => CardDB.get(id)).sort((a, b) => b.value - a.value).forEach(c => { const left = stockCnt(c.id) - (offer.get.cards[c.id] || 0); if (left <= 0) return; const m = mini('get', c.id, left, true); if (c.id === npc.treasure) { m.style.outline = '2px solid var(--gold)'; m.title += ' · 💎 SCHATZ'; } m.addEventListener('click', () => add('get', c.id)); invN.append(m); });
     }
@@ -2693,16 +2819,17 @@ const Dev = {
   /* Simuliert n Pulls eines Packs (ohne Spielstand zu verändern) und gibt die Verteilung aus. */
   simulate(packId = 'alpha', n = 100000, luck = 1, usePity = true) {
     const pack = PACK_BY_ID[packId]; if (!pack) { console.error('Unbekanntes Pack', Object.keys(PACK_BY_ID)); return; }
-    const counts = new Array(13).fill(0); let value = 0, pity = 0, cards = 0, bestSum = 0;
+    const edc = {}; const counts = new Array(13).fill(0); let value = 0, pity = 0, cards = 0, bestSum = 0;
     for (let i = 0; i < n; i++) {
       const drawn = PackEngine.draw(pack, luck, usePity ? pity : 0); let hit = false;
-      for (const c of drawn) { counts[c.tier]++; value += c.value; cards++; if (c.tier >= pack.pityTier) hit = true; }
+      for (const c of drawn) { counts[c.tier]++; value += c.value; cards++; const ed = Ed.roll(pack); if (ed) edc[ed.id] = (edc[ed.id] || 0) + 1; if (c.tier >= pack.pityTier) hit = true; }
       pity = hit ? 0 : pity + 1;
     }
     const exp = PackEngine.weights(pack, luck, 0).map(x => x * 100);
     const rows = RAR.slice(1).map(r => ({ Stufe: r.name, Anzahl: counts[r.t], 'Anteil %': +(counts[r.t] / cards * 100).toFixed(4), 'Erwartet % (ohne Pity)': +exp[r.t - 1].toFixed(4) }));
     const sumExp = exp.reduce((a, b) => a + b, 0);
     console.log(`%cSimulation ${pack.name}: ${n} Packs, Luck x${luck}, Pity ${usePity ? 'an' : 'aus'}`, 'font-weight:bold'); console.table(rows);
+    console.log('Special Editions pro Karte:', Object.fromEntries(EDITIONS.map(e => [e.id, `${fmtPct((edc[e.id] || 0) / cards * 100)} (1:${Math.round(cards / Math.max(1, edc[e.id] || 0))}) erwartet 1:${Math.round(1 / Ed.probs(pack).find(x => x.ed.id === e.id).p)}`])));
     const ev = value / n; console.log(`Σ Erwartung = ${sumExp.toFixed(6)} %  ·  Ø Kartenwert/Pack = ${fmt(ev)} (Preis ${fmt(pack.price)} → Wert/Preis ${(ev / pack.price).toFixed(2)}, Quick-Sell ${(ev * Economy.QUICKSELL / pack.price).toFixed(2)})`);
     return { counts, ev, ratio: ev / pack.price, sumExp, rows };
   },
@@ -2720,6 +2847,7 @@ const Dev = {
     ok('999 Karten', CardDB.cards.length === 999);
     console.table(out); const bad = out.filter(o => !o.OK); console.log(bad.length ? '❌ ' + bad.length + ' Tests fehlgeschlagen' : '✅ Alle ' + out.length + ' Tests bestanden'); return bad.length === 0;
   },
+  special(id, ed = 'shiny') { const s = S(); s.cards[id] = (s.cards[id] || 0) + 1; s.disc[id] = s.disc[id] || Date.now(); Ed.add(id, ed); Store.save(true); UI.rerender(); },
   give(n) { Economy.add(n); UI.refreshHud(); },
   cards(...ids) { ids.forEach(id => { S().cards[id] = (S().cards[id] || 0) + 1; S().disc[id] = S().disc[id] || Date.now(); }); Store.save(true); UI.rerender(); },
   state: () => S(), city: City, ui: UI, packs: PACKS, db: CardDB, trade: TradeAI, econ: Economy, engine: PackEngine
@@ -2768,7 +2896,31 @@ window.Dev = Dev;
 #packOv .summary .kpi{padding:8px}#packOv .summary .kpi b{font-size:1rem}
 body[data-mode=mobile] #packOv .summary{padding:12px}
 #packOv.cut-hide .packcards,#packOv.cut-hide #cardCap{opacity:0;transition:opacity .4s}
-#packOv #cardCap{position:relative;z-index:5;margin-top:4px}
+#packOv #cardCap{position:relative;z-index:5;margin-top:22px}
+/* --- Special Editions --- */
+.card .edbadge{position:absolute;z-index:7;left:50%;top:2.6em;transform:translateX(-50%);font-size:.85em;font-weight:700;letter-spacing:.08em;padding:.1em .8em;border-radius:99px;background:#000b;color:#fff;border:1px solid var(--ec,#fff);white-space:nowrap;text-shadow:0 0 .5em var(--ec,#fff);animation:pop .6s}
+.card .edmark{position:absolute;z-index:6;left:.7em;top:2.8em;font-size:1.1em;filter:drop-shadow(0 0 .3em #000)}
+.card .fx-ed{display:none}
+.card.ed .fx-ed{display:block;opacity:.8;mix-blend-mode:screen}
+.card.ed-shiny{--ec:#7df9ff;--glow:#7df9ffcc}
+.card.ed-shiny .fx-ed{background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.75) 48%,transparent 60%),radial-gradient(circle at 25% 30%,#fff 0 1.5px,transparent 3px),radial-gradient(circle at 75% 25%,#bff 0 2px,transparent 3.5px),radial-gradient(circle at 60% 70%,#fff 0 1.5px,transparent 3px);background-size:250% 100%,100% 100%,100% 100%,100% 100%;animation:edSweep 2.6s linear infinite,twinkle 1.2s infinite alternate}
+.card.ed-shiny .frame{box-shadow:inset 0 0 1.2em #7df9ff}
+@keyframes edSweep{from{background-position:150% 0,0 0,0 0,0 0}to{background-position:-100% 0,0 0,0 0,0 0}}
+.card.ed-gold{--ec:#ffd24a;--glow:#ffd24aee}
+.card.ed-gold .frame{background:linear-gradient(135deg,#fff3b0,#ffb000 30%,#fff3b0 50%,#b87400 75%,#ffe27a);background-size:200% 200%;animation:goldF 3s linear infinite}
+@keyframes goldF{to{background-position:200% 200%}}
+.card.ed-gold .art{filter:sepia(.55) saturate(1.7) brightness(1.1)}
+.card.ed-gold .fx-ed{background:linear-gradient(120deg,transparent 30%,rgba(255,230,120,.8) 50%,transparent 70%);background-size:250% 100%;animation:edSweep2 2.2s linear infinite;mix-blend-mode:color-dodge}
+@keyframes edSweep2{from{background-position:150% 0}to{background-position:-100% 0}}
+.card.ed-diamond{--ec:#b9f2ff;--glow:#b9f2ffff}
+.card.ed-diamond .frame{background:conic-gradient(from var(--ang,0deg),#fff,#7df9ff,#fff,#bfe9ff,#fff,#4fd0ff,#fff);animation:spinang 4s linear infinite}
+.card.ed-diamond .art{filter:hue-rotate(150deg) saturate(.7) brightness(1.25) contrast(1.1)}
+.card.ed-diamond .fx-ed{background:conic-gradient(from 20deg at 50% 50%,rgba(255,255,255,.55),transparent 12%,rgba(125,249,255,.5) 25%,transparent 40%,rgba(255,255,255,.5) 55%,transparent 70%,rgba(185,242,255,.6) 85%,rgba(255,255,255,.55));animation:twinkle 1.6s infinite alternate}
+.card.ed-prisma{--ec:#ff7ad9;--glow:#ff7ad9ff}
+.card.ed-prisma .frame{background:conic-gradient(from var(--ang,0deg),#ff3d71,#ffd24a,#4ade80,#22d3ee,#6366f1,#e879f9,#ff3d71);animation:spinang 2.5s linear infinite}
+.card.ed-prisma .fx-ed{opacity:.55;mix-blend-mode:color;background:linear-gradient(115deg,#ff4d9d,#ffe14d,#4dff9d,#4dc3ff,#b14dff,#ff4d9d);background-size:300% 300%;animation:holo 3s linear infinite}
+.card.ed-prisma .face.front,.card.ed-diamond .face.front,.card.ed-gold .face.front,.card.ed-shiny .face.front{animation:glowp 1.4s infinite alternate}
+.card.ed-gold .edbadge{background:linear-gradient(90deg,#b87400,#ffd24a,#b87400);color:#2b1a00}
 kbd{display:inline-block;padding:1px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;font-size:.82em;background:var(--panel)}
 .card.sz-xs{--cw:92px}
 .page .card.sz-md{--cw:min(172px,28vw)}
