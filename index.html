@@ -632,7 +632,7 @@ body[data-mode=mobile] #cityPrompt{bottom:calc(224px + var(--sai-b));white-space
 #battleOv .bt-arena{position:relative;z-index:2;flex:1;min-height:0;max-width:760px;width:100%;margin:0 auto}
 .bt-foe,.bt-me{position:absolute;display:flex;align-items:center;gap:10px}
 .bt-foe{right:3%;top:2%;flex-direction:row}
-.bt-me{left:3%;bottom:-2%;flex-direction:row}
+.bt-me{left:3%;bottom:12px;flex-direction:row}
 .bt-dog{position:relative;width:min(38vw,190px);aspect-ratio:1;flex:none;filter:drop-shadow(0 10px 8px rgba(0,0,0,.35))}
 .bt-dog::before{content:"";position:absolute;left:8%;right:8%;bottom:-6%;height:14%;border-radius:50%;background:rgba(0,0,0,.28);filter:blur(4px)}
 .bt-dog svg{position:relative;width:100%;height:100%}
@@ -702,6 +702,88 @@ body[data-mode=mobile] #cityPrompt{bottom:calc(224px + var(--sai-b));white-space
 body[data-mode=mobile] #battleOv .bt-dog{width:min(40vw,160px)}
 body[data-mode=mobile] .bt-box{width:min(54vw,230px)}
 @media (max-height:560px){#battleOv .bt-dog{width:min(24vh,140px)}.bt-mv{min-height:46px;padding:6px 10px}.bt-cmd{grid-template-columns:repeat(4,1fr)}.bt-mv small{display:none}.bt-mv{grid-template-columns:28px 1fr}}
+
+/* =====================================================================
+   CITY GO
+   ===================================================================== */
+.go-only{display:none!important}
+#cityLayer.go .go-only{display:flex!important}
+#cityBag{position:relative;gap:4px;width:auto;padding:0 12px}#cityBag b{font:700 .85rem var(--font-d)}
+#goNear{position:absolute;right:calc(14px + var(--sai-r));top:176px;width:158px;padding:8px 10px;border-radius:14px;background:rgba(12,10,40,.62);border:1px solid #ffffff22;font-size:.74rem;display:none;backdrop-filter:blur(6px);pointer-events:none}
+#cityLayer.go #goNear{display:block}
+body[data-mode=mobile] #goNear{top:150px;width:136px;font-size:.68rem;padding:6px 8px}
+.gn-t{font:700 .78rem var(--font-d);margin-bottom:4px;display:flex;gap:5px;align-items:center}
+.gn-r{display:flex;align-items:center;gap:6px;padding:1px 0}.gn-r i{width:9px;height:9px;border-radius:50%;flex:none}.gn-r span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gn-r b{font-variant-numeric:tabular-nums}
+.gn-lure{margin-top:5px;color:#f9a8d4;font-weight:800;display:flex;gap:4px;align-items:center}
+.go-choice{display:grid;grid-template-columns:52px 1fr;column-gap:12px;text-align:left;padding:14px;border-radius:18px;border:2px solid var(--line);background:linear-gradient(180deg,#2a2370,#16123f);color:#fff}
+.go-choice.go{border-color:#38bdf8;background:linear-gradient(180deg,#1e5ba8,#13316b)}
+.go-choice .gc-ic{grid-row:1/3;width:52px;height:52px;border-radius:14px;background:#ffffff1c;display:flex;align-items:center;justify-content:center}.go-choice .gc-ic svg{width:28px;height:28px}
+.go-choice b{font-family:var(--font-d);font-size:1.2rem}.go-choice small{color:#d4d1f5;font-size:.82rem;line-height:1.25}
+.go-choice:active{transform:scale(.98)}
+.go-pick{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.go-pb{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 8px;border-radius:16px;border:2px solid #ffffff30;color:#fff;text-align:center}
+.go-pb.catch{background:linear-gradient(180deg,#2f9a64,#1b6040)}.go-pb.fight{background:linear-gradient(180deg,#b3392c,#7a1d1a)}
+.go-pb b{font-family:var(--font-d);font-size:1.1rem}.go-pb small{font-size:.72rem;color:#e5e7eb}.go-pb .fi svg{width:32px;height:32px}.go-pb.off{filter:grayscale(.7) brightness(.7)}
+.go-pb:active{transform:scale(.97)}
+.gi{display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))}
+/* Fang-Begegnung */
+#goOv{position:absolute;inset:0;pointer-events:auto;overflow:hidden;z-index:60;background:#0b0a24;touch-action:none;user-select:none;-webkit-user-select:none}
+#goOv .go-ground{top:44%}
+.go-top{position:absolute;z-index:4;left:0;right:0;top:0;padding:calc(10px + var(--sai-t)) 14px 0;display:flex;justify-content:space-between;align-items:flex-start}
+.go-wp{text-align:center;font-family:var(--font-d);line-height:1;color:#fff;text-shadow:0 2px 6px #0008}.go-wp small{display:block;font-size:.8rem;opacity:.85;letter-spacing:.15em}.go-wp b{font-size:2.6rem}
+.go-name{position:absolute;z-index:4;left:0;right:0;top:calc(88px + var(--sai-t));display:flex;gap:8px;align-items:center;justify-content:center;font-family:var(--font-d);font-size:1.15rem;text-shadow:0 2px 6px #0009;flex-wrap:wrap;padding:0 14px;text-align:center}
+.go-name .rar{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:99px;color:#111;background:var(--c)}
+.go-stage{position:absolute;left:50%;top:41%;width:min(56vw,270px);aspect-ratio:1;transform:translate(-50%,-50%);z-index:3;pointer-events:none}
+.go-dog{position:absolute;inset:0;animation:goBob 2.4s ease-in-out infinite;filter:drop-shadow(0 12px 10px rgba(0,0,0,.35))}.go-dog svg{width:100%;height:100%}
+@keyframes goBob{50%{transform:translateY(-8px) rotate(1.5deg)}}
+.go-ring{position:absolute;left:50%;top:50%;width:190%;aspect-ratio:1;margin:-95% 0 0 -95%;border-radius:50%;border:5px solid var(--rc);box-shadow:0 0 14px var(--rc),inset 0 0 14px var(--rc);animation:goRing 1.9s linear infinite;pointer-events:none}
+.go-ring.in{width:92%;margin:-46% 0 0 -46%;border:3px solid #ffffff90;box-shadow:none;animation:none}
+@keyframes goRing{from{transform:scale(1)}to{transform:scale(.2)}}
+.go-msg{position:absolute;z-index:6;left:0;right:0;top:62%;text-align:center;font:800 1.7rem var(--font-d);text-shadow:0 3px 0 #000,0 0 14px #000;opacity:0;pointer-events:none;padding:0 12px}
+.go-msg.on{animation:goMsg 1.3s ease-out forwards}
+.go-msg.good{color:#ffd24a}.go-msg.bad{color:#fca5a5}
+@keyframes goMsg{0%{opacity:0;transform:scale(.6)}15%{opacity:1;transform:scale(1.12)}80%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+.go-hint{position:absolute;z-index:4;left:0;right:0;bottom:calc(168px + var(--sai-b));text-align:center;font-weight:800;color:#fff;text-shadow:0 2px 4px #000;transition:opacity .3s;animation:hintUp 1.4s ease-in-out infinite}
+.go-hint.hide{opacity:0}
+@keyframes hintUp{50%{transform:translateY(-8px)}}
+.go-bar{position:absolute;z-index:5;left:0;right:0;bottom:calc(14px + var(--sai-b));display:flex;justify-content:space-between;align-items:flex-end;padding:0 16px}
+.go-item{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:74px;padding:8px 10px;border-radius:16px;background:#0b0a24cc;border:2px solid #ffffff30;color:#fff;touch-action:manipulation}
+.go-item b{font:700 1.05rem var(--font-d)}.go-item small{font-size:.62rem;color:#c9c7ee}.go-item.on{border-color:#4ade80}.go-item.off{opacity:.45}
+.go-ballwrap{width:110px;height:130px;display:flex;align-items:flex-end;justify-content:center}
+.go-ball{width:80px;height:80px;touch-action:none;cursor:grab;filter:drop-shadow(0 6px 6px rgba(0,0,0,.4));animation:ballIdle 1.6s ease-in-out infinite;display:flex;align-items:center;justify-content:center}.go-ball svg{width:100%;height:100%}
+.go-ball.held{animation:none;cursor:grabbing}.go-ball.empty{opacity:.35}
+@keyframes ballIdle{50%{transform:translateY(-6px)}}
+.go-fly{position:fixed;z-index:20;width:64px;height:64px;pointer-events:none}.go-fly svg{width:100%;height:100%}
+.go-star{position:absolute;z-index:21;width:22px;height:22px;color:#ffd24a;pointer-events:none;animation:goStar .9s ease-out forwards}.go-star svg{width:100%;height:100%}
+@keyframes goStar{from{transform:translate(-50%,-50%) scale(.4);opacity:1}to{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.3);opacity:0}}
+#goRes{position:absolute;z-index:30;left:0;right:0;bottom:0;padding:12px 14px calc(14px + var(--sai-b));display:flex;justify-content:center;pointer-events:none}#goRes>*{pointer-events:auto}
+.go-resbox{display:flex;flex-direction:column;align-items:center;gap:8px;max-width:420px;width:100%;max-height:82vh;overflow:auto}
+/* Stop */
+.go-disc{width:150px;height:150px;border-radius:50%;margin:6px auto 14px;background:radial-gradient(circle at 35% 30%,#7dd3fc,#2563eb);border:6px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 30px #38bdf8aa}
+.go-disc .gd-in{width:64px;height:64px;color:#fff}.go-disc .gd-in svg{width:100%;height:100%}
+.go-disc.spin{animation:discSpin 1.1s cubic-bezier(.4,0,.2,1) both}
+@keyframes discSpin{from{transform:rotateY(0)}to{transform:rotateY(1080deg)}}
+.go-disc.done{background:radial-gradient(circle at 35% 30%,#c4b5fd,#6d28d9);box-shadow:0 0 20px #a78bfa88}
+.go-rew{display:flex;flex-direction:column;gap:6px}
+.go-ri{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:12px;background:#ffffff10;animation:popIn .35s var(--ease-spring) both}.go-ri b{flex:1}
+.stats-mini{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:.84rem;color:var(--dim)}.stats-mini span{display:flex;gap:5px;align-items:center}
+.go-it .ic{width:40px;display:flex;justify-content:center}
+@media (max-height:620px){.go-name{top:calc(70px + var(--sai-t))}.go-hint{bottom:calc(150px + var(--sai-b))}.go-wp b{font-size:2rem}}
+
+#mapOv{position:fixed;inset:0;z-index:40;background:#cfe5c1;touch-action:none;user-select:none;-webkit-user-select:none}
+#mapCv{position:absolute;inset:0;display:block}
+.map-top{position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--sai-t)) 12px 0;display:flex;flex-direction:column;gap:8px;align-items:flex-start;pointer-events:none}
+.map-top>*{pointer-events:auto}
+#mapInfo{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:6px 12px;border-radius:99px;font-weight:700;font-size:.85rem}
+#mapInfo .bar.xb{width:60px;display:inline-block;height:7px;margin:0}
+#mapBag{width:auto;padding:0 12px;gap:4px}#mapBag b{font:700 .85rem var(--font-d)}
+.map-status{position:absolute;left:12px;bottom:calc(26px + var(--sai-b));max-width:calc(100vw - 84px);padding:8px 14px;border-radius:99px;background:rgba(12,10,40,.82);border:1px solid #ffffff30;color:#fff;font-weight:700;font-size:.84rem;display:flex;gap:6px;align-items:center;white-space:nowrap}
+.map-status.ok{border-color:#4ade80}.map-status.demo{border-color:#fbbf24}
+.map-lure{position:absolute;right:14px;bottom:calc(76px + var(--sai-b));background:linear-gradient(180deg,#ec4899,#be185d);color:#fff}
+.map-center{position:absolute;right:14px;bottom:calc(20px + var(--sai-b))}
+#mapAttr{position:absolute;left:6px;bottom:2px;font-size:10px;color:#333;background:#fffa;padding:1px 5px;border-radius:4px;display:none}
+body[data-mode=mobile] #cityLayer.go #cityDex{display:none!important}
+#mapOv .icon-btn{background:rgba(12,10,40,.88);color:#fff;border:1px solid #ffffff30;box-shadow:0 3px 10px #0005}#mapOv .cglass{background:rgba(12,10,40,.86)}
 </style>
 </head>
 <body data-mode="desktop">
@@ -971,7 +1053,7 @@ const Store = (() => {
     cards: {}, disc: {}, pity: {}, ed: {}, ems: {},
     stats: { packs: 0, spent: 0, earned: 0, pulled: 0, bestId: 0, bestTier: 0, value: 0, trades: 0, quicksold: 0, playMs: 0, tierPulled: new Array(13).fill(0), packsByType: {}, bones: 0, quests: 0, newCards: 0, maxCoins: 1000, dotd: 0, edPulled: {}, fights: 0, fightWins: 0, fetches: 0 },
     settings: { vol: 0.7, muted: false, music: true, mode: 'auto', shortCut: false, reduceFx: false, name: 'Hundefreund', color: '#ff7a45', outfit: 0, tutorial: false, dotdSeen: '' },
-    daily: { last: '', streak: 0, claimed: '', qDay: '', quests: [], boneDay: '', bones: [], gDay: '', fetch: 0, fightCoins: 0, recruits: 0 }, team: [],
+    daily: { last: '', streak: 0, claimed: '', qDay: '', quests: [], boneDay: '', bones: [], gDay: '', fetch: 0, fightCoins: 0, recruits: 0, goSpinDay: '', goWalkDay: '', goWalkN: 0 }, team: [], go: { items: { ball: 15, great: 2, ultra: 0, berry: 3, lure: 1 }, stops: {}, arenas: {}, gone: {}, caught: 0, meters: 0, spun: 0 },
     emerg: { at: 0, tick: 0, seen: 0, lastAfford: 100, remain: 0 }, ledger: [],
     ms: {}, sets: {}, ach: {}, npc: {}, nq: {},
     trade: { log: [], xp: 0, streak: 0, last: 0, recent: {}, count: 0 },
@@ -1168,6 +1250,10 @@ const ICONS = {
   next: '<path d="M9 5l7 7-7 7"/>',
   ff: '<path d="M4 6l7.5 6L4 18zM12.5 6L20 12l-7.5 6z"/>',
   pause: '<path d="M8.5 5v14M15.5 5v14"/>',
+  bag: '<path d="M6 8h12l1.2 12.2a1 1 0 0 1-1 1.1H5.8a1 1 0 0 1-1-1.1z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1" fill="currentColor"/>',
+  flag: '<path d="M6 21V4M6 5h12l-2.6 3.7L18 12H6"/>',
+  pin: '<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
   shield: '<path d="M12 3l7 2.8v5.4c0 4.6-3 8.2-7 9.8-4-1.6-7-5.2-7-9.8V5.8z"/>',
   sword: '<path d="M14.5 4.5l5-1-1 5-9.5 9.5-4-4z"/><path d="M5 15.5l3.5 3.5M3.5 20.5l2.5-2.5"/>',
   run: '<circle cx="14.5" cy="4.5" r="2"/><path d="M12.5 8.5l-3 2.5-2.5 4M12.5 8.5l3 3 3 .5M9.5 11l1.5 4.5-2.5 5M11 15.5l3.5 1.5.5 3.5"/>',
@@ -1593,6 +1679,7 @@ const ACH = [];
   [[10, 200], [50, 800], [100, 2000], [250, 8000], [500, 40000], [750, 150000], [999, 2000000]].forEach(([n, c]) => A('own' + n, '{i:book}', `${n} Karten`, `Sammle ${n} verschiedene Karten.`, s => Object.keys(s.cards).length >= n, c));
   for (let t = 4; t <= 12; t++) A('tier' + t, '{i:diamond}', `${RAR[t].name}!`, `Ziehe eine Karte der Stufe ${RAR[t].name}.`, s => s.stats.tierPulled[t] > 0, 200 * Math.pow(3, t - 4));
   [[1, 300], [10, 2500], [50, 20000]].forEach(([n, c]) => A('fight' + n, '{i:sword}', n === 1 ? 'Erster Sieg' : `${n} Kampfsiege`, `Gewinne ${n} Kämpfe gegen Wildhunde.`, s => (s.stats.fightWins || 0) >= n, c));
+  [[1, 250], [10, 2000], [50, 15000], [150, 60000]].forEach(([n, c]) => A('catch' + n, '{i:target}', n === 1 ? 'Erster Fang' : `${n} Hunde gefangen`, `Fange ${n} Hunde in City Go.`, s => ((s.go && s.go.caught) || 0) >= n, c));
   [[1, 200], [10, 1500], [50, 12000]].forEach(([n, c]) => A('trade' + n, '{i:trade}', `${n} Trade${n > 1 ? 's' : ''}`, `Schließe ${n} Trade${n > 1 ? 's' : ''} ab.`, s => s.stats.trades >= n, c));
   [[10000, 'Sparfuchs', 500], [100000, 'Wohlhabend', 3000], [1000000, 'Millionär', 25000], [100000000, 'Hundert-Millionär', 1000000]].forEach(([n, nm, c]) => A('coins' + n, '{i:coin}', nm, `Besitze ${fmt(n)} Coins gleichzeitig.`, s => s.stats.maxCoins >= n, c));
   [[2, 300], [5, 5000], [9, 80000]].forEach(([n, c]) => A('luck' + n, '{i:luck}', `Glück x${n}`, `Erreiche einen Luck-Multiplikator von x${n}.`, s => s.luck >= n, c));
@@ -1625,6 +1712,8 @@ const QUEST_T = [
   { type: 'bone', ic: '{i:bone}', txt: n => `Sammle ${n} Knochen in der City`, r: [3, 6] },
   { type: 'talk', ic: '{i:chat}', txt: n => `Sprich mit ${n} Bewohnern`, r: [3, 5] },
   { type: 'fight', ic: '{i:sword}', txt: n => `Gewinne ${n} Kampf${n > 1 ? 'e' : ''} gegen Wildhunde`, r: [1, 3] },
+  { type: 'catch', ic: '{i:target}', txt: n => `Fange ${n} Hund${n > 1 ? 'e' : ''} in City Go`, r: [1, 3] },
+  { type: 'spin', ic: '{i:bone}', txt: n => `Drehe ${n} Knochen-Stop${n > 1 ? 's' : ''}`, r: [2, 4] },
   { type: 'fetch', ic: '{i:bone}', txt: n => `Apportiere ${n}× den Stock in der City`, r: [3, 6] },
   { type: 'sell', ic: '{i:money}', txt: n => `Verkaufe ${n} Duplikate (Quick-Sell)`, r: [2, 5] },
   { type: 'rare', ic: '{i:diamond}', txt: n => `Ziehe ${n} Karte${n > 1 ? 'n' : ''} ab „Selten“`, r: [1, 2] },
@@ -2568,13 +2657,13 @@ const Dogs = (() => {
   const mk = (card, hpMul = 1) => { const st = stats(card); st.maxHp = Math.round(st.maxHp * hpMul); return Object.assign(st, { hp: st.maxHp, charge: 0, guard: false, alive: true }); };
 
   /* ---------- Kampf-UI ---------- */
-  function battle(wild, diff) {
+  function battle(wild, diff, opts = {}) {
     return new Promise(resolve => {
-      const mine = team().map(c => mk(c)), foes = foeTeam(wild, diff).map(c => mk(c, diff.hp));
+      const mine = team().map(c => mk(c)), foes = (opts.foes || foeTeam(wild, diff)).map(c => mk(c, diff.hp));
       let me = 0, fo = 0, busy = true, over = false, lastFoeGuard = false;
       const ov = el('div', { id: 'battleOv', class: 'bt' });
       ov.innerHTML = `<div class="bt-sky"></div><div class="bt-ground"></div>
-        <div class="bt-top"><span class="chip">{i:sword} Kampf · ${diff.name}</span><button class="btn sec sm" id="btFlee">{i:run} Fliehen</button></div>
+        <div class="bt-top"><span class="chip">{i:sword} ${opts.label || 'Kampf · ' + diff.name}</span><button class="btn sec sm" id="btFlee">{i:run} Fliehen</button></div>
         <div class="bt-arena">
           <div class="bt-foe"><div class="bt-box" id="btFoeBox"></div><div class="bt-dog" id="btFoeDog"></div></div>
           <div class="bt-me"><div class="bt-dog" id="btMeDog"></div><div class="bt-box" id="btMeBox"></div></div>
@@ -2595,7 +2684,7 @@ const Dogs = (() => {
           <div class="bt-st"><span class="pips">${pips(list, cur)}</span><span class="chg" title="Super-Wuff Ladung">${[0, 1, 2].map(k => `<u class="${f.charge > k ? 'on' : ''}"></u>`).join('')}</span></div>`;
         requestAnimationFrame(() => { const i = $('.hp i', box); if (i) i.style.width = hpPct(f) + '%'; });
       }
-      function drawDog(side, enter) { const f = side === 'me' ? A() : F(), d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.innerHTML = DogArt.svg(f.card); d.className = 'bt-dog ' + side + (enter ? ' enter' : ''); d.style.setProperty('--c', RAR[f.tier].color); }
+      function drawDog(side, enter) { const f = side === 'me' ? A() : F(), d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.getAnimations().forEach(x => x.cancel()); d.innerHTML = DogArt.svg(f.card); d.className = 'bt-dog ' + side + (enter ? ' enter' : ''); d.style.setProperty('--c', RAR[f.tier].color); }
       function floatNum(side, txt, cls) { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'), b = d.getBoundingClientRect(), o = ov.getBoundingClientRect(); const n = el('div', { class: 'bt-num ' + cls }, txt); n.style.left = (b.left - o.left + b.width / 2) + 'px'; n.style.top = (b.top - o.top + b.height * 0.25) + 'px'; ov.append(n); setTimeout(() => n.remove(), 1000); }
       const lunge = async (side) => { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'), dx = side === 'me' ? 1 : -1; d.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${dx * 34}px,${-dx * 18}px) scale(1.08)` }, { transform: 'translate(0,0)' }], { duration: 320, easing: 'cubic-bezier(.3,1.4,.6,1)' }); await sleep(170); };
       const hurt = async (side, crit) => { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.animate([{ transform: 'translate(0,0)', filter: 'brightness(2.2)' }, { transform: 'translate(-10px,0)' }, { transform: 'translate(9px,0)' }, { transform: 'translate(-5px,0)' }, { transform: 'translate(0,0)', filter: 'none' }], { duration: crit ? 520 : 380 }); if (!S().settings.reduceFx && crit) ov.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(4px,-3px)' }, { transform: 'translate(-4px,3px)' }, { transform: 'translate(0,0)' }], { duration: 260 }); await sleep(340); };
@@ -2673,7 +2762,7 @@ const Dogs = (() => {
         if (coins) Economy.add(coins, true, 'Kampf gewonnen'); Economy.addXp(xp); Economy.addLuck(0.01 * diff.mult, true); Quests.progress('fight'); Ach.check();
         // Streuner schließt sich an?
         let recruit = null; const chance = ({ 1: 0.35, 2: 0.3, 3: 0.2, 4: 0.12, 5: 0.07, 6: 0.04 }[wild.tier] || 0) * (diff.id === 'hard' ? 1.4 : diff.id === 'easy' ? 0.8 : 1);
-        if (d.recruits < 6 && Math.random() < chance) { recruit = wild; d.recruits++; const isNew = !s.disc[wild.id]; if (isNew) { s.disc[wild.id] = Date.now(); s.stats.newCards++; Quests.progress('new', 1); } s.cards[wild.id] = (s.cards[wild.id] || 0) + 1; recruit = { card: wild, isNew, count: s.cards[wild.id] }; }
+        if (!opts.noRecruit && d.recruits < 6 && Math.random() < chance) { recruit = wild; d.recruits++; const isNew = !s.disc[wild.id]; if (isNew) { s.disc[wild.id] = Date.now(); s.stats.newCards++; Quests.progress('new', 1); } s.cards[wild.id] = (s.cards[wild.id] || 0) + 1; recruit = { card: wild, isNew, count: s.cards[wild.id] }; }
         Store.save(true); Bus.emit('stateChanged');
         say('Sieg!'); Audio.fanfare(5); await sleep(300);
         result({ won: true, coins, xp, capped, recruit });
@@ -2689,10 +2778,10 @@ const Dogs = (() => {
         box.append(el('div', { class: 'row', style: 'justify-content:center;gap:10px;margin-top:10px' }, el('button', { class: 'btn sec', onclick: () => { close(r); Dogs.teamModal(); } }, '{i:dog} Team'), el('button', { class: 'btn gold', onclick: () => close(r) }, 'Weiter')));
         cmd.innerHTML = ''; cmd.append(box); cmd.classList.remove('off'); cmd.classList.add('res');
       }
-      function close(r) { ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
+      function close(r) { ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running || (typeof GoMap !== 'undefined' && GoMap.running) ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
       const onKey = e => { if (e.key === 'Escape') e.stopPropagation(); }; document.addEventListener('keydown', onKey, true);
 
-      drawDog('me', true); drawDog('foe', true); drawBox('me'); drawBox('foe'); Audio.bark(); say(`Ein wilder ${F().name} greift an!`);
+      drawDog('me', true); drawDog('foe', true); drawBox('me'); drawBox('foe'); Audio.bark(); say(opts.foes ? `${F().name} tritt gegen dich an!` : `Ein wilder ${F().name} greift an!`);
       setTimeout(() => menu(), 900);
     });
   }
@@ -2732,6 +2821,392 @@ const Dogs = (() => {
   }
 
   return { stats, power, team, setTeam, teamPower, wildCard, challenge, battle, teamModal, day, DIFFS };
+})();
+
+/* ------------------------------ CITY GO: Hunde fangen, Stops, Arenen, Beutel ------------------------------ */
+const Go = (() => {
+  const ITEMS = {
+    ball: { name: 'Leckerli', mult: 1, col: '#c98a4b', desc: 'Normaler Fangwurf.' },
+    great: { name: 'Super-Leckerli', mult: 1.6, col: '#3b82f6', desc: 'Fängt deutlich besser (×1,6).' },
+    ultra: { name: 'Ultra-Leckerli', mult: 2.4, col: '#a855f7', desc: 'Bester Fang (×2,4).' },
+    berry: { name: 'Himbeer-Snack', col: '#ef4444', desc: 'Beruhigt den Hund: Fang ×1,5 und er flieht seltener.' },
+    lure: { name: 'Glücksköder', col: '#ec4899', desc: '5 Minuten lang erscheinen mehr Hunde in deiner Nähe.' }
+  };
+  const vib = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) { } };
+  const ORDER = ['ball', 'great', 'ultra', 'berry', 'lure'];
+  const BASE = [0, 0.66, 0.56, 0.46, 0.36, 0.27, 0.2, 0.14, 0.09, 0.06];     // Fangchance je Stufe (1–9)
+  const SPAWN_W = [0, 34, 26, 17, 10, 6, 3.2, 1.8, 1, 0.5];
+  const g = () => { const s = S(); if (!s.go || !s.go.items) s.go = { items: { ball: 15, great: 2, ultra: 0, berry: 3, lure: 1 }, stops: {}, arenas: {}, gone: {}, caught: 0, meters: 0, spun: 0 }; return s.go; };
+  const count = id => (g().items[id] || 0);
+  function give(id, n) { g().items[id] = count(id) + n; Bus.emit('go'); }
+  function use(id) { if (count(id) <= 0) return false; g().items[id]--; Bus.emit('go'); return true; }
+  const ricon = (id, size = 28) => {
+    const c = ITEMS[id].col, light = DogArt.shade(c, 0.45), dark = DogArt.shade(c, -0.35);
+    if (id === 'berry') return `<svg class="gi" style="width:${size}px;height:${size}px" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="23" r="13" fill="${c}"/><circle cx="14" cy="19" r="3" fill="${light}"/><circle cx="24" cy="26" r="2.4" fill="${dark}"/><path d="M20 10c-1-4 2-6 6-6-1 4-3 6-6 6z" fill="#22c55e"/></svg>`;
+    if (id === 'lure') return `<svg class="gi" style="width:${size}px;height:${size}px" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="${dark}"/><circle cx="20" cy="20" r="13" fill="${c}"/><path d="M20 9l2.6 7.4 7.4 2.6-7.4 2.6L20 29l-2.6-7.4L10 19l7.4-2.6z" fill="#fff"/></svg>`;
+    return `<svg class="gi" style="width:${size}px;height:${size}px" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="17" fill="${dark}"/><circle cx="20" cy="20" r="15" fill="${c}"/><ellipse cx="14" cy="12" rx="6" ry="3.4" fill="${light}" opacity=".7" transform="rotate(-30 14 12)"/><g fill="#fff" opacity=".92"><ellipse cx="20" cy="24" rx="5" ry="4"/><circle cx="14" cy="18.5" r="2"/><circle cx="19" cy="15.5" r="2"/><circle cx="24.5" cy="15.5" r="2"/><circle cx="29" cy="18.5" r="2"/></g></svg>`;
+  };
+  const tierOfRing = t => t <= 2 ? '#4ade80' : t <= 4 ? '#fbbf24' : t <= 6 ? '#fb923c' : '#ef4444';
+
+  function spawnCard(rnd = Math.random) {
+    const lv = S().level, w = SPAWN_W.map((x, t) => t === 0 ? 0 : x * (t >= 4 ? 1 + Math.min(1.2, lv * 0.02) : 1)), sum = w.reduce((a, b) => a + b, 0);
+    let r = rnd() * sum, tier = 1; for (let t = 1; t < w.length; t++) { r -= w[t]; if (r <= 0) { tier = t; break; } }
+    const arr = CardDB.byTier[tier]; return arr[Math.floor(rnd() * arr.length)];
+  }
+
+  /* ---------- Auswahl: Fangen oder Kämpfen ---------- */
+  function pick(card) {
+    return new Promise(res => {
+      let chosen = null; const st = Dogs.stats(card), body = el('div', { class: 'col' });
+      body.append(el('div', { class: 'bt-pre' }, el('div', { class: 'bt-pre-art', html: DogArt.svg(card) }), el('div', { class: 'grow' }, el('b', { class: 'tc' + card.tier, style: 'font-size:1.1rem' }, card.name), el('div', { class: 'dim' }, `${RAR[card.tier].name} · WP ${Dogs.power(card)}`), el('div', { class: 'dim', style: 'font-size:.8rem' }, `LP ${st.maxHp} · Angriff ${st.atk} · Tempo ${st.spd}`))));
+      const balls = count('ball') + count('great') + count('ultra');
+      body.append(el('div', { class: 'go-pick' },
+        el('button', { class: 'go-pb catch' + (balls ? '' : ' off'), onclick: () => { if (!balls) { Audio.error(); UI.toast('Keine Leckerli mehr – besuche einen Knochen-Stop!', 'bad'); return; } chosen = 'catch'; m.close(); } }, el('span', { html: ricon('ball', 34) }), el('b', {}, 'Fangen'), el('small', {}, `${balls} Leckerli im Beutel`)),
+        el('button', { class: 'go-pb fight', onclick: () => { chosen = 'fight'; m.close(); } }, el('span', { class: 'fi' }, '{i:sword}'), el('b', {}, 'Kämpfen'), el('small', {}, 'Mit deinem Team'))));
+      const m = UI.modal({ title: '{i:target} Wilder Hund!', body, onClose: () => setTimeout(() => res(chosen)), actions: [{ label: 'Weitergehen', cls: 'sec' }] });
+    });
+  }
+
+  /* ---------- Fang-Begegnung ---------- */
+  function encounter(card) {
+    return new Promise(resolve => {
+      const go = g(), st = Dogs.stats(card), ringCol = tierOfRing(card.tier);
+      let ball = count('ball') ? 'ball' : count('great') ? 'great' : count('ultra') ? 'ultra' : 'ball', berry = false, busy = false, over = false, fled = false;
+      const ov = el('div', { id: 'goOv', class: 'go', style: `--rc:${ringCol};--tc:${RAR[card.tier].color}` });
+      ov.innerHTML = `<div class="bt-sky"></div><div class="bt-ground go-ground"></div>
+        <div class="go-top"><button class="btn sec sm" id="goRun">{i:run} Weggehen</button><div class="go-wp"><small>WP</small><b>${Dogs.power(card)}</b></div><div style="width:110px"></div></div>
+        <div class="go-name"><b class="tc${card.tier}">${card.name}</b><span class="rar" style="--c:${RAR[card.tier].color}">${RAR[card.tier].name}</span></div>
+        <div class="go-stage" id="goStage"><div class="go-dog" id="goDog">${DogArt.svg(card)}</div><div class="go-ring" id="goRing"></div><div class="go-ring in"></div></div>
+        <div class="go-msg" id="goMsg"></div>
+        <div class="go-hint" id="goHint">Wische den Ball nach oben auf den Hund!</div>
+        <div class="go-bar"><button class="go-item" id="goBallSel" aria-label="Leckerli wechseln"></button><div class="go-ballwrap"><div class="go-ball" id="goBall"></div></div><button class="go-item" id="goBerry" aria-label="Himbeer-Snack geben"></button></div>
+        <div id="goRes"></div>`;
+      $('#overlays').append(ov); City.pause(true); Audio.setScene('off'); Audio.bark();
+      const $o = q => $(q, ov), dog = $o('#goDog'), ring = $o('#goRing'), msg = $o('#goMsg'), ballEl = $o('#goBall'), hint = $o('#goHint');
+      const say = (t, cls = '') => { msg.textContent = t; msg.className = 'go-msg ' + cls; void msg.offsetWidth; msg.classList.add('on'); };
+      function drawBar() {
+        const cur = ball; $o('#goBallSel').innerHTML = `<span>${ricon(cur, 34)}</span><b>${count(cur)}</b><small>${ITEMS[cur].name}</small>`;
+        const be = $o('#goBerry'); be.innerHTML = `<span>${ricon('berry', 34)}</span><b>${count('berry')}</b><small>${berry ? 'gegeben' : 'Snack'}</small>`; be.classList.toggle('on', berry); be.classList.toggle('off', !berry && !count('berry'));
+        ballEl.innerHTML = ricon(cur, 64); ballEl.classList.toggle('empty', count(cur) <= 0);
+      }
+      $o('#goBallSel').onclick = () => { if (busy) return; const avail = ['ball', 'great', 'ultra'].filter(i => count(i) > 0); if (!avail.length) { Audio.error(); return; } ball = avail[(avail.indexOf(ball) + 1) % avail.length]; Audio.soft(); drawBar(); };
+      $o('#goBerry').onclick = () => { if (busy || berry || !use('berry')) return; berry = true; Audio.sparkle(); say('Der Hund wird ruhiger …', 'good'); dog.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1) rotate(-3deg)' }, { transform: 'scale(1)' }], { duration: 500 }); drawBar(); };
+      $o('#goRun').onclick = () => { if (busy) return; end({ caught: false, fled: false, left: true }); };
+      const ringScale = () => { try { return new DOMMatrix(getComputedStyle(ring).transform).a || 1; } catch (e) { return 1; } };
+      const centerOf = e => { const b = e.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2, b.width, b.height]; };
+      let drag = null;
+      ballEl.onpointerdown = e => { if (busy || over) return; if (count(ball) <= 0) { Audio.error(); say('Keine Leckerli dieser Sorte!', 'bad'); return; } e.preventDefault(); drag = { x0: e.clientX, y0: e.clientY, pts: [[performance.now(), e.clientX, e.clientY]] }; try { ballEl.setPointerCapture(e.pointerId); } catch (x) { } ballEl.classList.add('held'); ballEl.style.transition = 'none'; hint.classList.add('hide'); };
+      ballEl.onpointermove = e => { if (!drag) return; drag.pts.push([performance.now(), e.clientX, e.clientY]); if (drag.pts.length > 14) drag.pts.shift(); ballEl.style.transform = `translate(${e.clientX - drag.x0}px,${e.clientY - drag.y0}px)`; };
+      const release = e => {
+        if (!drag) return; const d = drag; drag = null; ballEl.classList.remove('held');
+        const now = performance.now(), recent = d.pts.filter(p => now - p[0] < 130), a = recent[0] || d.pts[0], b = d.pts[d.pts.length - 1], dt = Math.max(16, b[0] - a[0]), vx = (b[1] - a[1]) / dt, vy = (b[2] - a[2]) / dt;
+        if (vy > -0.4 || Math.hypot(b[1] - d.x0, b[2] - d.y0) < 30) { ballEl.style.transition = 'transform .25s var(--ease-spring)'; ballEl.style.transform = ''; hint.classList.remove('hide'); return; }
+        // Kurvenwurf: deutliche seitliche Auslenkung auf dem Weg
+        let dev = 0; { const x1 = d.pts[0][1], y1 = d.pts[0][2], x2 = b[1], y2 = b[2], L = Math.hypot(x2 - x1, y2 - y1) || 1; d.pts.forEach(p => { dev = Math.max(dev, Math.abs((p[1] - x1) * (y2 - y1) - (p[2] - y1) * (x2 - x1)) / L); }); }
+        throwBall(b[1], b[2], vx, vy, dev > 38);
+      };
+      ballEl.onpointerup = release; ballEl.onpointercancel = release;
+      async function throwBall(rx, ry, vx, vy, curve) {
+        busy = true; use(ball); const used = ball; drawBar(); Audio.swish(1);
+        const [dx, dy, dw] = centerOf(dog), scale = ringScale(), vw = innerWidth, vh = innerHeight;
+        const lx = clamp(rx + vx * 230, 10, vw - 10), ly = clamp(ry + vy * 230, 10, vh - 10), dist = Math.hypot(lx - dx, ly - dy), hit = dist < dw * 0.4;
+        const bw = ballEl.getBoundingClientRect(), fx = bw.left + bw.width / 2, fy = bw.top + bw.height / 2;
+        const fl = el('div', { class: 'go-fly', html: ricon(used, 64) }); fl.style.left = fx + 'px'; fl.style.top = fy + 'px'; ov.append(fl); ballEl.style.visibility = 'hidden'; ballEl.style.transform = '';
+        const tx = hit ? dx : lx, ty = hit ? dy : ly, mx = (fx + tx) / 2 + (curve ? (vx >= 0 ? -1 : 1) * 70 : 0), my = Math.min(fy, ty) - 70;
+        const anim = fl.animate([{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: `translate(calc(-50% + ${mx - fx}px),calc(-50% + ${my - fy}px)) scale(.8)`, offset: 0.5 }, { transform: `translate(calc(-50% + ${tx - fx}px),calc(-50% + ${ty - fy}px)) scale(${hit ? 0.62 : 0.5})` }], { duration: 640, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
+        await anim.finished.catch(() => { });
+        if (!hit) { say('Daneben!', 'bad'); Audio.error(); fl.animate([{ opacity: 1 }, { opacity: 0, transform: `translate(calc(-50% + ${tx - fx}px),calc(-50% + ${ty - fy + 120}px)) scale(.4)` }], { duration: 450, fill: 'forwards' }); await sleep(450); fl.remove(); return nextBall(); }
+        // Treffer: Bonus durch Ring
+        let bonus = 1, txt = 'Treffer!'; if (scale < 0.36) { bonus = 1.9; txt = 'Ausgezeichnet!'; } else if (scale < 0.62) { bonus = 1.5; txt = 'Toll!'; } else if (scale < 0.92) { bonus = 1.2; txt = 'Gut!'; } if (curve) { bonus *= 1.15; txt = 'Kurvenwurf · ' + txt; }
+        say(txt, 'good'); Audio.thud(0.3, 140); ring.style.visibility = 'hidden';
+        dog.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.12)', opacity: 0 }], { duration: 300, fill: 'forwards', easing: 'ease-in' }); await sleep(260);
+        const p = clamp((BASE[card.tier] || 0.05) * ITEMS[used].mult * bonus * (berry ? 1.5 : 1), 0.02, 0.97), ok = Math.random() < p, wob = ok ? 3 : 1 + Math.floor(Math.random() * 2);
+        for (let i = 0; i < wob; i++) { await sleep(450); fl.animate([{ transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(0)' }, { transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(-28deg)' }, { transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(24deg)' }, { transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(0)' }], { duration: 600, fill: 'forwards' }); Audio.thud(0.25, 100 + i * 20); await sleep(600); }
+        if (ok) { await sleep(250); caught(fl, tx, ty); return; }
+        // ausgebrochen
+        fl.remove(); dog.animate([{ transform: 'scale(.12)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1 }, { transform: 'scale(1)', opacity: 1 }], { duration: 380, fill: 'forwards', easing: 'cubic-bezier(.3,1.5,.5,1)' }); ring.style.visibility = ''; say('Ausgebrochen!', 'bad'); Audio.error(); await sleep(700);
+        const flee = Math.random() < (0.1 + card.tier * 0.022) * (berry ? 0.5 : 1);
+        if (flee) { fled = true; say('Der Hund ist weggelaufen!', 'bad'); dog.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(70vw) scale(.7)', opacity: 0 }], { duration: 600, fill: 'forwards', easing: 'ease-in' }); Audio.whoosh(0.4, 0.2); await sleep(800); return end({ caught: false, fled: true }); }
+        nextBall();
+      }
+      function nextBall() {
+        const any = ['ball', 'great', 'ultra'].some(i => count(i) > 0);
+        if (!any) { say('Keine Leckerli mehr!', 'bad'); setTimeout(() => end({ caught: false, fled: false, left: true }), 1200); return; }
+        if (count(ball) <= 0) ball = ['ball', 'great', 'ultra'].find(i => count(i) > 0);
+        ballEl.style.visibility = ''; ballEl.style.transform = ''; ballEl.animate([{ transform: 'translateY(60px) scale(.5)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 350, easing: 'var(--ease-spring)' }); drawBar(); busy = false; hint.classList.remove('hide');
+      }
+      function caught(fl, tx, ty) {
+        over = true; const s = S(); Audio.fanfare(Math.min(12, 4 + card.tier)); vib([20, 40, 80]);
+        for (let i = 0; i < 10; i++) { const star = el('div', { class: 'go-star' }, '{i:sparkle}'); star.style.left = tx + 'px'; star.style.top = ty + 'px'; star.style.setProperty('--dx', (Math.cos(i / 10 * 6.283) * 110) + 'px'); star.style.setProperty('--dy', (Math.sin(i / 10 * 6.283) * 110) + 'px'); ov.append(star); setTimeout(() => star.remove(), 900); }
+        fl.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(2.5)' }, { filter: 'brightness(1)' }], { duration: 700 });
+        const isNew = !s.disc[card.id]; if (isNew) { s.disc[card.id] = Date.now(); s.stats.newCards++; Quests.progress('new', 1); }
+        s.cards[card.id] = (s.cards[card.id] || 0) + 1; let ed = null; if (Math.random() < 0.012) { ed = 'shiny'; Ed.add(card.id, ed); }
+        go.caught = (go.caught || 0) + 1; const xp = 40 + card.tier * 25 + (isNew ? 100 : 0); Economy.addXp(xp); Quests.progress('catch'); Ach.check();
+        const coins = Math.round(10 + card.value * 0.03); Economy.add(coins, true, 'Fang-Bonus'); Store.save(true); Bus.emit('stateChanged'); Bus.emit('go');
+        setTimeout(() => {
+          const box = el('div', { class: 'bt-res win go-resbox' }, el('h2', {}, '{i:trophy} Gefangen!'), renderCard(card, { size: 'sm', owned: true, isNew, edition: ed, count: s.cards[card.id] > 1 ? s.cards[card.id] : 0, live: true }), el('div', { class: 'bt-rw' }, el('span', { class: 'price' }, '{i:coin} +' + fmt(coins)), el('span', {}, '{i:star} +' + xp + ' XP')), ed ? el('p', { class: 'good' }, '{i:sparkle} Glänzende Special Edition!') : null, el('button', { class: 'btn gold', onclick: () => end({ caught: true, card, isNew }) }, 'Weiter'));
+          $o('#goRes').append(box); Audio.sparkle();
+        }, 900);
+      }
+      function end(r) { if (!ov.isConnected) return; ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running || GoMap.running ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
+      const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); if (!busy && !over) end({ caught: false, fled: false, left: true }); } }; document.addEventListener('keydown', onKey, true);
+      drawBar(); say(`Ein wilder ${card.name.split(' (')[0]}!`);
+      if (!['ball', 'great', 'ultra'].some(i => count(i) > 0)) { say('Du hast keine Leckerli!', 'bad'); setTimeout(() => end({ caught: false, fled: false, left: true }), 1500); }
+    });
+  }
+
+  /* ---------- Beutel ---------- */
+  function bagModal(ctx = {}) {
+    const go = g(); const body = el('div', { class: 'col' });
+    const list = el('div', { class: 'list' });
+    ORDER.forEach(id => {
+      const it = ITEMS[id], n = count(id), canUse = id === 'lure' && ctx.inCity && n > 0;
+      list.append(el('div', { class: 'li go-it' }, el('span', { class: 'ic', html: ricon(id, 36) }), el('div', { class: 'grow' }, el('b', {}, it.name), el('div', { class: 'dim', style: 'font-size:.8rem' }, it.desc)), el('b', { class: 'mono', style: 'font-size:1.2rem' }, '×' + n), canUse ? el('button', { class: 'btn gold sm', onclick: () => { ctx.onLure && ctx.onLure(); m.close(); } }, 'Benutzen') : null));
+    });
+    body.append(list, el('div', { class: 'stats-mini' }, el('span', {}, `{i:target} Gefangen: ${go.caught || 0}`), el('span', {}, `{i:run} Gelaufen: ${fmt(Math.round(go.meters || 0))} m`), el('span', {}, `{i:bone} Stops gedreht: ${go.spun || 0}`)), el('p', { class: 'dim', style: 'margin:0;font-size:.82rem' }, 'Neue Leckerli bekommst du an Knochen-Stops (blaue Türme) und beim Laufen: alle 150 m gibt es ein Leckerli.'));
+    const m = UI.modal({ title: '{i:bag} Beutel', body, actions: [{ label: 'Schließen', cls: 'sec' }] });
+  }
+
+  /* ---------- Knochen-Stop ---------- */
+  const STOP_CD = 4 * 60 * 1000, ARENA_CD = 12 * 60 * 1000;
+  function stopReady(id) { return Date.now() >= (g().stops[id] || 0); }
+  function stopLeft(id) { return Math.max(0, (g().stops[id] || 0) - Date.now()); }
+  function spin(id) {
+    const go = g(); if (!stopReady(id)) { UI.toast(`Dieser Stop lädt noch auf: ${fmtDur(stopLeft(id))}`, 'bad'); Audio.error(); return; }
+    go.stops[id] = Date.now() + STOP_CD; go.spun = (go.spun || 0) + 1;
+    const first = S().daily.goSpinDay !== todayStr(); if (first) S().daily.goSpinDay = todayStr();
+    const rew = []; const add = (k, n) => { give(k, n); rew.push([k, n]); };
+    add('ball', 3 + Math.floor(Math.random() * 3) + (first ? 5 : 0)); if (Math.random() < 0.35) add('berry', 1 + (Math.random() < 0.3 ? 1 : 0)); if (Math.random() < 0.22) add('great', 1 + (Math.random() < 0.3 ? 1 : 0)); if (Math.random() < 0.05) add('ultra', 1); if (Math.random() < 0.06) add('lure', 1);
+    const xp = 30; Economy.addXp(xp); Quests.progress('spin'); Ach.check(); Store.save(true);
+    const disc = el('div', { class: 'go-disc spin' }, el('div', { class: 'gd-in' }, '{i:bone}')), res = el('div', { class: 'go-rew' });
+    const m = UI.modal({ title: '{i:bone} Knochen-Stop', body: [disc, res], actions: [{ label: 'Weiter', cls: 'gold' }] });
+    Audio.whoosh(0.8, 0.2); setTimeout(() => { disc.classList.remove('spin'); disc.classList.add('done'); Audio.sparkle(); Audio.coins(2); rew.forEach(([k, n], i) => { const r = el('div', { class: 'go-ri', style: `animation-delay:${i * 90}ms` }, el('span', { html: ricon(k, 38) }), el('b', {}, ITEMS[k].name), el('span', { class: 'mono' }, '×' + n)); res.append(r); }); res.append(el('div', { class: 'dim', style: 'text-align:center;margin-top:6px' }, `+${xp} XP${first ? ' · Tagesbonus: +5 Leckerli' : ''}`)); }, 1100);
+    return true;
+  }
+
+  /* ---------- Arena ---------- */
+  function arenaReady(id) { return Date.now() >= (g().arenas[id] || 0); }
+  function arenaLeft(id) { return Math.max(0, (g().arenas[id] || 0) - Date.now()); }
+  async function arena(a) {
+    if (!Dogs.team().length) { UI.toast('Du brauchst ein Team aus mindestens einer Karte!', 'bad'); return null; }
+    if (!arenaReady(a.id)) { UI.toast(`Die Arena ist gerade dein! Neue Herausforderer in ${fmtDur(arenaLeft(a.id))}.`, 'good'); return null; }
+    return new Promise(res => {
+      let ok = false; const tm = Dogs.team(), avg = tm.reduce((s, c) => s + c.tier, 0) / tm.length, rnd = mulberry32(hashStr(a.id + todayStr()));
+      const foes = []; for (let i = 0; i < 3; i++) { const t = clamp(Math.round(avg + (i === 2 ? 1 : 0) + (rnd() - 0.5) * 1.5), 1, 9), arr = CardDB.byTier[t]; foes.push(arr[Math.floor(rnd() * arr.length)]); }
+      const tp = Dogs.teamPower(), ep = foes.reduce((s, c) => s + Dogs.power(c), 0), hint = tp / ep > 1.25 ? 'Gute Chancen' : tp / ep > 0.8 ? 'Ausgeglichen' : 'Sehr riskant';
+      const body = el('div', { class: 'col' }, el('p', { style: 'margin:0' }, `Arena-Wächter ${a.guard} verteidigt diese Arena mit 3 Hunden.`), el('div', { class: 'row', style: 'justify-content:center;gap:8px' }, ...foes.map(c => renderCard(c, { size: 'xs', owned: true, odds: false }))), el('p', { class: 'dim', style: 'margin:0' }, `Dein Team: Stärke ${tp} · Gegner: ${ep} · ${hint}. Sieg gibt Coins, XP und Leckerli.`));
+      const m = UI.modal({ title: '{i:flag} ' + a.name, body, onClose: () => setTimeout(async () => { if (!ok) return res(null); const r = await Dogs.battle(foes[0], { id: 'arena', name: 'Arena', n: 3, mult: 2.2, hp: 1.05 }, { foes, noRecruit: true, label: a.name }); if (r && r.won) { g().arenas[a.id] = Date.now() + ARENA_CD; give('great', 2); if (Math.random() < 0.35) give('ultra', 1); give('ball', 5); Economy.addXp(60); UI.toast('{i:flag} Arena erobert! +2 Super-Leckerli, +5 Leckerli', 'gold'); Store.save(true); } res(r); }), actions: [{ label: 'Team ändern', cls: 'sec', keep: true, onclick: () => Dogs.teamModal() }, { label: '{i:sword} Kämpfen', cls: 'gold', onclick: () => { ok = true; } }] });
+    });
+  }
+
+  /* ---------- Laufbonus ---------- */
+  function walkBonus() { const go = g(), d = S().daily; if (d.goWalkDay !== todayStr()) { d.goWalkDay = todayStr(); d.goWalkN = 0; } if (d.goWalkN >= 20) return false; d.goWalkN++; give('ball', 1); return true; }
+
+  return { ITEMS, ricon, count, give, use, spawnCard, pick, encounter, bagModal, spin, stopReady, stopLeft, arena, arenaReady, arenaLeft, walkBonus, g };
+})();
+
+/* ------------------------------ CITY GO · STANDORT (echte Karte) ------------------------------ */
+const GoMap = (() => {
+  const CELL = 120, DOG_RANGE = 75, STOP_RANGE = 45, ARENA_RANGE = 60, ZOOM = 18, SCALE = 2.4;   // SCALE = Pixel pro Meter
+  const DEMO = { lat: 52.5163, lon: 13.3777 };
+  let ov = null, cv = null, cx = null, raf = 0, running = false, geo = null, watch = null, mode = 'intro', tilesOn = true, W = 0, H = 0, dpr = 1;
+  let pos = { x: 0, z: 0 }, tgt = null, heading = 0, acc = 0, lastT = 0, walkAcc = 0, status = '', lureUntil = 0, hits = [], gpsErr = '';
+  const tiles = new Map(); let tileOk = 0, tileFail = 0; const imgs = new Map();
+  const R2D = 180 / Math.PI;
+
+  const toXY = (lat, lon) => ({ x: (lon - geo.lon) * 111320 * Math.cos(geo.lat / R2D), z: -(lat - geo.lat) * 111320 });
+  const tileLon = (x, z) => x / Math.pow(2, z) * 360 - 180, tileLat = (y, z) => { const n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return R2D * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))); };
+  const lon2tile = (lon, z) => Math.floor((lon + 180) / 360 * Math.pow(2, z)), lat2tile = (lat, z) => Math.floor((1 - Math.log(Math.tan(lat / R2D) + 1 / Math.cos(lat / R2D)) / Math.PI) / 2 * Math.pow(2, z));
+  const toLL = (x, z) => ({ lat: geo.lat - z / 111320, lon: geo.lon + x / (111320 * Math.cos(geo.lat / R2D)) });
+
+  function getTile(z, x, y) {
+    const k = z + '/' + x + '/' + y; let t = tiles.get(k); if (t) return t;
+    t = { img: new Image(), ok: false, fail: false }; t.img.onload = () => { t.ok = true; tileOk++; }; t.img.onerror = () => { t.fail = true; tileFail++; };
+    t.img.src = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`; tiles.set(k, t);
+    if (tiles.size > 140) { const first = tiles.keys().next().value; tiles.delete(first); }
+    return t;
+  }
+
+  /* ---------- Welt: deterministisch aus Zellen ---------- */
+  function cellObjects(ci, cj, now) {
+    const out = [], r = mulberry32(hashStr('gm' + ci + ',' + cj)), o = { x: (ci + 0.15 + r() * 0.7) * CELL, z: (cj + 0.15 + r() * 0.7) * CELL };
+    const kind = r();
+    if (kind < 0.17) out.push({ t: 'stop', id: `gms_${ci}_${cj}`, x: o.x, z: o.z });
+    else if (kind < 0.2) out.push({ t: 'arena', id: `gma_${ci}_${cj}`, x: o.x, z: o.z, name: ['Rathaus-Arena', 'Park-Arena', 'Brunnen-Arena', 'Hügel-Arena'][Math.floor(r() * 4)], guard: ['Bello', 'Luna', 'Rocco', 'Maja'][Math.floor(r() * 4)] });
+    const slotMs = 12 * 60 * 1000, off = Math.floor(r() * slotMs), slot = Math.floor((now + off) / slotMs), rr = mulberry32(hashStr(`gd${ci},${cj},${slot}`));
+    const n = Math.floor(rr() * 2.7) + (now < lureUntil ? 1 : 0), gone = Go.g().gone || (Go.g().gone = {});
+    for (let i = 0; i < n; i++) { const id = `gmd_${ci}_${cj}_${slot}_${i}`, card = Go.spawnCard(rr), px = (ci + rr()) * CELL, pz = (cj + rr()) * CELL; if (!gone[id]) out.push({ t: 'dog', id, card, x: px, z: pz }); }
+    return out;
+  }
+  function worldNear(px, pz) {
+    const now = Date.now(), ci0 = Math.floor((px + geoOff.x) / CELL), cj0 = Math.floor((pz + geoOff.z) / CELL), list = [];
+    for (let i = ci0 - 3; i <= ci0 + 3; i++) for (let j = cj0 - 3; j <= cj0 + 3; j++) cellObjects(i, j, now).forEach(o => list.push(Object.assign({}, o, { x: o.x - geoOff.x, z: o.z - geoOff.z })));
+    return list;
+  }
+  let geoOff = { x: 0, z: 0 };                // Weltkoordinaten sind an die Geo-Position gebunden (Origin -> Meter ab Lat/Lon 0)
+
+  /* ---------- Zeichnen ---------- */
+  function dogImg(card) {
+    let e = imgs.get(card.id); if (e) return e;
+    e = new Image(); e.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DogArt.svg(card).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" ')); imgs.set(card.id, e); if (imgs.size > 80) imgs.delete(imgs.keys().next().value); return e;
+  }
+  const sx = x => W / 2 + (x - pos.x) * SCALE, sy = z => H * 0.6 + (z - pos.z) * SCALE;
+  function drawMap(t) {
+    cx.fillStyle = '#cfe5c1'; cx.fillRect(0, 0, W, H);
+    if (tilesOn && tileOk + tileFail < 6 || tileOk > 0) {
+      const ll0 = toLL(pos.x - W / 2 / SCALE, pos.z - H * 0.6 / SCALE), ll1 = toLL(pos.x + W / 2 / SCALE, pos.z + H * 0.4 / SCALE);
+      const x0 = lon2tile(ll0.lon, ZOOM), x1 = lon2tile(ll1.lon, ZOOM), y0 = lat2tile(ll0.lat, ZOOM), y1 = lat2tile(ll1.lat, ZOOM);
+      for (let tx = x0; tx <= x1; tx++) for (let ty = y0; ty <= y1; ty++) {
+        const tl = getTile(ZOOM, tx, ty); if (!tl.ok) continue;
+        const a = toXY(tileLat(ty, ZOOM), tileLon(tx, ZOOM)), b = toXY(tileLat(ty + 1, ZOOM), tileLon(tx + 1, ZOOM));
+        cx.drawImage(tl.img, sx(a.x), sy(a.z), (b.x - a.x) * SCALE + 0.6, (b.z - a.z) * SCALE + 0.6);
+      }
+    } else {
+      // Fallback: stilisierte Karte mit Straßenraster
+      const step = 60, gx0 = Math.floor((pos.x - W / 2 / SCALE) / step), gx1 = Math.ceil((pos.x + W / 2 / SCALE) / step), gz0 = Math.floor((pos.z - H * 0.6 / SCALE) / step), gz1 = Math.ceil((pos.z + H * 0.4 / SCALE) / step);
+      for (let i = gx0; i <= gx1; i++) for (let j = gz0; j <= gz1; j++) { const r = mulberry32(hashStr('bk' + i + ',' + j)), v = r(); cx.fillStyle = v < 0.2 ? '#a8d8f0' : v < 0.45 ? '#b6dca0' : '#e7e1d2'; cx.fillRect(sx(i * step) + 6, sy(j * step) + 6, step * SCALE - 12, step * SCALE - 12); }
+      cx.strokeStyle = '#fff'; cx.lineWidth = 7; cx.lineCap = 'round';
+      for (let i = gx0; i <= gx1; i++) { cx.beginPath(); cx.moveTo(sx(i * step), 0); cx.lineTo(sx(i * step), H); cx.stroke(); }
+      for (let j = gz0; j <= gz1; j++) { cx.beginPath(); cx.moveTo(0, sy(j * step)); cx.lineTo(W, sy(j * step)); cx.stroke(); }
+    }
+    // Tageszeit
+    const hr = new Date().getHours() + new Date().getMinutes() / 60, night = hr < 5.5 || hr > 21 ? 0.42 : hr < 7 ? 0.2 : hr > 19 ? 0.22 : 0; if (night) { cx.fillStyle = `rgba(10,14,50,${night})`; cx.fillRect(0, 0, W, H); }
+  }
+  function drawObjects(t) {
+    hits = []; const list = worldNear(pos.x, pos.z);
+    list.sort((a, b) => a.z - b.z);
+    for (const o of list) {
+      const x = sx(o.x), y = sy(o.z); if (x < -60 || x > W + 60 || y < -80 || y > H + 60) continue; const d = Math.hypot(o.x - pos.x, o.z - pos.z);
+      if (o.t === 'dog') {
+        const near = d <= DOG_RANGE, bob = near ? Math.sin(t * 5 + o.x) * 3 : 0, rc = RAR[o.card.tier].color, r = 27;
+        cx.save(); cx.translate(x, y - r - 4 + bob); cx.shadowColor = rc; cx.shadowBlur = near ? 18 : 6; cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(0, 0, r, 0, 6.283); cx.fill(); cx.shadowBlur = 0;
+        cx.save(); cx.beginPath(); cx.arc(0, 0, r - 3, 0, 6.283); cx.clip(); cx.fillStyle = RAR[o.card.tier].color + '55'; cx.fillRect(-r, -r, r * 2, r * 2); const im = dogImg(o.card); if (im.complete && im.naturalWidth) cx.drawImage(im, -r + 1, -r + 4, r * 2 - 2, r * 2 - 2); cx.restore();
+        cx.lineWidth = 4; cx.strokeStyle = rc; cx.beginPath(); cx.arc(0, 0, r, 0, 6.283); cx.stroke(); cx.restore();
+        cx.fillStyle = rc; cx.beginPath(); cx.moveTo(x - 7, y - 8 + bob); cx.lineTo(x + 7, y - 8 + bob); cx.lineTo(x, y + 2 + bob); cx.fill();
+        if (!near) { cx.fillStyle = 'rgba(15,12,45,.8)'; cx.font = '700 11px Fredoka,sans-serif'; cx.textAlign = 'center'; const tx = Math.round(d) + ' m', w = cx.measureText(tx).width + 10; cx.fillRect(x - w / 2, y + 4, w, 16); cx.fillStyle = '#fff'; cx.fillText(tx, x, y + 16); }
+        hits.push({ o, x, y: y - r - 4, r: r + 8 });
+      } else if (o.t === 'stop') {
+        const rdy = Go.stopReady(o.id), near = d <= STOP_RANGE, col = rdy ? '#38bdf8' : '#a78bfa', bob = Math.sin(t * 2 + o.x) * 2;
+        cx.save(); cx.translate(x, y); cx.globalAlpha = 0.35; cx.fillStyle = col; cx.beginPath(); cx.ellipse(0, 0, 26 + (near ? Math.sin(t * 4) * 3 : 0), 10, 0, 0, 6.283); cx.fill(); cx.globalAlpha = 1;
+        cx.fillStyle = '#1e3a8a'; cx.fillRect(-5, -26, 10, 26); cx.translate(0, -34 + bob); cx.shadowColor = col; cx.shadowBlur = 14; cx.fillStyle = col; cx.beginPath(); cx.arc(0, 0, 17, 0, 6.283); cx.fill(); cx.shadowBlur = 0; cx.strokeStyle = '#fff'; cx.lineWidth = 3; cx.stroke();
+        cx.strokeStyle = '#fff'; cx.lineWidth = 4; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(-6, 6); cx.lineTo(6, -6); cx.stroke(); cx.fillStyle = '#fff'; [[-8, 4], [-4, 8], [8, -4], [4, -8]].forEach(([a, b]) => { cx.beginPath(); cx.arc(a, b, 3.2, 0, 6.283); cx.fill(); }); cx.restore();
+        hits.push({ o, x, y: y - 34, r: 28 });
+      } else {
+        const rdy = Go.arenaReady(o.id), near = d <= ARENA_RANGE, col = rdy ? '#ef4444' : '#facc15';
+        cx.save(); cx.translate(x, y); cx.globalAlpha = 0.3; cx.fillStyle = col; cx.beginPath(); cx.ellipse(0, 0, 36, 13, 0, 0, 6.283); cx.fill(); cx.globalAlpha = 1;
+        cx.fillStyle = '#e5e7eb'; cx.fillRect(-4, -54, 8, 54); cx.fillStyle = col; cx.shadowColor = col; cx.shadowBlur = near ? 16 : 6; cx.beginPath(); cx.moveTo(4, -54); cx.lineTo(34 + Math.sin(t * 3) * 3, -46); cx.lineTo(4, -36); cx.closePath(); cx.fill(); cx.shadowBlur = 0;
+        cx.font = '700 11px Fredoka,sans-serif'; cx.textAlign = 'center'; cx.fillStyle = 'rgba(15,12,45,.85)'; const w = cx.measureText(o.name).width + 12; cx.fillRect(-w / 2, 6, w, 17); cx.fillStyle = '#fff'; cx.fillText(o.name, 0, 18); cx.restore();
+        hits.push({ o, x, y: y - 36, r: 34 });
+      }
+    }
+  }
+  function drawPlayer(t) {
+    const x = W / 2 + 0, y = H * 0.6; const px = sx(pos.x), py = sy(pos.z);
+    cx.save(); cx.translate(px, py);
+    cx.fillStyle = 'rgba(56,189,248,.10)'; cx.strokeStyle = 'rgba(56,189,248,.5)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(0, 0, STOP_RANGE * SCALE, 0, 6.283); cx.fill(); cx.setLineDash([6, 6]); cx.stroke(); cx.setLineDash([]);
+    if (acc > 0 && mode === 'gps') { cx.fillStyle = 'rgba(59,130,246,.12)'; cx.beginPath(); cx.arc(0, 0, Math.min(acc, 80) * SCALE, 0, 6.283); cx.fill(); }
+    cx.rotate(heading); cx.fillStyle = 'rgba(255,255,255,.9)'; cx.beginPath(); cx.moveTo(0, -30); cx.lineTo(10, -14); cx.lineTo(-10, -14); cx.closePath(); cx.fill(); cx.rotate(-heading);
+    cx.shadowColor = '#000a'; cx.shadowBlur = 8; cx.fillStyle = S().settings.color || '#ff7a45'; cx.beginPath(); cx.arc(0, 0, 15, 0, 6.283); cx.fill(); cx.shadowBlur = 0; cx.lineWidth = 4; cx.strokeStyle = '#fff'; cx.stroke();
+    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(0, -3, 4.5, 0, 6.283); cx.fill(); cx.beginPath(); cx.ellipse(0, 7, 7, 4.5, 0, 0, 6.283); cx.fill();
+    cx.restore();
+    // Begleithund
+    const bx = px - Math.sin(heading) * 24 + 14, by = py + Math.cos(heading) * 24 + 8; cx.fillStyle = '#c58b4e'; cx.strokeStyle = '#fff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(bx, by + Math.sin(t * 6) * 1.5, 8, 0, 6.283); cx.fill(); cx.stroke();
+  }
+  function frame(now) {
+    if (!running) return; raf = requestAnimationFrame(frame); const dt = Math.min(0.1, (now - lastT) / 1000 || 0.016); lastT = now; const t = now / 1000;
+    if (mode === 'gps' || mode === 'demo') {
+      if (tgt) {
+        const dx = tgt.x - pos.x, dz = tgt.z - pos.z, d = Math.hypot(dx, dz);
+        if (d > 0.3) { const sp = mode === 'demo' ? 9 : Math.max(2, d * 1.6), st = Math.min(d, sp * dt); pos.x += dx / d * st; pos.z += dz / d * st; heading = Math.atan2(dx, -dz); if (st > 0.0001) moved(st); }
+        else if (mode === 'demo') tgt = null;
+      }
+    }
+    if (W) { drawMap(t); if (mode !== 'intro') { drawObjects(t); drawPlayer(t); } }
+    if ((frame.hudT = (frame.hudT || 0) - dt) <= 0) { frame.hudT = 0.5; drawHud(); }
+  }
+  function moved(st) { const go = Go.g(); if (st < 30) { go.meters = (go.meters || 0) + st; walkAcc += st; if (walkAcc >= 150) { walkAcc -= 150; if (Go.walkBonus()) UI.floatText('+1 Leckerli', '#c98a4b', '#mapInfo'); } } }
+
+  /* ---------- HUD ---------- */
+  function drawHud() {
+    if (!ov) return; const s = S(), info = $('#mapInfo', ov); const xpP = clamp(s.xp / Economy.xpNeed(s.level) * 100, 0, 100);
+    info.innerHTML = `<span class="c-coin">{i:coin}${fmtShort(s.coins)}</span><span>{i:star} Lv ${s.level}</span><span class="bar xb"><i style="width:${xpP}%"></i></span><span>{i:run} ${fmt(Math.round(Go.g().meters || 0))} m</span>`;
+    $('#mapBag b', ov).textContent = Go.count('ball') + Go.count('great') + Go.count('ultra');
+    const st = $('#mapStatus', ov); st.className = 'map-status ' + (mode === 'gps' ? 'ok' : mode === 'demo' ? 'demo' : ''); st.innerHTML = mode === 'gps' ? `{i:pin} GPS${acc ? ' · ±' + Math.round(acc) + ' m' : ''}` : mode === 'demo' ? '{i:pin} Demo · tippe zum Laufen' : '{i:pin} Standort wird gesucht …';
+    const lure = $('#mapLure', ov); lure.classList.toggle('hidden', !(Go.count('lure') > 0 || Date.now() < lureUntil)); lure.innerHTML = Date.now() < lureUntil ? `{i:sparkle} ${fmtDur(lureUntil - Date.now())}` : `{i:sparkle} Köder ×${Go.count('lure')}`;
+    $('#mapAttr', ov).style.display = tileOk > 0 ? 'block' : 'none';
+  }
+
+  /* ---------- Eingabe ---------- */
+  async function tapAt(px, py) {
+    if (UI.modalOpen()) return; let best = null, bd = 1e9;
+    for (const h of hits) { const d = Math.hypot(h.x - px, h.y - py); if (d < h.r + 10 && d < bd) { bd = d; best = h.o; } }
+    if (!best) { if (mode === 'demo') { tgt = { x: pos.x + (px - sx(pos.x)) / SCALE, z: pos.z + (py - sy(pos.z)) / SCALE }; } return; }
+    const d = Math.hypot(best.x - pos.x, best.z - pos.z), range = best.t === 'dog' ? DOG_RANGE : best.t === 'stop' ? STOP_RANGE : ARENA_RANGE;
+    if (d > range) { Audio.error(); UI.toast(`Noch ${Math.round(d - range)} m zu weit weg – geh näher heran!`, 'bad'); return; }
+    Audio.click();
+    if (best.t === 'stop') { Go.spin(best.id); return; }
+    if (best.t === 'arena') { await Go.arena({ id: best.id, name: best.name, guard: best.guard }); return; }
+    const gone = Go.g().gone || (Go.g().gone = {}), mark = () => { gone[best.id] = Date.now(); const ks = Object.keys(gone); if (ks.length > 300) ks.sort((a, b) => gone[a] - gone[b]).slice(0, ks.length - 300).forEach(k => delete gone[k]); Store.save(); };
+    const c = await Go.pick(best.card);
+    if (c === 'catch') { const r = await Go.encounter(best.card); if (r && (r.caught || r.fled)) mark(); }
+    else if (c === 'fight') { const r = await Dogs.challenge(best.card); if (r && r.won) mark(); }
+  }
+
+  /* ---------- Standort ---------- */
+  function setGeo(lat, lon) { geo = { lat, lon }; geoOff = { x: lon * 111320 * Math.cos(lat / R2D), z: -lat * 111320 }; }
+  function onFix(p) {
+    const c = p.coords; acc = c.accuracy || 0; if (acc > 120) return;
+    if (!geo) { setGeo(c.latitude, c.longitude); pos = { x: 0, z: 0 }; mode = 'gps'; tgt = null; return; }
+    const n = toXY(c.latitude, c.longitude); if (mode !== 'gps') mode = 'gps'; const d = Math.hypot(n.x - (tgt ? tgt.x : pos.x), n.z - (tgt ? tgt.z : pos.z)); if (d < 1.5) return; tgt = n;
+  }
+  function onErr(e) {
+    if (e && e.code === 1) { gpsErr = 'Standortzugriff verweigert.'; goDemo('Standortzugriff wurde nicht erlaubt (oder von der App blockiert). Du spielst im Demo-Modus – tippe auf die Karte, um zu laufen.'); }
+    else if (!geo) { gpsErr = 'Kein GPS-Signal.'; setTimeout(() => { if (!geo && running && mode === 'intro') goDemo('Kein GPS-Signal gefunden – Demo-Modus aktiv.'); }, 8000); }
+  }
+  function startGps() {
+    mode = 'intro';
+    if (!navigator.geolocation) return goDemo('Dieses Gerät/diese App bietet keinen Standort. Demo-Modus aktiv.');
+    try { watch = navigator.geolocation.watchPosition(onFix, onErr, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }); } catch (e) { goDemo('Standort nicht verfügbar. Demo-Modus aktiv.'); }
+    setTimeout(() => { if (running && mode === 'intro' && !geo) goDemo('Der Standort antwortet nicht. Demo-Modus aktiv.'); }, 15000);
+  }
+  function goDemo(msg) {
+    if (watch != null && navigator.geolocation) { navigator.geolocation.clearWatch(watch); watch = null; }
+    setGeo(DEMO.lat, DEMO.lon); pos = { x: 0, z: 0 }; tgt = null; mode = 'demo'; if (msg) UI.toast(msg, '');
+  }
+
+  /* ---------- Start / Ende ---------- */
+  function resize() { if (!cv) return; dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+  function begin(useGps, online) {
+    tilesOn = online; tileOk = 0; tileFail = 0; tiles.clear();
+    ov = el('div', { id: 'mapOv' }); ov.innerHTML = `<canvas id="mapCv"></canvas>
+      <div class="map-top"><div class="row" style="gap:8px"><button class="icon-btn" id="mapBack" aria-label="Zurück">{i:back}</button><button class="icon-btn" id="mapTeam" aria-label="Team">{i:dog}</button><button class="icon-btn" id="mapBag" aria-label="Beutel">{i:bag}<b>0</b></button><button class="icon-btn" id="mapDex" aria-label="Album">{i:book}</button></div><div class="cglass" id="mapInfo"></div></div>
+      <div class="map-status" id="mapStatus"></div>
+      <button class="btn sm map-lure hidden" id="mapLure"></button>
+      <button class="icon-btn map-center" id="mapCenter" aria-label="Zentrieren">{i:target}</button>
+      <div id="mapAttr">© OpenStreetMap-Mitwirkende</div>`;
+    document.body.append(ov); cv = $('#mapCv', ov); cx = cv.getContext('2d'); resize(); window.addEventListener('resize', resize);
+    UI.inCity = true; running = true; lastT = performance.now(); Audio.setScene('city');
+    $('#mapBack', ov).onclick = () => leave(); $('#mapTeam', ov).onclick = () => Dogs.teamModal(); $('#mapBag', ov).onclick = () => Go.bagModal({ inCity: true, onLure: useLure }); $('#mapDex', ov).onclick = () => UI.cityAlbum();
+    $('#mapLure', ov).onclick = () => { if (Date.now() < lureUntil) return; Go.bagModal({ inCity: true, onLure: useLure }); }; $('#mapCenter', ov).onclick = () => { if (mode === 'gps' && tgt) pos = { x: tgt.x, z: tgt.z }; };
+    let dn = null; cv.addEventListener('pointerdown', e => { dn = { x: e.clientX, y: e.clientY, t: performance.now() }; }); cv.addEventListener('pointerup', e => { if (dn && Math.hypot(e.clientX - dn.x, e.clientY - dn.y) < 12) tapAt(e.clientX, e.clientY); dn = null; });
+    raf = requestAnimationFrame(frame); if (useGps) startGps(); else goDemo('Demo-Modus: Tippe auf die Karte, um dorthin zu laufen.');
+  }
+  function useLure() { if (!Go.use('lure')) return; lureUntil = Date.now() + 5 * 60 * 1000; Audio.sparkle(); UI.toast('{i:sparkle} Glücksköder aktiv! 5 Minuten lang mehr Hunde in deiner Nähe.', 'good'); }
+  function leave() {
+    running = false; cancelAnimationFrame(raf); if (watch != null && navigator.geolocation) navigator.geolocation.clearWatch(watch); watch = null; window.removeEventListener('resize', resize);
+    if (ov) ov.remove(); ov = null; geo = null; mode = 'intro'; tgt = null; UI.inCity = false; Audio.setScene('menu'); UI.rerender(); Store.save(true);
+  }
+  function enter() {
+    let online = true;
+    const chk = el('input', { type: 'checkbox', checked: true, id: 'mapOnline', onchange: e => { online = e.target.checked; } });
+    UI.modal({ title: '{i:pin} City Go · Standort', body: el('div', { class: 'col' },
+      el('p', { style: 'margin:0' }, 'Hier läufst du in der echten Welt: Hunde, Knochen-Stops und Arenen erscheinen rund um deinen Standort. Du musst hingehen, um sie zu erreichen.'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'Dein Standort bleibt auf deinem Gerät und wird nirgends gespeichert oder gesendet. Die Karte wird als Bilder von OpenStreetMap geladen – dabei sieht der Kartenserver grob, welche Gegend du ansiehst.'),
+      el('label', { class: 'row', style: 'gap:8px;font-size:.9rem' }, chk, 'Online-Karte (OpenStreetMap) laden'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Tipp: Wenn dein Gerät oder diese App keinen Standort erlaubt, kannst du im Demo-Modus spielen – dann läufst du per Tippen.')),
+      actions: [{ label: 'Demo-Modus', cls: 'sec', onclick: () => setTimeout(() => begin(false, online)) }, { label: '{i:pin} Standort nutzen', cls: 'gold', onclick: () => setTimeout(() => begin(true, online)) }] });
+  }
+  return { enter, leave, get running() { return running; } };
 })();
 
 /* ------------------------------ LIVE CITY (Three.js) ------------------------------ */
@@ -3002,7 +3477,7 @@ const City = (() => {
     });
     for (let i = 0; i < 9; i++) { const d = makeDog(['#c58b4e', '#f0d8a8', '#3b3b3b', '#f5f5f5', '#a0522d'][i % 5]); d.g.visible = false; scene.add(d.g); parade.dogs.push(d); }
     { const p = makePerson({ shirt: '#dc2626', hat: '#facc15' }); p.g.position.set(6, 0, 4.5); p.g.rotation.y = -2; p.g.visible = false; scene.add(p.g); const tg = sprite(['Marktschreier', '−25 % auf Packs!'], { w: 512, h: 128, bg: '#dc2626', border: '#fff', fs: 48, sw: 3.6 }); tg.position.y = 2.5; p.g.add(tg); crier = p; }
-    updateLighting(true);
+    buildGoWorld(); updateLighting(true);
   }
 
   /* ---------- Licht & Tageszeit ---------- */
@@ -3071,14 +3546,17 @@ const City = (() => {
   /* ---------- Interaktion ---------- */
   function findTarget() {
     let best = null, bd = 1e9; const px = P.x, pz = P.z;
-    for (const e of WILD) { if (e.state === 'fight') continue; const d = Math.hypot(e.x - px, e.z - pz); if (d < 3.6 && d < bd) { bd = d; best = { kind: 'wild', e, label: `Wildhund herausfordern (${RAR[e.card.tier].name})` }; } }
+    if (GO) { for (const s of STOPS) { const d = Math.hypot(s.x - px, s.z - pz); if (d < 4 && d < bd) { bd = d; best = { kind: 'stop', s, label: Go.stopReady(s.id) ? 'Knochen-Stop drehen' : `Stop lädt auf (${fmtDur(Go.stopLeft(s.id))})` }; } } for (const a of ARENAS) { const d = Math.hypot(a.x - px, a.z - pz); if (d < 5.6 && d < bd) { bd = d; best = { kind: 'arena', a, label: Go.arenaReady(a.id) ? `${a.name} herausfordern` : `${a.name} gehört dir (${fmtDur(Go.arenaLeft(a.id))})` }; } } }
+    for (const e of WILD) { if (e.state === 'fight') continue; const d = Math.hypot(e.x - px, e.z - pz); if (d < 3.8 && d < bd) { bd = d; best = { kind: 'wild', e, label: GO ? `Wilden Hund ansehen (${RAR[e.card.tier].name})` : `Wildhund herausfordern (${RAR[e.card.tier].name})` }; } }
     for (const e of NPC_E) { const d = Math.hypot(e.x - px, e.z - pz); if (d < 3.2 && d < bd) { bd = d; best = { kind: 'npc', e, label: `Mit ${e.npc.name} sprechen / traden` }; } }
     for (const k of ['shop', 'album', 'cafe', 'bakery', 'board', 'park']) { const o = POIS[k]; if (!o) continue; const d = Math.hypot(o.x - px, o.z - pz); const lim = k === 'park' ? 5 : 3.6; if (d < lim && d - 0.8 < bd) { bd = d - 0.8; best = { kind: k, label: o.label }; } }
     return best;
   }
   function interact() {
     if (paused || !targetI || UI.modalOpen()) return; const t = targetI; Audio.click();
-    if (t.kind === 'wild') fightWild(t.e);
+    if (t.kind === 'wild') wildAction(t.e);
+    else if (t.kind === 'stop') { if (Go.spin(t.s.id)) hudDirty = 1; }
+    else if (t.kind === 'arena') arenaAction(t.a);
     else if (t.kind === 'npc') { t.e.state = 'talk'; t.e.timer = 999; faceTo(t.e, P.x, P.z); Quests.progress('talk'); UI.npcDialog(t.e.npc); }
     else if (t.kind === 'shop') UI.cityShop(); else if (t.kind === 'album') UI.cityAlbum(); else if (t.kind === 'cafe') UI.cityCafe(); else if (t.kind === 'bakery') UI.cityBakery(); else if (t.kind === 'board') UI.cityBoard(); else if (t.kind === 'park') UI.cityPark();
   }
@@ -3088,9 +3566,73 @@ const City = (() => {
     text = stripIc(text); if (e.bubble.material.map) e.bubble.material.map.dispose(); e.bubble.material.map = textTex(text.length > 38 ? [text.slice(0, 38) + '…'] : [text], { w: 640, h: 128, bg: 'rgba(255,255,255,.96)', color: '#222', fs: 40, border: '#444' }); e.bubble.material.needsUpdate = true; e.bubble.scale.set(5, 1, 1); e.bubble.visible = true; e.bT = ms / 1000; e.mark.visible = false;
   }
 
+  /* ---------- City Go: Stops, Arenen, Fangen ---------- */
+  let GO = false, goG = null, lureUntil = 0, walkAcc = 0, gps = { on: false, id: null, last: null, qx: 0, qz: 0 }, goClock = 0;
+  const STOPS = [], ARENAS = [];
+  function buildGoWorld() {
+    goG = new THREE.Group(); scene.add(goG);
+    const rnd = mulberry32(4242), pts = WAY.map(p => [rnd(), p]).sort((a, b) => a[0] - b[0]).map(x => x[1]); const far = (p, list, d) => list.every(q => Math.hypot(p[0] - q[0], p[1] - q[1]) > d);
+    const ap = [], sp = []; for (const p of pts) { if (ap.length >= 2) break; if (Math.hypot(p[0], p[1]) > 34 && far(p, ap, 40)) ap.push(p); }
+    for (const p of pts) { if (sp.length >= 9) break; if (Math.hypot(p[0], p[1]) > 14 && far(p, sp, 20) && far(p, ap, 14)) sp.push(p); }
+    sp.forEach((p, i) => {
+      const g = new THREE.Group(); g.position.set(p[0], 0, p[1]);
+      const base = new THREE.Mesh(GEO.cyl, M('#2b6cb0')); base.scale.set(0.8, 1.1, 0.8); base.position.y = 0.55; g.add(base);
+      const dm = new THREE.MeshLambertMaterial({ color: lin('#38bdf8'), emissive: lin('#0a4a7a') }), disc = new THREE.Mesh(GEO.cyl, dm); disc.scale.set(1.25, 0.14, 1.25); disc.position.y = 1.75; g.add(disc);
+      const top = new THREE.Mesh(GEO.sphLo, dm); top.scale.set(0.38, 0.38, 0.38); top.position.y = 2.2; g.add(top);
+      const bm = new THREE.MeshBasicMaterial({ color: lin('#38bdf8'), transparent: true, opacity: 0.16, depthWrite: false }), beam = new THREE.Mesh(GEO.cyl, bm); beam.scale.set(0.45, 34, 0.45); beam.position.y = 17; g.add(beam);
+      const lab = sprite('KNOCHEN-STOP', { w: 512, h: 96, bg: 'rgba(12,60,110,.92)', border: '#38bdf8', fs: 46, sw: 2.6 }); lab.position.y = 3.3; g.add(lab);
+      CIRCLES.push({ x: p[0], z: p[1], r: 0.9 }); goG.add(g); STOPS.push({ id: 'stop' + i, x: p[0], z: p[1], g, disc, dm, bm, lab, rdy: true });
+    });
+    const names = ['Nord-Arena', 'Süd-Arena'], guards = ['Bello', 'Luna', 'Rocco', 'Maja'];
+    ap.forEach((p, i) => {
+      const g = new THREE.Group(); g.position.set(p[0], 0, p[1]);
+      const plat = new THREE.Mesh(GEO.cyl, M('#9aa3b2')); plat.scale.set(3.7, 0.3, 3.7); plat.position.y = 0.15; g.add(plat);
+      const ring = new THREE.Mesh(GEO.cyl, M('#d6dae3')); ring.scale.set(3.0, 0.34, 3.0); ring.position.y = 0.16; g.add(ring);
+      const pil = new THREE.Mesh(GEO.cyl, M('#f1f5f9')); pil.scale.set(0.45, 4.2, 0.45); pil.position.y = 2.4; g.add(pil);
+      const fm = new THREE.MeshLambertMaterial({ color: lin('#ef4444'), emissive: lin('#400a0a'), side: THREE.DoubleSide }), flag = new THREE.Mesh(GEO.box, fm); flag.scale.set(1.9, 1.1, 0.08); flag.position.set(1.15, 4.1, 0); g.add(flag);
+      const bm = new THREE.MeshBasicMaterial({ color: lin('#ef4444'), transparent: true, opacity: 0.14, depthWrite: false }), beam = new THREE.Mesh(GEO.cyl, bm); beam.scale.set(0.6, 34, 0.6); beam.position.y = 17; g.add(beam);
+      const lab = sprite([names[i % 2], 'Hunde-Arena'], { w: 512, h: 128, bg: 'rgba(90,16,16,.92)', border: '#fca5a5', fs: 46, sw: 3.4 }); lab.position.y = 5.6; g.add(lab);
+      CIRCLES.push({ x: p[0], z: p[1], r: 1.0 }); goG.add(g); ARENAS.push({ id: 'arena' + i, name: names[i % 2], guard: guards[(i * 2 + 1) % 4], x: p[0], z: p[1], g, fm, bm, flag, rdy: true });
+    });
+    goG.visible = GO;
+  }
+  function updateGoWorld(dt, t) {
+    if (!goG || !GO) return; goClock += dt;
+    STOPS.forEach((s, i) => { s.disc.rotation.y += dt * 2.2; s.disc.position.y = 1.75 + Math.sin(t * 2 + i) * 0.08; });
+    ARENAS.forEach((a, i) => { a.flag.rotation.y = Math.sin(t * 1.5 + i) * 0.25; });
+    if (goClock > 0.5) {
+      goClock = 0;
+      STOPS.forEach(s => { const r = Go.stopReady(s.id); if (r !== s.rdy) { s.rdy = r; s.dm.color.copy(new THREE.Color(r ? '#38bdf8' : '#a78bfa').convertSRGBToLinear()); s.dm.emissive.copy(new THREE.Color(r ? '#0a4a7a' : '#2a1850').convertSRGBToLinear()); s.bm.color.copy(s.dm.color); s.bm.opacity = r ? 0.16 : 0.05; } });
+      ARENAS.forEach(a => { const r = Go.arenaReady(a.id); if (r !== a.rdy) { a.rdy = r; a.fm.color.copy(new THREE.Color(r ? '#ef4444' : '#facc15').convertSRGBToLinear()); a.bm.color.copy(a.fm.color); } });
+    }
+  }
+  function applyLure() {
+    if (!GO || !Go.use('lure')) return; lureUntil = Date.now() + 5 * 60 * 1000; for (let k = 0; k < 4; k++) spawnWild(true); wildT = 1.5; Audio.sparkle(); Audio.bark();
+    Bus.emit('toast', '{i:sparkle} Glücksköder aktiv! 5 Minuten lang kommen mehr Hunde vorbei.', 'good'); hudDirty = 1;
+  }
+  async function wildAction(e) {
+    if (!GO) return fightWild(e);
+    e.state = 'fight'; const c = await Go.pick(e.card);
+    if (c === 'catch') { const r = await Go.encounter(e.card); hudDirty = 1; if (r && (r.caught || r.fled)) { removeWild(e); wildT = 3; } else { e.state = 'idle'; e.timer = 3; } return; }
+    if (c === 'fight') { e.state = 'idle'; return fightWild(e); }
+    e.state = 'idle'; e.timer = 2;
+  }
+  async function arenaAction(a) { const r = await Go.arena(a); hudDirty = 1; if (r && r.won) refreshPet(); }
+  function setGps(on) {
+    if (on === gps.on) return gps.on;
+    if (!on) { if (gps.id != null && navigator.geolocation) navigator.geolocation.clearWatch(gps.id); gps.on = false; gps.id = null; gps.last = null; UI.toast('GPS-Laufmodus aus', ''); return false; }
+    if (!navigator.geolocation) { UI.toast('Dieses Gerät unterstützt kein GPS.', 'bad'); return false; }
+    try {
+      gps.id = navigator.geolocation.watchPosition(p => {
+        const c = p.coords; if (c.accuracy > 60) return; if (gps.last) { const dLat = (c.latitude - gps.last.latitude) * 111320, dLon = (c.longitude - gps.last.longitude) * 111320 * Math.cos(c.latitude * Math.PI / 180), d = Math.hypot(dLat, dLon); if (d > 1.5 && d < 80) { gps.qx += dLon * 2; gps.qz -= dLat * 2; gps.last = c; } } else gps.last = c;
+      }, err => { gps.on = false; UI.toast(err && err.code === 1 ? 'GPS nicht erlaubt – bitte Standort freigeben.' : 'GPS nicht verfügbar.', 'bad'); }, { enableHighAccuracy: true, maximumAge: 2000, timeout: 20000 });
+      gps.on = true; UI.toast('{i:pin} GPS-Laufmodus an: Wenn du draußen gehst, läuft deine Figur mit!', 'good');
+    } catch (e) { UI.toast('GPS nicht verfügbar.', 'bad'); return false; }
+    return gps.on;
+  }
   /* ---------- Begleithund, Wildhunde, Apportieren ---------- */
   const WILD = []; let pet = null, stick = null, wildT = 2, ringGeo = null, ringMat = null;
-  const MAXW = () => mob ? 3 : 5, LIM_ = 56;
+  const MAXW = () => GO ? (mob ? 6 : 9) + (Date.now() < lureUntil ? 4 : 0) : (mob ? 3 : 5), LIM_ = 56;
   const dogRun = (d, ph, amt) => { d.legs.forEach((l, k) => { l.rotation.x = Math.sin(ph + (k % 2) * Math.PI + (k > 1 ? 1.2 : 0)) * 0.75 * amt; }); if (d.tail) d.tail.rotation.y = Math.sin(ph * 1.3) * 0.5 * (0.3 + amt); };
   function refreshPet() {
     if (!built || !scene) return; if (pet) { scene.remove(pet.d.g); }
@@ -3144,21 +3686,21 @@ const City = (() => {
     hudDirty = 1;
   }
   /* Wildhunde */
-  function spawnWild() {
-    if (WILD.length >= MAXW()) return; let w = null; for (let k = 0; k < 40; k++) { const c = WAY[Math.floor(Math.random() * WAY.length)]; if (Math.hypot(c[0] - P.x, c[1] - P.z) > 20 && !WILD.some(o => Math.hypot(o.x - c[0], o.z - c[1]) < 8)) { w = c; break; } } if (!w) return;
-    const card = Dogs.wildCard(), tr = DogArt.traits(card), d = makeDog(tr.base), rc = RAR[card.tier].color; d.g.scale.setScalar(1.0 + card.tier * 0.045);
-    const tag = sprite([card.name.split(' (')[0], RAR[card.tier].name + ' · Wildhund'], { w: 512, h: 128, bg: 'rgba(70,10,20,.9)', border: rc, fs: 42, sw: 2.5 }); tag.position.y = 1.85; d.g.add(tag);
+  function spawnWild(near) {
+    if (WILD.length >= MAXW()) return; let w = null; for (let k = 0; k < 60; k++) { const c = WAY[Math.floor(Math.random() * WAY.length)], d = Math.hypot(c[0] - P.x, c[1] - P.z), okD = !GO ? d > 20 : near ? d > 7 && d < 22 : d > 10 && d < 48; if (okD && !WILD.some(o => Math.hypot(o.x - c[0], o.z - c[1]) < 6)) { w = c; break; } } if (!w) return;
+    const card = GO ? Go.spawnCard() : Dogs.wildCard(), tr = DogArt.traits(card), d = makeDog(tr.base), rc = RAR[card.tier].color; d.g.scale.setScalar(1.0 + card.tier * 0.045);
+    const tag = sprite([card.name.split(' (')[0], RAR[card.tier].name + (GO ? ' · WP ' + Dogs.power(card) : ' · Wildhund')], { w: 512, h: 128, bg: 'rgba(70,10,20,.9)', border: rc, fs: 42, sw: 2.5 }); tag.position.y = 1.85; d.g.add(tag);
     ringGeo = ringGeo || new THREE.RingGeometry(0.85, 1.1, 28).rotateX(-Math.PI / 2); const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ef4444').convertSRGBToLinear(), transparent: true, opacity: 0.85, depthWrite: false })); ring.position.y = 0.06; d.g.add(ring);
-    const e = { d, card, x: w[0], z: w[1], yaw: Math.random() * 6.28, tx: w[0], tz: w[1], state: 'idle', timer: Math.random() * 3, ph: Math.random() * 6, tag, ring, spd: 0 };
+    const e = { d, card, x: w[0], z: w[1], yaw: Math.random() * 6.28, tx: w[0], tz: w[1], state: 'idle', timer: Math.random() * 3, ph: Math.random() * 6, tag, ring, spd: 0, ttl: 200 + Math.random() * 200 };
     d.g.position.set(e.x, 0, e.z); scene.add(d.g); WILD.push(e);
   }
   function removeWild(e) {
     const i = WILD.indexOf(e); if (i < 0) return; WILD.splice(i, 1); scene.remove(e.d.g); e.tag.material.map && e.tag.material.map.dispose(); e.tag.material.dispose(); e.ring.material.dispose();
   }
   function updateWild(dt, t) {
-    wildT -= dt; if (wildT <= 0) { wildT = WILD.length ? 14 : 3; spawnWild(); }
+    wildT -= dt; if (wildT <= 0) { wildT = GO ? (Date.now() < lureUntil ? 2 : 6) : (WILD.length ? 14 : 3); spawnWild(Date.now() < lureUntil); }
     for (let i = 0; i < WILD.length; i++) {
-      const e = WILD[i], near = Math.hypot(e.x - P.x, e.z - P.z); if (near > 45 && (frame + i) % 3) continue;
+      const e = WILD[i], near = Math.hypot(e.x - P.x, e.z - P.z); if (GO && e.state !== 'fight') { e.ttl -= dt; if (e.ttl <= 0 && near > 30) { removeWild(e); i--; continue; } } if (near > 45 && (frame + i) % 3) continue;
       { const cd = Math.hypot(e.x - camera.position.x, e.z - camera.position.z); e.tag.visible = near < (mob ? 22 : 30) && cd > 3.6; const tf = clamp(cd / 12, 0.4, 1); e.tag.scale.set(e.tag.userData.base[0] * tf, e.tag.userData.base[1] * tf, 1); } e.ring.visible = near < 40; if (e.ring.visible) { const sc = 1 + Math.sin(t * 4 + i) * 0.08; e.ring.scale.set(sc, 1, sc); }
       if (e.state === 'fight') { dogRun(e.d, 0, 0); continue; }
       let speed = 0;
@@ -3200,7 +3742,8 @@ const City = (() => {
     const run = IN.run || IN.sprint, sp = run ? 9.2 : 5.4; const speed = sp * mag;
     const fx = -Math.sin(CAM.yaw), fz = -Math.cos(CAM.yaw), rx = Math.cos(CAM.yaw), rz = -Math.sin(CAM.yaw);
     const vx = (rx * ix + fx * iy) * sp, vz = (rz * ix + fz * iy) * sp;
-    P.x += vx * dt; P.z += vz * dt; resolve(P, PL_R);
+    const ox = P.x, oz = P.z; P.x += vx * dt; P.z += vz * dt; if (gps.on && (gps.qx || gps.qz)) { const gx = clamp(gps.qx, -6 * dt * 10, 6 * dt * 10), gz = clamp(gps.qz, -6 * dt * 10, 6 * dt * 10); P.x += gx; P.z += gz; gps.qx -= gx; gps.qz -= gz; P.yaw = Math.atan2(gx, gz); } resolve(P, PL_R);
+    if (GO) { const mv = Math.hypot(P.x - ox, P.z - oz); if (mv < 3) { const go = Go.g(); go.meters = (go.meters || 0) + mv; walkAcc += mv; if (walkAcc >= 150) { walkAcc -= 150; if (Go.walkBonus()) UI.floatText('+1 Leckerli', '#c98a4b', '#cityInfo'); } } }
     if (mag > 0.05) { const ty = Math.atan2(vx, vz); let d = ty - P.yaw; d = Math.atan2(Math.sin(d), Math.cos(d)); P.yaw += d * Math.min(1, dt * 14); }
     P.spd = lerp(P.spd, speed, Math.min(1, dt * 10)); P.phase += dt * (3 + P.spd * 1.15); walkAnim(P.parts, P.phase, Math.min(1, P.spd / 5));
     P.mesh.position.set(P.x, Math.abs(Math.sin(P.phase)) * 0.07 * Math.min(1, P.spd / 5), P.z); P.mesh.rotation.y = P.yaw;
@@ -3270,15 +3813,23 @@ const City = (() => {
     [['shop', 'P', '#f97316'], ['album', 'A', '#3b82f6'], ['cafe', 'C', '#14b8a6'], ['board', 'Q', '#eab308'], ['park', 'H', '#22c55e']].forEach(([k2, ch, col]) => { const o = POIS[k2]; if (!o) return; c.fillStyle = col; c.beginPath(); c.arc(X(o.x), Z(o.z), W * 0.055, 0, TAU2); c.fill(); c.strokeStyle = '#fff'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#fff'; c.fillText(ch, X(o.x), Z(o.z) + 1); });
     BONES.forEach((b, i) => { if (!S().daily.bones.includes(i)) { c.fillStyle = '#fff6c9'; c.beginPath(); c.arc(X(b.x), Z(b.z), 2.6, 0, TAU2); c.fill(); } });
     NPC_E.forEach(e => { c.fillStyle = e.npc.color; c.strokeStyle = '#000'; c.lineWidth = 1.5; c.beginPath(); c.arc(X(e.x), Z(e.z), 4, 0, TAU2); c.fill(); c.stroke(); if (NPCQuests.of(e.npc.id)) { c.fillStyle = '#ffd24a'; c.fillText('!', X(e.x), Z(e.z) - 10); } });
+    if (GO) { STOPS.forEach(s => { c.fillStyle = s.rdy ? '#38bdf8' : '#a78bfa'; c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.beginPath(); c.arc(X(s.x), Z(s.z), 4.2, 0, TAU2); c.fill(); c.stroke(); }); ARENAS.forEach(a => { c.fillStyle = a.rdy ? '#ef4444' : '#facc15'; c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.fillRect(X(a.x) - 5, Z(a.z) - 5, 10, 10); c.strokeRect(X(a.x) - 5, Z(a.z) - 5, 10, 10); }); }
     WILD.forEach(e => { c.fillStyle = '#ef4444'; c.strokeStyle = '#000'; c.lineWidth = 1.2; c.beginPath(); c.arc(X(e.x), Z(e.z), 3.6, 0, TAU2); c.fill(); c.stroke(); });
     if (pet) { c.fillStyle = '#e8b36a'; c.beginPath(); c.arc(X(pet.x), Z(pet.z), 2.8, 0, TAU2); c.fill(); }
     c.save(); c.translate(X(P.x), Z(P.z)); c.rotate(-P.yaw + Math.PI); c.fillStyle = '#ffd24a'; c.strokeStyle = '#000'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, -10); c.lineTo(7, 7); c.lineTo(0, 3); c.lineTo(-7, 7); c.closePath(); c.fill(); c.stroke(); c.restore();
     c.restore();
   }
+  function drawNearby() {
+    let box = $('#goNear'); if (!box) { box = document.createElement('div'); box.id = 'goNear'; $('#cityHud').append(box); }
+    const lst = WILD.map(e => [Math.hypot(e.x - P.x, e.z - P.z), e]).sort((a, b) => a[0] - b[0]).slice(0, 4);
+    const lure = Date.now() < lureUntil ? `<div class="gn-lure">{i:sparkle} Köder ${fmtDur(lureUntil - Date.now())}</div>` : '';
+    box.innerHTML = `<div class="gn-t">{i:target} In der Nähe</div>` + (lst.length ? lst.map(([d, e]) => `<div class="gn-r"><i style="background:${RAR[e.card.tier].color}"></i><span>${e.card.name.split(' (')[0]}</span><b>${Math.round(d)} m</b></div>`).join('') : '<div class="gn-r dim">Nichts in Sicht …</div>') + lure;
+  }
   /* ---------- HUD ---------- */
   function updateHud() {
     const s = S(); NPCQuests.ensure(); Quests.ensure(); const hh = Math.floor(dayT * 24), mm = Math.floor((dayT * 24 % 1) * 60), clock = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
-    const top = $('#cityTop'); if (!top.dataset.init) { top.dataset.init = 1; top.innerHTML = `<div class="row" style="gap:8px"><button class="icon-btn" id="cityBack" aria-label="Zurück zum Menü">{i:back}</button><button class="icon-btn" id="cityMenuBtn" aria-label="Menü">{i:menu}</button><button class="icon-btn" id="cityTeam" aria-label="Hunde-Team">{i:dog}</button><button class="icon-btn offer-chip hidden" id="cityOffers" aria-label="NPC-Angebote">{i:mail}<b>0</b></button></div><div class="cglass" id="cityInfo"></div>`; $('#cityBack').onclick = () => UI.leaveCity(); $('#cityMenuBtn').onclick = () => UI.cityMenu(); $('#cityOffers').onclick = () => UI.offersModal(); $('#cityTeam').onclick = () => Dogs.teamModal(); }
+    const top = $('#cityTop'); if (!top.dataset.init) { top.dataset.init = 1; top.innerHTML = `<div class="row" style="gap:8px"><button class="icon-btn" id="cityBack" aria-label="Zurück zum Menü">{i:back}</button><button class="icon-btn" id="cityMenuBtn" aria-label="Menü">{i:menu}</button><button class="icon-btn" id="cityTeam" aria-label="Hunde-Team">{i:dog}</button><button class="icon-btn go-only" id="cityBag" aria-label="Beutel">{i:bag}<b>0</b></button><button class="icon-btn go-only" id="cityDex" aria-label="Album">{i:book}</button><button class="icon-btn offer-chip hidden" id="cityOffers" aria-label="NPC-Angebote">{i:mail}<b>0</b></button></div><div class="cglass" id="cityInfo"></div>`; $('#cityBack').onclick = () => UI.leaveCity(); $('#cityMenuBtn').onclick = () => UI.cityMenu(); $('#cityOffers').onclick = () => UI.offersModal(); $('#cityTeam').onclick = () => Dogs.teamModal(); $('#cityBag').onclick = () => Go.bagModal({ inCity: true, onLure: applyLure }); $('#cityDex').onclick = () => UI.cityAlbum(); }
+    if (GO) { const bb = $('#cityBag b'); if (bb) bb.textContent = Go.count('ball') + Go.count('great') + Go.count('ultra'); drawNearby(); }
     const op = Offers.pending(); $('#cityOffers').classList.toggle('hidden', !op); $('#cityOffers b').textContent = op;
     const boost = Economy.event.luckUntil > Date.now() ? ' {i:bolt}' : '';
     $('#cityInfo').innerHTML = `<span class="c-coin">{i:coin}${fmtShort(s.coins)}</span><span class="c-luck">{i:luck}${fmtLuck(Economy.effLuck())}${boost}</span><span class="c-bone">{i:bone}${s.daily.bones.length}/${BONES.length}</span><span>{i:clock}<span class="clock">${clock}</span></span>`;
@@ -3291,7 +3842,7 @@ const City = (() => {
     if (suspended) { lastT = now; return; }
     const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now; clockT += dt; frame++;
     dayT = (dayT + dt / 420) % 1;
-    updatePlayer(dt); updateNPCs(dt); updatePet(dt, clockT); updateWild(dt, clockT); updateMisc(dt, clockT); updateCamera(dt);
+    updatePlayer(dt); updateNPCs(dt); updatePet(dt, clockT); updateWild(dt, clockT); updateGoWorld(dt, clockT); updateMisc(dt, clockT); updateCamera(dt);
     if (hudT <= 0 || hudDirty) { hudT = 0.25; hudDirty = 0; updateHud(); } else hudT -= dt;
     if (!loop.lt || now - loop.lt > 250) { loop.lt = now; updateLighting(); }
     const t = findTarget(); targetI = t; const pr = $('#cityPrompt'); const show = !!t && !paused && !UI.modalOpen();
@@ -3318,14 +3869,17 @@ const City = (() => {
         return true;
       } catch (err) { console.warn('City-Init fehlgeschlagen', err); glOK = false; $('#noGlMsg').textContent = 'Die Live City braucht WebGL und Three.js (' + (err.message || err) + '). Das restliche Spiel bleibt voll nutzbar.'; return false; }
     },
-    enter() {
-      $('#cityLayer').classList.remove('hidden');
+    enter(opts = {}) {
+      $('#cityLayer').classList.remove('hidden'); GO = !!opts.go; $('#cityLayer').classList.toggle('go', GO);
       if (!this.init()) { $('#cityNoGl').style.display = 'flex'; return false; }
       $('#cityNoGl').style.display = 'none'; NPCQuests.ensure(); Quests.ensure(); bindInput(); running = true; suspended = false; paused = false; lastT = performance.now(); resize(); updateCamera(0, true); updateHud();
-      refreshPet(); if (!teamBound) { teamBound = true; Bus.on('team', () => { if (running) refreshPet(); }); } if (!S().settings.dogTip) { S().settings.dogTip = 1; setTimeout(() => Bus.emit('toast', 'Wildhunde mit rotem Ring kannst du herausfordern. Knochen-Knopf: Stock werfen!', 'good'), 1500); }
+      if (goG) goG.visible = GO; while (WILD.length) removeWild(WILD[0]); wildT = 0.5; if (GO) for (let k = 0; k < (mob ? 4 : 6); k++) spawnWild(); lureUntil = 0; walkAcc = 0;
+      refreshPet(); if (!teamBound) { teamBound = true; Bus.on('team', () => { if (running) refreshPet(); }); } if (GO && !S().settings.goTip) { S().settings.goTip = 1; setTimeout(() => Bus.emit('toast', 'City Go: Tippe Hunde an und wirf Leckerli! Blaue Türme geben Nachschub, rote Flaggen sind Arenen.', 'good'), 1500); } else if (!GO && !S().settings.dogTip) { S().settings.dogTip = 1; setTimeout(() => Bus.emit('toast', 'Wildhunde mit rotem Ring kannst du herausfordern. Knochen-Knopf: Stock werfen!', 'good'), 1500); }
       cancelAnimationFrame(raf); raf = requestAnimationFrame(loop); Audio.setScene('city'); return true;
     },
-    leave() { dropStick(); if (pet) pet.mode = 'follow'; running = false; cancelAnimationFrame(raf); unbindInput(); $('#cityLayer').classList.add('hidden'); $('#cityPrompt').classList.remove('on'); Audio.setScene('menu'); },
+    get go() { return GO; },
+    toggleGps() { return setGps(!gps.on); }, get gps() { return gps.on; }, useLure() { applyLure(); },
+    leave() { setGps(false); dropStick(); if (pet) pet.mode = 'follow'; running = false; cancelAnimationFrame(raf); unbindInput(); $('#cityLayer').classList.add('hidden'); $('#cityPrompt').classList.remove('on'); Audio.setScene('menu'); },
     stop() { running = false; cancelAnimationFrame(raf); },
     suspend(b) { suspended = b; if (!b) lastT = performance.now(); },
     pause(b) { paused = b; if (b) { IN.keys = {}; IN.jx = IN.jy = 0; } },
@@ -3342,7 +3896,7 @@ const City = (() => {
       this.stop(); if (!built) return; scene.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { if (m.map) m.map.dispose(); if (m.emissiveMap) m.emissiveMap.dispose(); m.dispose(); }); });
       renderer.dispose(); built = false;
     },
-    debug() { return { WILD, get pet() { return pet; }, get stick() { return stick; }, throwStick, spawnWild, P, NPC_E, AABBS, CIRCLES, BONES, WAY, POIS, CAM, scene, camera, evt, renderer }; }
+    debug() { return { STOPS, ARENAS, applyLure, WILD, get pet() { return pet; }, get stick() { return stick; }, throwStick, spawnWild, P, NPC_E, AABBS, CIRCLES, BONES, WAY, POIS, CAM, scene, camera, evt, renderer }; }
   };
   return API;
 })();
@@ -3356,7 +3910,7 @@ const UI = {
   /* ---------- Toasts / Modale ---------- */
   _tq: [],
   flushToasts() { const q = this._tq.splice(0); q.forEach((x, i) => setTimeout(() => this.toast(x[0], x[1]), i * 450)); },
-  toast(msg, kind = '') { if (($('#packOv') && !$('#packOv .summary')) || $('#battleOv')) { this._tq.push([msg, kind]); return; } const t = el('div', { class: 'toast ' + kind }, msg); $('#toasts').append(t); while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove(); setTimeout(() => t.remove(), 3800); },
+  toast(msg, kind = '') { if (($('#packOv') && !$('#packOv .summary')) || $('#battleOv') || $('#goOv')) { this._tq.push([msg, kind]); return; } const t = el('div', { class: 'toast ' + kind }, msg); $('#toasts').append(t); while ($('#toasts').children.length > 4) $('#toasts').firstChild.remove(); setTimeout(() => t.remove(), 3800); },
   modalOpen() { return !!$('#overlays > *'); },
   modal(o) {
     const ov = el('div', { class: 'ov', role: 'dialog', 'aria-modal': 'true', 'aria-label': o.title || 'Dialog' });
@@ -3429,12 +3983,18 @@ const UI = {
   markNav() { $$('#nav button').forEach(b => b.classList.toggle('active', b.dataset.v === this.view || (b.dataset.v === 'more' && ['stats', 'settings', 'help'].includes(this.view)))); },
   moreSheet() { const m = UI.modal({ title: 'Mehr', body: el('div', { class: 'col' }, ...['stats', 'settings', 'help'].map(k => { const n = NAV.find(x => x[0] === k); return el('button', { class: 'btn sec', onclick: () => { m.close(); UI.go(k); } }, `${n[1]} ${n[2]}`); })) }); },
   go(v) {
-    if (v === 'city') return this.enterCity();
+    if (v === 'city') return this.cityChooser();
     this.view = v; this.markNav(); const host = $('#view'); host.scrollTop = 0; host.innerHTML = '';
     const f = this['view_' + v]; if (f) f.call(this, host); this.refreshHud(); host.focus({ preventScroll: true });
   },
   rerender() { if (!this.inCity) { const sc = $('#view').scrollTop; this.go(this.view); $('#view').scrollTop = sc; } else this.refreshHud(); },
-  enterCity() { Audio.click(); this.inCity = true; if (!City.enter()) { /* kein WebGL: Hinweis sichtbar */ } },
+  cityChooser() {
+    const m = this.modal({ title: '{i:city} Wohin soll es gehen?', body: el('div', { class: 'col' },
+      el('button', { class: 'go-choice', onclick: () => { m.close(); UI.enterCity(); } }, el('span', { class: 'gc-ic' }, '{i:city}'), el('b', {}, 'Live City'), el('small', {}, 'Gemütlich laufen, Bewohner treffen, traden, Knochen sammeln, Wildhunde bekämpfen.')),
+      el('button', { class: 'go-choice go', onclick: () => { m.close(); UI.enterCity({ go: true }); } }, el('span', { class: 'gc-ic' }, '{i:target}'), el('b', {}, 'City Go'), el('small', {}, 'Wie Pokémon Go in 3D: Hunde fangen, Knochen-Stops drehen, Arenen erobern, Beutel füllen.')),
+      el('button', { class: 'go-choice go', style: 'border-color:#4ade80;background:linear-gradient(180deg,#1f7a4d,#134a30)', onclick: () => { m.close(); GoMap.enter(); } }, el('span', { class: 'gc-ic' }, '{i:pin}'), el('b', {}, 'City Go · Standort'), el('small', {}, 'Mit deinem echten Standort und Karte: geh raus, Hunde erscheinen um dich herum. Demo-Modus ohne GPS möglich.'))), actions: [{ label: 'Abbrechen', cls: 'sec' }] });
+  },
+  enterCity(opts) { Audio.click(); this.inCity = true; if (!City.enter(opts || {})) { /* kein WebGL: Hinweis sichtbar */ } },
   leaveCity() { City.leave(); this.inCity = false; this.talkingTo = null; $$('#overlays .ov').forEach(o => o.remove()); this.go(this.view === 'city' ? 'packs' : this.view); },
   /* ---------- Pack-Kacheln ---------- */
   needConfirm(price) { return price >= 2000 || (price >= S().coins * 0.3 && price >= 300); },
@@ -3499,7 +4059,7 @@ const UI = {
     const fav = s.fav ? CardDB.get(s.fav) : null;
     const prof = el('div', { class: 'glass dotd' }, fav && s.cards[fav.id] ? renderCard(fav, { size: 'xs', count: s.cards[fav.id], onclick: c => UI.showCard(c) }) : el('div', { class: 'big-ic' }, '{i:dog}'), el('div', { class: 'col', style: 'gap:4px' }, el('b', {}, `{i:heart} ${s.settings.name}`), el('small', { class: 'dim' }, `Level ${s.level} · ${TradeAI.rank().title}`), el('small', { class: 'dim' }, fav ? 'Lieblingskarte' : 'Wähle eine Favoriten-Karte im Album'), el('button', { class: 'btn sec sm', onclick: () => UI.openDupes() }, '{i:layers} Duplikate ansehen')));
     hero.append(daily, dotd, prof); sec.append(hero);
-    const cityBtn = el('button', { class: 'btn gold', style: 'margin-bottom:14px', onclick: () => UI.enterCity() }, '{i:city} Live City betreten'); sec.append(cityBtn);
+    const cityBtn = el('div', { class: 'row wrap', style: 'gap:10px;margin-bottom:14px' }, el('button', { class: 'btn', style: 'flex:1 1 30%;background:linear-gradient(180deg,#34d399,#059669);color:#fff', onclick: () => GoMap.enter() }, '{i:pin} Standort'), el('button', { class: 'btn gold', style: 'flex:1 1 30%', onclick: () => UI.enterCity() }, '{i:city} Live City'), el('button', { class: 'btn', style: 'flex:1 1 30%;background:linear-gradient(180deg,#38bdf8,#2563eb);color:#fff', onclick: () => UI.enterCity({ go: true }) }, '{i:target} City Go')); sec.append(cityBtn);
     const grid = el('div', { class: 'grid pack-grid' }); PACKS.forEach(p => grid.append(this.packTile(p))); sec.append(grid);
     host.append(sec);
   },
@@ -3948,7 +4508,7 @@ Object.assign(UI, {
     this.modal({ wide: true, title: '{i:coffee} Café Pfote – Tauschbörse', body });
   },
   cityMenu() {
-    const m = this.modal({ title: '{i:pause} Menü', body: el('div', { class: 'col' }, el('button', { class: 'btn', onclick: () => m.close() }, '{i:next} Weiter'), el('button', { class: 'btn sec', onclick: () => { m.close(); UI.leaveCity(); } }, '{i:home} Zum Hauptmenü'), el('button', { class: 'btn sec', onclick: () => { Store.save(true); UI.toast('{i:save} Gespeichert', 'good'); } }, '{i:save} Jetzt speichern'), el('label', { class: 'row dim' }, '{i:sound}', el('input', { type: 'range', min: 0, max: 100, value: Math.round(S().settings.vol * 100), oninput: e => { S().settings.vol = e.target.value / 100; UI.applySettings(); }, onchange: () => Store.save() }))) });
+    const m = this.modal({ title: '{i:pause} Menü', body: el('div', { class: 'col' }, el('button', { class: 'btn', onclick: () => m.close() }, '{i:next} Weiter'), el('button', { class: 'btn sec', onclick: () => { m.close(); UI.leaveCity(); } }, '{i:home} Zum Hauptmenü'), el('button', { class: 'btn sec', onclick: () => { Store.save(true); UI.toast('{i:save} Gespeichert', 'good'); } }, '{i:save} Jetzt speichern'), City.go ? el('button', { class: 'btn sec', onclick: () => { City.toggleGps(); m.close(); } }, City.gps ? '{i:pin} GPS-Laufmodus ausschalten' : '{i:pin} GPS-Laufmodus einschalten') : null, el('label', { class: 'row dim' }, '{i:sound}', el('input', { type: 'range', min: 0, max: 100, value: Math.round(S().settings.vol * 100), oninput: e => { S().settings.vol = e.target.value / 100; UI.applySettings(); }, onchange: () => Store.save() }))) });
   }
 });
 
