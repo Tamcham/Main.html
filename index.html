@@ -771,7 +771,7 @@ body[data-mode=mobile] #goNear{top:150px;width:136px;font-size:.68rem;padding:6p
 @media (max-height:620px){.go-name{top:calc(70px + var(--sai-t))}.go-hint{bottom:calc(150px + var(--sai-b))}.go-wp b{font-size:2rem}}
 
 #mapOv{position:fixed;inset:0;z-index:40;background:#cfe5c1;touch-action:none;user-select:none;-webkit-user-select:none}
-#mapCv{position:absolute;inset:0;display:block}
+#mapCv{position:absolute;inset:0;width:100%;height:100%;display:block}
 .map-top{position:absolute;left:0;right:0;top:0;padding:calc(10px + var(--sai-t)) 12px 0;display:flex;flex-direction:column;gap:8px;align-items:flex-start;pointer-events:none}
 .map-top>*{pointer-events:auto}
 #mapInfo{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:6px 12px;border-radius:99px;font-weight:700;font-size:.85rem}
@@ -784,6 +784,18 @@ body[data-mode=mobile] #goNear{top:150px;width:136px;font-size:.68rem;padding:6p
 #mapAttr{position:absolute;left:6px;bottom:2px;font-size:10px;color:#333;background:#fffa;padding:1px 5px;border-radius:4px;display:none}
 body[data-mode=mobile] #cityLayer.go #cityDex{display:none!important}
 #mapOv .icon-btn{background:rgba(12,10,40,.88);color:#fff;border:1px solid #ffffff30;box-shadow:0 3px 10px #0005}#mapOv .cglass{background:rgba(12,10,40,.86)}
+.bt-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#battleOv:has(.bt-cv) .bt-dog{visibility:hidden;width:min(30vw,130px)}
+.go-cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+.go-stage{pointer-events:none}
+.go-caught-name{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;font-family:var(--font-d);font-size:1.2rem}
+.new-pill{font:800 .68rem var(--font-d);padding:2px 9px;border-radius:99px;background:#ff3d71;color:#fff;letter-spacing:.05em}
+.d3-thumb,.d3-live{display:block;border-radius:14px}
+.bt-pre-art{display:flex;align-items:center;justify-content:center;overflow:hidden}
+.foe-th{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px;border-radius:14px;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 14%,#13103a);width:96px}.foe-th small{font-size:.66rem;text-align:center;line-height:1.1}
+.tm-slot{border-color:var(--c,var(--line))}
+.tm-it{background:color-mix(in srgb,var(--c) 10%,transparent);border:2px solid color-mix(in srgb,var(--c) 40%,transparent);color:inherit}
+.tm-it.on{border-color:var(--gold)}
 </style>
 </head>
 <body data-mode="desktop">
@@ -2593,6 +2605,265 @@ const Net = {
   peers() { return NPCS; }
 };
 
+/* ------------------------------ G3: gemeinsames 3D-Paket (Figuren, Karten-Hunde, Bühne, Vorschau) ------------------------------ */
+const G3 = (() => {
+  const TAU2 = Math.PI * 2; let mob = false;
+  const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
+  const mats = {};
+  const M = (hex, o = {}) => { const k = hex + JSON.stringify(o); return mats[k] || (mats[k] = new THREE.MeshLambertMaterial(Object.assign({ color: lin(hex) }, o))); };
+  let VC = null; const vcMat = () => VC || (VC = new THREE.MeshLambertMaterial({ vertexColors: true }));
+  const canvasTex = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); } t.anisotropy = 4; return t; };
+  /* ---------- Geometrie-Zusammenführung ---------- */
+  let _m, _q, _e, _p, _s;
+  const mtx = (x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) => (_m || (_q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _m = new THREE.Matrix4())).compose(_p.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz)), _s.set(sx, sy, sz));
+  class MB {
+    constructor() { this.p = []; this.n = []; this.c = []; this.u = []; }
+    add(geo, m, hex, uvs) {
+      const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(m); const P = g.attributes.position.array, Nn = g.attributes.normal.array, U = g.attributes.uv ? g.attributes.uv.array : null, col = lin(hex);
+      for (let i = 0; i < P.length; i += 3) { this.p.push(P[i], P[i + 1], P[i + 2]); this.n.push(Nn[i], Nn[i + 1], Nn[i + 2]); this.c.push(col.r, col.g, col.b); }
+      const vc = P.length / 3; for (let i = 0; i < vc; i++) { if (U) { let u = U[i * 2], v = U[i * 2 + 1]; if (uvs) { const f = Math.floor(i / 6); const s2 = uvs(f); u *= s2[0]; v *= s2[1]; } this.u.push(u, v); } else this.u.push(0, 0); }
+      g.dispose(); return this;
+    }
+    box(hex, x, y, z, sx, sy, sz, ry = 0) { return this.add(GEO.box, mtx(x, y, z, sx, sy, sz, ry), hex); }
+    build(mat, shadow = true) {
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(this.u, 2)); g.computeBoundingSphere();
+      const m = new THREE.Mesh(g, mat || vcMat()); m.castShadow = shadow; m.receiveShadow = true; m.matrixAutoUpdate = false; m.userData.own = true; this.p = this.n = this.c = this.u = null; return m;
+    }
+  }
+  const GEO = {};
+  function initGeo() {
+    if (GEO.box) return; mob = Device.isMobile();
+    Object.assign(GEO, {
+      box: new THREE.BoxGeometry(1, 1, 1), cyl: new THREE.CylinderGeometry(1, 1, 1, 10), cyl6: new THREE.CylinderGeometry(1, 1, 1, 6), sph: new THREE.SphereGeometry(1, 12, 9), sphLo: new THREE.SphereGeometry(1, 8, 6),
+      cone: new THREE.ConeGeometry(1, 1, 7), ico: new THREE.IcosahedronGeometry(1, 1), cap: new THREE.SphereGeometry(1, 12, 8, 0, TAU2, 0, Math.PI * 0.5), plane: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), ring: new THREE.RingGeometry(0.82, 1, 40).rotateX(-Math.PI / 2), torus: new THREE.TorusGeometry(1, 0.12, 8, 28)
+    });
+  }
+  function textTex(lines, o = {}) {
+    const c = document.createElement('canvas'); const w = o.w || 512, h = o.h || 128; c.width = w; c.height = h; const x = c.getContext('2d');
+    if (o.bg) { x.fillStyle = o.bg; const r = o.r ?? 26; x.beginPath(); x.moveTo(r, 0); x.arcTo(w, 0, w, h, r); x.arcTo(w, h, 0, h, r); x.arcTo(0, h, 0, 0, r); x.arcTo(0, 0, w, 0, r); x.fill(); if (o.border) { x.strokeStyle = o.border; x.lineWidth = 6; x.stroke(); } }
+    x.fillStyle = o.color || '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; const arr = (Array.isArray(lines) ? lines : [lines]).map(stripIc); const fs = o.fs || 52;
+    arr.forEach((ln, i) => { x.font = `${i === 0 ? 700 : 600} ${i === 0 ? fs : fs * 0.62}px Fredoka,system-ui,sans-serif`; x.fillText(ln, w / 2, h / 2 + (i - (arr.length - 1) / 2) * fs * 0.95, w - 24); });
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.minFilter = THREE.LinearFilter; return t;
+  }
+  function sprite(lines, o = {}) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: textTex(lines, o), transparent: true, depthTest: o.depthTest !== false, toneMapped: false, fog: o.fog !== false })); const w = o.sw || 4; sp.scale.set(w, w * (o.h || 128) / (o.w || 512), 1); sp.userData.base = [w, w * (o.h || 128) / (o.w || 512)]; return sp; }
+
+  /* ---------- Figuren (rund, „Chibi“-Stil) ---------- */
+  let blobMat = null;
+  function blob(parent, r = 0.55) { blobMat = blobMat || new THREE.MeshBasicMaterial({ map: canvasTex(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false }); const m = new THREE.Mesh(GEO.plane, blobMat); m.scale.set(r * 2, 1, r * 2); m.position.y = 0.03; m.renderOrder = 1; parent.add(m); return m; }
+  function makePerson(o) {
+    const g = new THREE.Group(), skin = o.skin || '#f1c9a5', shirt = o.shirt || '#4a90e2', pants = o.pants || '#334155', hair = o.hair || '#3b2a1a', shoe = '#2b2b33';
+    const head = new MB().add(GEO.sph, mtx(0, 0, 0, 0.36, 0.35, 0.34), skin).add(GEO.cap, mtx(0, 0.02, -0.01, 0.38, 0.36, 0.37, 0, -0.18), hair)
+      .add(GEO.sphLo, mtx(-0.12, 0.03, 0.31, 0.045, 0.06, 0.03), '#1b1412').add(GEO.sphLo, mtx(0.12, 0.03, 0.31, 0.045, 0.06, 0.03), '#1b1412').add(GEO.sphLo, mtx(0, -0.06, 0.34, 0.04, 0.03, 0.03), DogArt.shade(skin, -0.2))
+      .add(GEO.sphLo, mtx(-0.2, -0.08, 0.26, 0.06, 0.04, 0.02), '#f0a0a0').add(GEO.sphLo, mtx(0.2, -0.08, 0.26, 0.06, 0.04, 0.02), '#f0a0a0');
+    if (o.hat) head.add(GEO.cyl, mtx(0, 0.3, 0, 0.3, 0.16, 0.3), o.hat).add(GEO.cyl, mtx(0, 0.23, 0.06, 0.42, 0.03, 0.42), o.hat);
+    const hm = head.build(vcMat(), !mob); hm.position.set(0, 1.62, 0); hm.matrixAutoUpdate = true; g.add(hm);
+    const torso = new MB().add(GEO.cyl, mtx(0, 0, 0, 0.27, 0.62, 0.22), shirt).add(GEO.sph, mtx(0, 0.31, 0, 0.27, 0.12, 0.22), shirt).add(GEO.cyl, mtx(0, -0.27, 0, 0.28, 0.12, 0.23), pants);
+    if (o.cape) torso.add(GEO.box, mtx(0, 0.02, -0.24, 0.52, 0.72, 0.04), o.cape);
+    if (o.jacket) torso.add(GEO.cyl, mtx(0, 0.05, 0, 0.3, 0.5, 0.25), o.jacket);
+    torso.add(GEO.cyl, mtx(0, 0.4, 0, 0.1, 0.1, 0.1), skin);
+    const tm = torso.build(vcMat(), !mob); tm.position.set(0, 1.04, 0); tm.matrixAutoUpdate = true; g.add(tm);
+    const limb = (x, y, len, col, end) => { const p = new THREE.Group(); p.position.set(x, y, 0); const mb = new MB().add(GEO.cyl6, mtx(0, -len / 2, 0, 0.085, len, 0.085), col).add(GEO.sphLo, mtx(0, -len, end === shoe ? 0.05 : 0, end === shoe ? 0.11 : 0.085, end === shoe ? 0.07 : 0.085, end === shoe ? 0.15 : 0.085), end); const m = mb.build(vcMat(), !mob); m.matrixAutoUpdate = true; p.add(m); g.add(p); return p; };
+    const legs = [limb(-0.13, 0.66, 0.58, pants, shoe), limb(0.13, 0.66, 0.58, pants, shoe)];
+    const arms = [limb(-0.34, 1.38, 0.5, shirt, skin), limb(0.34, 1.38, 0.5, shirt, skin)];
+    arms[0].rotation.z = -0.12; arms[1].rotation.z = 0.12; blob(g);
+    return { g, legs, arms, head: hm };
+  }
+  function walkAnim(pr, phase, amt) { const a = Math.sin(phase) * 0.75 * amt; pr.legs[0].rotation.x = a; pr.legs[1].rotation.x = -a; pr.arms[0].rotation.x = -a * 0.9; pr.arms[1].rotation.x = a * 0.9; }
+  function makeDog(col) {
+    const g = new THREE.Group(), d = DogArt.shade(col, -0.3);
+    const body = new MB().add(GEO.sph, mtx(0, 0.45, 0, 0.22, 0.2, 0.38), col).add(GEO.sph, mtx(0, 0.68, 0.36, 0.2, 0.19, 0.2), col).add(GEO.sph, mtx(0, 0.63, 0.53, 0.1, 0.08, 0.1), DogArt.shade(col, 0.2)).add(GEO.sphLo, mtx(0, 0.66, 0.62, 0.04, 0.035, 0.035), '#111')
+      .add(GEO.sph, mtx(-0.15, 0.78, 0.33, 0.06, 0.12, 0.05, 0, 0, 0.3), d).add(GEO.sph, mtx(0.15, 0.78, 0.33, 0.06, 0.12, 0.05, 0, 0, -0.3), d).add(GEO.sphLo, mtx(-0.07, 0.72, 0.52, 0.025, 0.03, 0.02), '#111').add(GEO.sphLo, mtx(0.07, 0.72, 0.52, 0.025, 0.03, 0.02), '#111');
+    const bm = body.build(vcMat(), !mob); bm.matrixAutoUpdate = true; g.add(bm);
+    const tail = new THREE.Group(); tail.position.set(0, 0.55, -0.34); const tm = new MB().add(GEO.cyl6, mtx(0, 0.12, -0.06, 0.04, 0.26, 0.04, 0, -0.7), col).build(vcMat(), false); tm.matrixAutoUpdate = true; tail.add(tm); g.add(tail);
+    const legs = [[-0.11, 0.22], [0.11, 0.22], [-0.11, -0.2], [0.11, -0.2]].map(([x, z]) => { const l = new THREE.Group(); l.position.set(x, 0.36, z); const m = new MB().add(GEO.cyl6, mtx(0, -0.16, 0, 0.055, 0.34, 0.055), d).build(vcMat(), false); m.matrixAutoUpdate = true; l.add(m); g.add(l); return l; });
+    blob(g, 0.45); return { g, legs, tail };
+  }
+
+
+  /* ============ Karten-Hund als echtes 3D-Modell ============ */
+  let glowMats = {};
+  const glowMat = hex => glowMats[hex] || (glowMats[hex] = new THREE.MeshBasicMaterial({ color: lin(hex), transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+  function makeCardDog(card, o = {}) {
+    initGeo(); const t = DogArt.traits(card), tier = card.tier, v = t.v, base = t.base, sec = t.sec, pat = t.pat, dark = DogArt.shade(base, -0.32), light = DogArt.shade(base, 0.22);
+    const rnd = mulberry32(hashStr('3d' + card.id)), fl = t.fluffy ? 1.16 : 1, sn = [0.07, 0.15, 0.25][t.snout], hs = v.puppy ? 1.22 : 1, sc = (v.puppy ? 0.8 : 1) * (0.9 + tier * 0.04) * (o.scale || 1);
+    const own = !!o.ownMat, mat = own ? new THREE.MeshLambertMaterial({ vertexColors: true }) : vcMat();
+    const g = new THREE.Group(), root = new THREE.Group(); root.scale.setScalar(sc); g.add(root);
+    const collar = new THREE.Color().setHSL((card.hue || 200) / 360, 0.75, 0.5).getStyle();
+    const sh = (v.senior ? DogArt.mixC(sec, '#cfcfcf', 0.6) : sec);
+    // Körper
+    const B = new MB().add(GEO.sph, mtx(0, 0.52, 0, 0.27 * fl, 0.24 * fl, 0.44 * fl), base);
+    if (['swiss', 'fox', 'blaze', 'mask', 'tan', 'saddle'].includes(pat) || t.fx) B.add(GEO.sph, mtx(0, 0.47, 0.3, 0.21 * fl, 0.2 * fl, 0.18), sh);
+    if (pat === 'saddle') B.add(GEO.sph, mtx(0, 0.6, -0.02, 0.28 * fl, 0.15, 0.3), dark);
+    if (pat === 'patch' || pat === 'patches') { B.add(GEO.sph, mtx(-0.17 * fl, 0.55, -0.1, 0.14, 0.14, 0.16), sh); if (pat === 'patches') { B.add(GEO.sph, mtx(0.18 * fl, 0.5, 0.12, 0.12, 0.12, 0.13), dark); B.add(GEO.sph, mtx(0.1, 0.66, -0.2, 0.1, 0.07, 0.1), sh); } }
+    if (pat === 'spots') for (let i = 0; i < 9; i++) { const a = rnd() * TAU2, z = (rnd() - 0.5) * 0.7; B.add(GEO.sphLo, mtx(Math.cos(a) * 0.255 * fl, 0.52 + Math.sin(a) * 0.23 * fl, z, 0.065, 0.065, 0.065), dark); }
+    if (t.poodle) { B.add(GEO.sphLo, mtx(0, 0.62, -0.38, 0.17, 0.17, 0.17), base); }
+    if (t.fluffy) { B.add(GEO.sphLo, mtx(0, 0.58, 0.32, 0.26, 0.24, 0.2), base); }
+    // Halsband
+    B.add(GEO.cyl, mtx(0, 0.66, 0.34, 0.2, 0.045, 0.2, 0, 0.45, 0), collar); B.add(GEO.sphLo, mtx(0, 0.58, 0.47, 0.045, 0.045, 0.04), '#ffd24a');
+    if (v.champ) B.add(GEO.sphLo, mtx(0, 0.55, 0.49, 0.07, 0.07, 0.03), '#f5c518');
+    if (v.guard) for (let i = -2; i <= 2; i++) B.add(GEO.cone, mtx(i * 0.07, 0.66, 0.46 - Math.abs(i) * 0.03, 0.025, 0.07, 0.025, 0, 1.2, 0), '#c8ccd4');
+    if (v.stray) B.add(GEO.cone, mtx(0, 0.58, 0.4, 0.12, 0.14, 0.04, 0, Math.PI, 0.0), '#e11d48');
+    const body = B.build(mat, false); root.add(body);
+    // Kopf (Gelenk am Hals)
+    const head = new THREE.Group(); head.position.set(0, 0.74, 0.36); root.add(head);
+    const H = new MB(); H.add(GEO.sph, mtx(0, 0, 0.06, 0.255 * hs, 0.235 * hs, 0.24 * hs), base);
+    const muzCol = pat === 'muzzle' ? dark : (pat === 'mask' || pat === 'swiss' || pat === 'blaze' || pat === 'fox' ? sec : light);
+    H.add(GEO.sph, mtx(0, -0.06 * hs, 0.2 * hs + sn * 0.5, 0.1 * hs + 0.02, 0.085 * hs, 0.08 + sn), muzCol);
+    H.add(GEO.sphLo, mtx(0, -0.035 * hs, 0.28 * hs + sn * 1.25, 0.045, 0.035, 0.04), '#14110f');
+    if (pat === 'blaze' || pat === 'swiss') H.add(GEO.box, mtx(0, 0.12 * hs, 0.18, 0.06, 0.02, 0.26), sec);
+    if (pat === 'mask') H.add(GEO.sph, mtx(0, -0.03, 0.17, 0.2 * hs, 0.16 * hs, 0.14), sec);
+    if (pat === 'tan') { H.add(GEO.sphLo, mtx(-0.1, 0.1 * hs, 0.2, 0.05, 0.035, 0.04), sec); H.add(GEO.sphLo, mtx(0.1, 0.1 * hs, 0.2, 0.05, 0.035, 0.04), sec); }
+    if (pat === 'patch' || pat === 'patches') H.add(GEO.sph, mtx(0.12 * hs, 0.03, 0.18, 0.12, 0.12, 0.1), dark);
+    const eyeY = 0.045 * hs, eyeZ = 0.22 * hs; [-1, 1].forEach(sd => { H.add(GEO.sphLo, mtx(sd * 0.105 * hs, eyeY, eyeZ, 0.055, 0.065, 0.04), '#0f0d12'); H.add(GEO.sphLo, mtx(sd * 0.095 * hs, eyeY + 0.025, eyeZ + 0.03, 0.017, 0.02, 0.012), '#ffffff'); });
+    [-1, 1].forEach(sd => { H.add(GEO.sphLo, mtx(sd * 0.17 * hs, -0.03 * hs, 0.17, 0.05, 0.03, 0.03), '#f2a0a8'); });
+    // Ohren
+    [-1, 1].forEach(sd => {
+      if (t.ear === 'pointy') H.add(GEO.cone, mtx(sd * 0.14 * hs, 0.26 * hs, 0, 0.09, 0.22, 0.06, 0, 0, -sd * 0.18), base).add(GEO.cone, mtx(sd * 0.14 * hs, 0.25 * hs, 0.02, 0.055, 0.15, 0.03, 0, 0, -sd * 0.18), '#f0b4b4');
+      else if (t.ear === 'fold') H.add(GEO.sph, mtx(sd * 0.17 * hs, 0.2 * hs, -0.02, 0.095, 0.1, 0.05, 0, 0, -sd * 0.5), dark);
+      else H.add(GEO.sph, mtx(sd * 0.23 * hs, 0.0, -0.01, 0.065, 0.17, 0.11, 0, 0, sd * 0.2), dark);
+    });
+    if (t.poodle) { H.add(GEO.sphLo, mtx(0, 0.25 * hs, 0.02, 0.2, 0.15, 0.2), base); }
+    else if (t.fluffy) H.add(GEO.sphLo, mtx(0, -0.02, -0.06, 0.3 * hs, 0.27 * hs, 0.2), base);
+    if (v.senior) { H.add(GEO.box, mtx(-0.1 * hs, eyeY + 0.07, 0.235 * hs, 0.07, 0.014, 0.01, 0, 0, 0.3), '#e8e8e8'); H.add(GEO.box, mtx(0.1 * hs, eyeY + 0.07, 0.235 * hs, 0.07, 0.014, 0.01, 0, 0, -0.3), '#e8e8e8'); }
+    const hm = H.build(mat, false); head.add(hm);
+    let tongue = null; if (t.tongue) { tongue = new MB().add(GEO.box, mtx(0, -0.03, 0, 0.045, 0.08, 0.03), '#f06a86').build(mat, false); tongue.position.set(0, -0.13 * hs, 0.25 * hs + sn * 1.0); tongue.rotation.x = 0.2; head.add(tongue); }
+    // Beine
+    const legs = []; const legDef = [[-0.15, 0.27], [0.15, 0.27], [-0.15, -0.26], [0.15, -0.26]];
+    legDef.forEach(([x, z], i) => { const l = new THREE.Group(); l.position.set(x * fl, 0.4, z); const lc = pat === 'tan' || pat === 'swiss' || pat === 'fox' ? sh : (i < 2 ? base : base); const m = new MB().add(GEO.cyl6, mtx(0, -0.18, 0, 0.065, 0.4, 0.065), base).add(GEO.sphLo, mtx(0, -0.38, 0.03, 0.085, 0.055, 0.115), lc).build(mat, false); l.add(m); root.add(l); legs.push(l); });
+    // Schwanz
+    const tail = new THREE.Group(); tail.position.set(0, 0.62, -0.42); const tm = new MB().add(GEO.cyl6, mtx(0, 0.14, -0.06, 0.045, 0.34, 0.045, 0, -0.65, 0), base).add(GEO.sphLo, mtx(0, 0.31, -0.19, t.poodle ? 0.13 : 0.06, t.poodle ? 0.13 : 0.06, t.poodle ? 0.13 : 0.06), pat === 'fox' ? sec : (t.poodle ? base : base)).build(mat, false); tail.add(tm); root.add(tail);
+    blob(g, 0.62 * sc * (fl > 1 ? 1.1 : 1));
+    // Seltenheits-Extras
+    const extras = []; const rc = RAR[tier].color;
+    if (tier >= 4) { const r = new THREE.Mesh(GEO.ring, glowMat(rc)); r.scale.set(0.95 * sc, 1, 0.95 * sc); r.position.y = 0.04; g.add(r); extras.push(['ring', r]); }
+    if (tier === 7 || tier === 9 || tier === 5) { const h = new THREE.Mesh(GEO.torus, glowMat(tier === 9 ? '#fff3b0' : '#ffd24a')); h.scale.set(0.2, 0.2, 0.2); h.position.y = 1.2 * sc + 0.05; h.rotation.x = Math.PI / 2; g.add(h); extras.push(['halo', h]); }
+    if (tier === 9) [-1, 1].forEach(sd => { const w = new MB().add(GEO.sph, mtx(sd * 0.34, 0, -0.05, 0.36, 0.05, 0.22, 0, 0, sd * 0.5), '#ffffff').add(GEO.sph, mtx(sd * 0.55, 0.12, -0.1, 0.26, 0.04, 0.16, 0, 0, sd * 0.7), '#e8f1ff').build(mat, false); const wg = new THREE.Group(); wg.position.set(sd * 0.12, 0.7, -0.1); wg.add(w); root.add(wg); extras.push(['wing', wg, sd]); });
+    if (tier >= 6) for (let i = 0; i < Math.min(5, tier - 3); i++) { const o2 = new THREE.Mesh(GEO.sphLo, glowMat(i % 2 ? '#ffffff' : rc)); o2.scale.setScalar(0.045); g.add(o2); extras.push(['orb', o2, i]); }
+    if (tier === 8) { const r2 = new THREE.Mesh(GEO.torus, glowMat('#c4b5fd')); r2.scale.set(0.8, 0.8, 0.8); r2.position.y = 0.55 * sc; r2.rotation.x = 1.2; g.add(r2); extras.push(['ring2', r2]); }
+    if (tier === 10) { const r2 = new THREE.Mesh(GEO.torus, glowMat('#c084fc')); r2.scale.set(0.62 * sc + 0.2, 0.62 * sc + 0.2, 0.62 * sc + 0.2); r2.position.y = 0.55 * sc; r2.rotation.x = Math.PI / 2; g.add(r2); extras.push(['ring2', r2]); }
+    if (tier === 11) for (let i = 0; i < 5; i++) { const f = new THREE.Mesh(GEO.cone, glowMat(i % 2 ? '#ff8a2a' : '#ff4d1a')); f.scale.set(0.07, 0.26, 0.07); f.position.set((i - 2) * 0.09, 0.9 * sc, -0.15 + Math.abs(i - 2) * -0.03); root.add(f); extras.push(['flame', f, i]); }
+    if (tier >= 11) { const e = new THREE.Mesh(GEO.sphLo, glowMat('#ffd24a')); e.scale.set(0.05, 0.06, 0.03); /* leuchtende Augen */ [-1, 1].forEach(sd => { const ee = e.clone(); ee.position.set(sd * 0.105 * hs, eyeY, eyeZ + 0.02); head.add(ee); }); }
+    const state = { phase: rnd() * 6, flash: 0 };
+    const m = { g, root, head, legs, tail, tongue, body, hm, mat, sc, state, tier, card, headY: 0.74 * sc, radius: 0.7 * sc };
+    m.update = (tt, mode = 'idle', amt = 1) => {
+      const ph = tt + state.phase;
+      tail.rotation.y = Math.sin(ph * (mode === 'happy' ? 17 : 6)) * (mode === 'happy' ? 0.75 : 0.35); tail.rotation.x = mode === 'sad' ? 0.5 : 0;
+      if (mode === 'run') { legs.forEach((l, k) => { l.rotation.x = Math.sin(tt * 13 + (k % 2) * Math.PI + (k > 1 ? 1.1 : 0)) * 0.85 * amt; }); root.position.y = Math.abs(Math.sin(tt * 13)) * 0.06 * amt; head.rotation.x = Math.sin(tt * 13) * 0.08; }
+      else if (mode === 'walk') { legs.forEach((l, k) => { l.rotation.x = Math.sin(tt * 7 + (k % 2) * Math.PI + (k > 1 ? 1.1 : 0)) * 0.55 * amt; }); root.position.y = Math.abs(Math.sin(tt * 7)) * 0.025 * amt; head.rotation.x = 0; }
+      else { legs.forEach(l => l.rotation.x *= 0.8); root.position.y = mode === 'happy' ? Math.abs(Math.sin(ph * 7)) * 0.3 : 0; root.scale.y = sc * (1 + Math.sin(ph * 2.1) * 0.014); head.rotation.x = Math.sin(ph * 1.3) * 0.05 + (mode === 'sad' ? 0.35 : 0); head.rotation.z = Math.sin(ph * 0.9) * 0.05; }
+      if (tongue) tongue.rotation.x = 0.2 + Math.sin(ph * 9) * 0.1;
+      const k2 = tt;
+      for (const e of extras) {
+        if (e[0] === 'ring') { e[1].material.opacity = 0.55 + Math.sin(k2 * 3) * 0.25; }
+        else if (e[0] === 'halo') { e[1].position.y = 1.2 * sc + 0.05 + Math.sin(k2 * 2) * 0.03; e[1].rotation.z = k2 * 0.8; }
+        else if (e[0] === 'wing') { e[1].rotation.z = e[2] * (0.1 + Math.sin(k2 * 3.2) * 0.22); }
+        else if (e[0] === 'orb') { const a = k2 * (1.1 + e[2] * 0.2) + e[2] * 1.9; e[1].position.set(Math.cos(a) * 0.8 * sc, 0.5 * sc + Math.sin(a * 1.3 + e[2]) * 0.4 * sc, Math.sin(a) * 0.8 * sc); }
+        else if (e[0] === 'ring2') { e[1].rotation.z = k2 * 1.2; }
+        else if (e[0] === 'flame') { e[1].scale.y = 0.26 + Math.sin(k2 * 12 + e[2] * 2) * 0.07; }
+      }
+      if (state.flash > 0) { state.flash = Math.max(0, state.flash - 0.07); const f = state.flash; mat.emissive && mat.emissive.setRGB(f * 0.9, f * 0.15, f * 0.1); if (!own) state.flash = 0; }
+    };
+    m.setFlash = k => { if (own) state.flash = k; };
+    m.dispose = () => { g.traverse(ob => { if (ob.userData && ob.userData.own && ob.geometry) ob.geometry.dispose(); }); if (own) mat.dispose(); };
+    return m;
+  }
+
+  /* ============ Bühne (eigener Renderer, Tweens, Partikel) ============ */
+  const ease = { out: k => 1 - Math.pow(1 - k, 3), inOut: k => k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2, back: k => { const c = 1.9; return 1 + (c + 1) * Math.pow(k - 1, 3) + c * Math.pow(k - 1, 2); }, lin: k => k, bounce: k => { const n = 7.5625, d = 2.75; if (k < 1 / d) return n * k * k; if (k < 2 / d) return n * (k -= 1.5 / d) * k + 0.75; if (k < 2.5 / d) return n * (k -= 2.25 / d) * k + 0.9375; return n * (k -= 2.625 / d) * k + 0.984375; } };
+  function makeStage(canvas, o = {}) {
+    initGeo(); const mobile = Device.isMobile();
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: !mobile, alpha: !!o.alpha, powerPreference: 'high-performance' });
+    renderer.outputEncoding = THREE.sRGBEncoding; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = o.exposure || 1.05; renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(o.fov || 40, 1, 0.1, 400);
+    if (!o.alpha) scene.background = new THREE.Color(o.bg || '#7ec0ff').convertSRGBToLinear();
+    if (o.fog) scene.fog = new THREE.Fog(new THREE.Color(o.fog).convertSRGBToLinear(), o.fogNear || 20, o.fogFar || 80);
+    const hemi = new THREE.HemisphereLight(0xdcefff, 0x6b8f4e, o.hemi ?? 0.95), sun = new THREE.DirectionalLight(0xfff0d8, o.sun ?? 1.15); sun.position.set(4, 8, 5); scene.add(hemi, sun, sun.target);
+    const tweens = [], fx = [], hooks = []; let raf = 0, running = false, last = 0, T = 0, disposed = false;
+    function size() { const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); return [w, h]; }
+    const api = {
+      renderer, scene, camera, hemi, sun, size, get time() { return T; },
+      onFrame(fn) { hooks.push(fn); return fn; },
+      tween(dur, fn, e = ease.out) { return new Promise(res => tweens.push({ t: 0, dur, fn, e, res })); },
+      sleep(ms) { return new Promise(res => tweens.push({ t: 0, dur: ms / 1000, fn: () => { }, e: ease.lin, res })); },
+      project(v3) { const p = v3.clone().project(camera); return { x: (p.x * 0.5 + 0.5) * canvas.clientWidth, y: (-p.y * 0.5 + 0.5) * canvas.clientHeight, behind: p.z > 1 }; },
+      burst(pos, color = '#ffffff', n = 24, speed = 3, life = 0.9, size2 = 0.12) {
+        const pts = new Float32Array(n * 3), vel = []; for (let i = 0; i < n; i++) { pts[i * 3] = pos.x; pts[i * 3 + 1] = pos.y; pts[i * 3 + 2] = pos.z; const a = Math.random() * TAU2, b = (Math.random() - 0.3) * Math.PI * 0.8, sp = speed * (0.4 + Math.random() * 0.8); vel.push([Math.cos(a) * Math.cos(b) * sp, Math.sin(b) * sp + speed * 0.5, Math.sin(a) * Math.cos(b) * sp]); }
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pts, 3)); const mt = new THREE.PointsMaterial({ color: lin(color), size: size2, transparent: true, opacity: 1, depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true, toneMapped: false }), p = new THREE.Points(geo, mt); p.frustumCulled = false; scene.add(p); fx.push({ p, vel, life, t: 0, geo, mt });
+      },
+      shock(pos, color = '#ffffff', maxS = 5, dur = 0.7) {
+        const m = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color: lin(color), transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, toneMapped: false })); m.position.copy(pos); m.scale.setScalar(0.2); scene.add(m);
+        api.tween(dur, k => { m.scale.setScalar(0.2 + k * maxS); m.material.opacity = 0.9 * (1 - k); }, ease.out).then(() => { scene.remove(m); m.material.dispose(); });
+      },
+      add(o3) { scene.add(o3); return o3; }, remove(o3) { scene.remove(o3); },
+      start() { if (running) return; running = true; last = performance.now(); const loop = now => { if (!running) return; raf = requestAnimationFrame(loop); const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+        for (let i = tweens.length - 1; i >= 0; i--) { const tw = tweens[i]; tw.t += dt; const k = Math.min(1, tw.t / Math.max(0.0001, tw.dur)); tw.fn(tw.e(k), k); if (k >= 1) { tweens.splice(i, 1); tw.res(); } }
+        for (let i = fx.length - 1; i >= 0; i--) { const f = fx[i]; f.t += dt; const a = f.geo.attributes.position.array; for (let j = 0; j < f.vel.length; j++) { f.vel[j][1] -= 7 * dt; a[j * 3] += f.vel[j][0] * dt; a[j * 3 + 1] += f.vel[j][1] * dt; a[j * 3 + 2] += f.vel[j][2] * dt; } f.geo.attributes.position.needsUpdate = true; f.mt.opacity = Math.max(0, 1 - f.t / f.life); if (f.t >= f.life) { scene.remove(f.p); f.geo.dispose(); f.mt.dispose(); fx.splice(i, 1); } }
+        for (const h of hooks) h(dt, T);
+        renderer.render(scene, camera); }; raf = requestAnimationFrame(loop); },
+      stop() { running = false; cancelAnimationFrame(raf); },
+      dispose() { if (disposed) return; disposed = true; api.stop(); scene.traverse(ob => { if (ob.userData && ob.userData.own && ob.geometry) ob.geometry.dispose(); }); fx.forEach(f => { f.geo.dispose(); f.mt.dispose(); }); try { renderer.dispose(); renderer.forceContextLoss(); } catch (e) { } }
+    };
+    return api;
+  }
+  /* Boden-Szene für Kampf/Fang: Wiese, Kreis, Himmel */
+  function arenaGround(stage, o = {}) {
+    const grass = canvasTex(256, 256, (x, w, h) => { x.fillStyle = o.grass || '#7fc163'; x.fillRect(0, 0, w, h); for (let i = 0; i < 2200; i++) { const r = Math.random(); x.fillStyle = r < 0.33 ? '#73b357' : r < 0.66 ? '#8fcf72' : '#6aa84f'; x.fillRect(Math.random() * w, Math.random() * h, 2, 3); } }, 14);
+    const gr = new THREE.Mesh(new THREE.CircleGeometry(60, 40).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: grass })); gr.userData.own = true; stage.add(gr);
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 3.6, 0.14, 40), new THREE.MeshLambertMaterial({ color: lin(o.disc || '#d9cfb8') })); disc.position.y = 0.05; disc.userData.own = true; stage.add(disc);
+    const rim = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color: lin(o.rim || '#ffffff'), transparent: true, opacity: 0.55, toneMapped: false })); rim.scale.set(3.3, 1, 3.3); rim.position.y = 0.13; stage.add(rim);
+    // Büsche / Bäume als Kulisse
+    const greens = ['#4caf50', '#5cb85c', '#3f9a47', '#6cc35a']; const mbT = new MB(), rnd = mulberry32(hashStr(o.seed || 'arena'));
+    for (let i = 0; i < 18; i++) { const a = rnd() * TAU2, r = 11 + rnd() * 22, x = Math.cos(a) * r, z = Math.sin(a) * r, s = 0.9 + rnd() * 1.1; mbT.add(GEO.cyl6, mtx(x, 0.9 * s, z, 0.14 * s, 1.8 * s, 0.14 * s), '#7a5230'); mbT.add(GEO.ico, mtx(x, 2.4 * s, z, 0.95 * s, 0.95 * s, 0.95 * s), greens[i % 4]); }
+    const trees = mbT.build(vcMat(), false); stage.add(trees);
+    return { grass };
+  }
+
+  /* ============ 3D-Vorschau (Thumbnails & Live-Ansichten) ============ */
+  let dv = null;
+  function dvInit() {
+    if (dv) return dv; if (!window.THREE) return null;
+    try {
+      initGeo(); const cv = document.createElement('canvas'); cv.width = cv.height = 256; const r = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: true }); r.outputEncoding = THREE.sRGBEncoding; r.toneMapping = THREE.ACESFilmicToneMapping; r.setSize(256, 256, false); r.setClearColor(0x000000, 0);
+      const sc = new THREE.Scene(), cam = new THREE.PerspectiveCamera(28, 1, 0.1, 50); sc.add(new THREE.HemisphereLight(0xe8f2ff, 0x7a6a50, 1.0)); const d = new THREE.DirectionalLight(0xfff0d8, 1.25); d.position.set(2, 4, 3); sc.add(d);
+      dv = { cv, r, sc, cam, models: new Map(), views: new Set(), raf: 0 };
+    } catch (e) { dv = null; }
+    return dv;
+  }
+  function dvModel(card) {
+    let m = dv.models.get(card.id); if (m) return m; m = makeCardDog(card, { ownMat: false }); m.g.traverse(o => { if (o.material === GEO_BLOB) o.visible = false; }); dv.models.set(card.id, m); if (dv.models.size > 24) { const k = dv.models.keys().next().value; const old = dv.models.get(k); dv.models.delete(k); old.dispose(); } return m;
+  }
+  const GEO_BLOB = null;
+  function dvDraw(card, ctx, px, ang, mode) {
+    const m = dvModel(card); dv.sc.add(m.g); m.g.rotation.y = ang; m.update(performance.now() / 1000, mode || 'idle', 1);
+    const s = m.sc, h = 1.2 * s + 0.15, dist = Math.max(2.3, h * 2.45); dv.cam.position.set(0, h * 0.55, dist); dv.cam.lookAt(0, h * 0.4, 0); dv.cam.aspect = 1; dv.cam.updateProjectionMatrix();
+    dv.r.render(dv.sc, dv.cam); dv.sc.remove(m.g); ctx.clearRect(0, 0, px, px); ctx.drawImage(dv.cv, 0, 0, 256, 256, 0, 0, px, px);
+  }
+  function fallbackImg(card, px) { const i = new Image(); i.width = i.height = px; i.alt = card.name; i.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DogArt.svg(card).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" ')); return i; }
+  const thumbCache = new Map();
+  function thumb(card, px = 96) {
+    const d = dvInit(); if (!d) return fallbackImg(card, px);
+    const dpr = Math.min(2, window.devicePixelRatio || 1), cvs = document.createElement('canvas'); cvs.width = cvs.height = Math.round(px * dpr); cvs.style.width = cvs.style.height = px + 'px'; cvs.className = 'd3-thumb'; const ctx = cvs.getContext('2d');
+    const key = card.id + ':' + cvs.width; let src = thumbCache.get(key);
+    if (!src) { const tmp = document.createElement('canvas'); tmp.width = tmp.height = cvs.width; try { dvDraw(card, tmp.getContext('2d'), cvs.width, 0.55, 'idle'); src = tmp; thumbCache.set(key, src); if (thumbCache.size > 200) thumbCache.delete(thumbCache.keys().next().value); } catch (e) { return fallbackImg(card, px); } }
+    ctx.drawImage(src, 0, 0); return cvs;
+  }
+  function dvLoop() {
+    if (dv.raf) return; const step = () => {
+      dv.raf = 0; if (!dv.views.size) return; const now = performance.now();
+      for (const v of Array.from(dv.views)) { if (!v.cv.isConnected) { dv.views.delete(v); continue; } try { dvDraw(v.card, v.ctx, v.px, (v.spin ? now / 1400 : 0.55) + v.off, v.mode); } catch (e) { dv.views.delete(v); } }
+      if (dv.views.size) dv.raf = requestAnimationFrame(step);
+    }; dv.raf = requestAnimationFrame(step);
+  }
+  function mount(card, px = 140, o = {}) {
+    const d = dvInit(); if (!d) return fallbackImg(card, px);
+    const dpr = Math.min(2, window.devicePixelRatio || 1), cvs = document.createElement('canvas'); cvs.width = cvs.height = Math.round(px * dpr); cvs.style.width = cvs.style.height = px + 'px'; cvs.className = 'd3-live';
+    if (d.views.size >= 4) return thumb(card, px);
+    d.views.add({ cv: cvs, ctx: cvs.getContext('2d'), card, px: cvs.width, spin: o.spin !== false, off: Math.random() * 3, mode: o.mode || 'idle' }); dvLoop(); return cvs;
+  }
+
+  return { lin, M, vcMat, canvasTex, mtx, MB, GEO, initGeo, textTex, sprite, blob, makePerson, walkAnim, makeDog, makeCardDog, makeStage, arenaGround, ease, glowMat, thumb, mount, get mob() { return mob; } };
+})();
+
 /* ------------------------------ NPC-QUESTS ------------------------------ */
 const NPCQuests = {
   ensure() {
@@ -2662,7 +2933,7 @@ const Dogs = (() => {
       const mine = team().map(c => mk(c)), foes = (opts.foes || foeTeam(wild, diff)).map(c => mk(c, diff.hp));
       let me = 0, fo = 0, busy = true, over = false, lastFoeGuard = false;
       const ov = el('div', { id: 'battleOv', class: 'bt' });
-      ov.innerHTML = `<div class="bt-sky"></div><div class="bt-ground"></div>
+      ov.innerHTML = `<canvas id="btCv" class="bt-cv"></canvas>
         <div class="bt-top"><span class="chip">{i:sword} ${opts.label || 'Kampf · ' + diff.name}</span><button class="btn sec sm" id="btFlee">{i:run} Fliehen</button></div>
         <div class="bt-arena">
           <div class="bt-foe"><div class="bt-box" id="btFoeBox"></div><div class="bt-dog" id="btFoeDog"></div></div>
@@ -2684,11 +2955,37 @@ const Dogs = (() => {
           <div class="bt-st"><span class="pips">${pips(list, cur)}</span><span class="chg" title="Super-Wuff Ladung">${[0, 1, 2].map(k => `<u class="${f.charge > k ? 'on' : ''}"></u>`).join('')}</span></div>`;
         requestAnimationFrame(() => { const i = $('.hp i', box); if (i) i.style.width = hpPct(f) + '%'; });
       }
-      function drawDog(side, enter) { const f = side === 'me' ? A() : F(), d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.getAnimations().forEach(x => x.cancel()); d.innerHTML = DogArt.svg(f.card); d.className = 'bt-dog ' + side + (enter ? ' enter' : ''); d.style.setProperty('--c', RAR[f.tier].color); }
-      function floatNum(side, txt, cls) { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'), b = d.getBoundingClientRect(), o = ov.getBoundingClientRect(); const n = el('div', { class: 'bt-num ' + cls }, txt); n.style.left = (b.left - o.left + b.width / 2) + 'px'; n.style.top = (b.top - o.top + b.height * 0.25) + 'px'; ov.append(n); setTimeout(() => n.remove(), 1000); }
-      const lunge = async (side) => { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'), dx = side === 'me' ? 1 : -1; d.animate([{ transform: 'translate(0,0)' }, { transform: `translate(${dx * 34}px,${-dx * 18}px) scale(1.08)` }, { transform: 'translate(0,0)' }], { duration: 320, easing: 'cubic-bezier(.3,1.4,.6,1)' }); await sleep(170); };
-      const hurt = async (side, crit) => { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.animate([{ transform: 'translate(0,0)', filter: 'brightness(2.2)' }, { transform: 'translate(-10px,0)' }, { transform: 'translate(9px,0)' }, { transform: 'translate(-5px,0)' }, { transform: 'translate(0,0)', filter: 'none' }], { duration: crit ? 520 : 380 }); if (!S().settings.reduceFx && crit) ov.animate([{ transform: 'translate(0,0)' }, { transform: 'translate(4px,-3px)' }, { transform: 'translate(-4px,3px)' }, { transform: 'translate(0,0)' }], { duration: 260 }); await sleep(340); };
-      const faintAnim = async side => { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.animate([{ opacity: 1, transform: 'translateY(0) rotate(0)' }, { opacity: 0, transform: 'translateY(40px) rotate(' + (side === 'me' ? -18 : 18) + 'deg)' }], { duration: 520, fill: 'forwards', easing: 'ease-in' }); Audio.thud(0.4, 55); await sleep(560); };
+      /* ---------- 3D-Bühne ---------- */
+      let st = null, cam2 = () => { }; const mod = { me: null, foe: null }; const POS = { me: { x: -1.5, z: 1.5, yaw: 2.2 }, foe: { x: 1.7, z: -1.6, yaw: -0.95 } };
+      try {
+        st = G3.makeStage($o('#btCv'), { fov: 36, bg: '#8ccaff', fog: '#9fd4ff', fogNear: 22, fogFar: 70 }); G3.arenaGround(st, { seed: 'bt' + diff.id, disc: '#e4dcc4' }); st.size();
+        const cam = () => { const asp = innerWidth / innerHeight; st.camera.fov = asp < 0.75 ? 52 : 36; st.camera.aspect = asp; st.camera.updateProjectionMatrix(); if (asp < 0.75) { st.camera.position.set(0, 6.4, 12.5); } else { st.camera.position.set(0, 3.8, 9.5); } st.camera.lookAt(0, 0.5, 0); st.camera.setViewOffset(innerWidth, innerHeight, 0, asp < 0.75 ? innerHeight * 0.1 : 0, innerWidth, innerHeight); };
+        cam2 = cam; cam(); window.addEventListener('resize', onResize); st.start();
+        st.onFrame((dt, t) => { ['me', 'foe'].forEach(k => { const m = mod[k]; if (m && !m.dead) m.update(t, m.mode || 'idle', 1); }); });
+      } catch (e) { st = null; }
+      function onResize() { if (!st) return; st.size(); st.camera.clearViewOffset(); cam2(); }
+      function drawDog(side, enter) {
+        const f = side === 'me' ? A() : F();
+        if (!st) { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'); d.getAnimations().forEach(x => x.cancel()); d.innerHTML = DogArt.svg(f.card); d.className = 'bt-dog ' + side + (enter ? ' enter' : ''); return; }
+        if (mod[side]) { st.remove(mod[side].g); mod[side].dispose(); }
+        const m = G3.makeCardDog(f.card, { ownMat: true, scale: 1.8 }), P2 = POS[side]; m.base = { x: P2.x, z: P2.z, yaw: P2.yaw }; m.g.position.set(P2.x, 0, P2.z); m.g.rotation.y = P2.yaw; m.mode = 'idle'; st.add(m.g); mod[side] = m;
+        if (enter) { m.g.scale.setScalar(0.01); st.tween(0.55, k => m.g.scale.setScalar(Math.max(0.01, k)), G3.ease.back); st.burst(new THREE.Vector3(P2.x, 0.3, P2.z), RAR[f.tier].color, 18, 2.4, 0.8); }
+      }
+      const headPos = side => { const m = mod[side]; return new THREE.Vector3(m.base.x, m.headY + 0.5, m.base.z); };
+      function floatNum(side, txt, cls) { let x, y; if (st && mod[side]) { const p = st.project(headPos(side)); x = p.x; y = p.y; } else { const d = $o(side === 'me' ? '#btMeDog' : '#btFoeDog'), b = d.getBoundingClientRect(), o = ov.getBoundingClientRect(); x = b.left - o.left + b.width / 2; y = b.top - o.top + b.height * 0.25; } const n = el('div', { class: 'bt-num ' + cls }, txt); n.style.left = x + 'px'; n.style.top = y + 'px'; ov.append(n); setTimeout(() => n.remove(), 1000); }
+      const lunge = async side => {
+        if (!st || !mod[side]) { return sleep(170); } const m = mod[side], tgtM = mod[side === 'me' ? 'foe' : 'me'], b = m.base, dx = (tgtM ? tgtM.base.x : 0) - b.x, dz = (tgtM ? tgtM.base.z : 0) - b.z;
+        m.mode = 'run'; st.tween(0.42, k => { const f = Math.sin(k * Math.PI) * 0.6; m.g.position.set(b.x + dx * f, Math.abs(Math.sin(k * Math.PI * 2)) * 0.12, b.z + dz * f); }, G3.ease.lin).then(() => { m.mode = 'idle'; m.g.position.set(b.x, 0, b.z); }); await sleep(210);
+      };
+      const hurt = async (side, crit) => {
+        if (!st || !mod[side]) return sleep(340); const m = mod[side], b = m.base; m.setFlash(1); const col = crit ? '#ffd24a' : '#ff6a5a'; st.burst(headPos(side), col, crit ? 36 : 20, crit ? 4 : 2.6, 0.8);
+        if (!S().settings.reduceFx && crit) st.tween(0.3, k => { st.camera.position.x = Math.sin(k * 40) * 0.14 * (1 - k); }, G3.ease.lin);
+        st.tween(0.4, k => { m.g.position.x = b.x + Math.sin(k * 30) * 0.18 * (1 - k); m.setFlash(1 - k); }, G3.ease.lin); await sleep(360);
+      };
+      const faintAnim = async side => {
+        if (!st || !mod[side]) return sleep(560); const m = mod[side]; m.mode = 'sad'; Audio.thud(0.4, 55); await st.tween(0.55, k => { m.g.rotation.z = k * 1.45 * (side === 'me' ? 1 : -1); m.g.position.y = -k * 0.25; m.g.scale.setScalar(Math.max(0.01, 1 - k * 0.35)); }, G3.ease.out); m.dead = true; st.burst(headPos(side), '#9ca3af', 14, 1.8, 0.7); st.remove(m.g); await sleep(80);
+      };
+      const special = async side => { if (!st || !mod[side]) return; const tg = mod[side === 'me' ? 'foe' : 'me']; if (!tg) return; const p = new THREE.Vector3(tg.base.x, 0.2, tg.base.z); st.shock(p, '#c084fc', 5.5, 0.8); st.burst(p.clone().setY(1), '#e9d5ff', 40, 5, 1); };
       const heal = (f, n) => { n = Math.min(n, f.maxHp - f.hp); f.hp += n; return n; };
       function calc(a, d, mv) { const base = a.atk * mv.pow * (0.85 + Math.random() * 0.3), crit = Math.random() < 0.1; let v = base * (1 - d.def / (d.def + 45)) * (crit ? 1.5 : 1); if (d.guard) v *= mv.id === 'special' ? 0.5 : 0.25; return { v: Math.max(1, Math.round(v)), crit }; }
 
@@ -2700,7 +2997,7 @@ const Dogs = (() => {
         await lunge(side);
         if (Math.random() > mv.acc) { say(`${who} verfehlt!`); floatNum(dSide, 'Daneben', 'miss'); await sleep(500); a.charge = Math.min(3, a.charge + mv.ch); drawBox(side); return; }
         const { v, crit } = calc(a, d, mv); d.hp = Math.max(0, d.hp - v); a.charge = Math.min(3, a.charge + mv.ch);
-        Audio.thud(crit || mvId === 'special' ? 0.5 : 0.3, crit ? 90 : 120); if (mvId === 'special') Audio.sparkle();
+        Audio.thud(crit || mvId === 'special' ? 0.5 : 0.3, crit ? 90 : 120); if (mvId === 'special') { Audio.sparkle(); special(side); }
         floatNum(dSide, '-' + v, crit ? 'crit' : mvId === 'special' ? 'spec' : ''); if (crit) say('Volltreffer!');
         drawBox(dSide); drawBox(side); await hurt(dSide, crit || mvId === 'special');
         if (d.hp <= 0) { d.alive = false; await faintAnim(dSide); }
@@ -2738,7 +3035,7 @@ const Dogs = (() => {
       function switchPanel(forced, done) {
         cmd.classList.remove('off'); cmd.innerHTML = '';
         const grid = el('div', { class: 'bt-sw' });
-        mine.forEach((f, i) => { const b = el('button', { class: 'bt-swb' + (i === me ? ' cur' : '') + (f.alive ? '' : ' dead'), disabled: !f.alive || i === me, onclick: async () => { me = i; drawDog('me', true); drawBox('me'); Audio.bark(); say(`Los, ${f.name.split(' (')[0]}!`); await sleep(500); done && done(); } }, el('span', { class: 'sw-ic', html: DogArt.svg(f.card) }), el('b', {}, f.name.split(' (')[0]), el('small', {}, `${Math.max(0, f.hp)}/${f.maxHp} LP`)); grid.append(b); });
+        mine.forEach((f, i) => { const b = el('button', { class: 'bt-swb' + (i === me ? ' cur' : '') + (f.alive ? '' : ' dead'), disabled: !f.alive || i === me, onclick: async () => { me = i; drawDog('me', true); drawBox('me'); Audio.bark(); say(`Los, ${f.name.split(' (')[0]}!`); await sleep(500); done && done(); } }, el('span', { class: 'sw-ic' }, G3.thumb(f.card, 62)), el('b', {}, f.name.split(' (')[0]), el('small', {}, `${Math.max(0, f.hp)}/${f.maxHp} LP`)); grid.append(b); });
         cmd.append(el('div', { class: 'bt-swt' }, forced ? 'Nächster Hund' : 'Hund wechseln (kostet eine Runde)'), grid);
         if (!forced) cmd.append(el('button', { class: 'btn sec sm', onclick: () => menu() }, 'Zurück'));
       }
@@ -2773,12 +3070,12 @@ const Dogs = (() => {
         if (r.won) {
           box.append(el('div', { class: 'bt-rw' }, el('span', { class: 'price' }, '{i:coin} +' + fmt(r.coins)), el('span', {}, '{i:star} +' + r.xp + ' XP')));
           if (r.capped) box.append(el('p', { class: 'dim' }, 'Tageslimit für Kampf-Coins erreicht – du bekommst weniger Coins.'));
-          if (r.recruit) { box.append(el('div', { class: 'bt-rec' }, el('b', {}, '{i:heart} Der Wildhund schließt sich dir an!'), renderCard(r.recruit.card, { size: 'sm', owned: true, isNew: r.recruit.isNew, count: r.recruit.count > 1 ? r.recruit.count : 0, live: true }))); Audio.sparkle(); }
+          if (r.recruit) { box.append(el('div', { class: 'bt-rec' }, el('b', {}, '{i:heart} Der Wildhund schließt sich dir an!'), G3.thumb(r.recruit.card, 110), el('small', { class: 'dim' }, r.recruit.card.name + (r.recruit.isNew ? ' · NEU im Album' : '')))); Audio.sparkle(); }
         } else box.append(el('p', { class: 'dim' }, 'Keine Sorge, du verlierst nichts. Stärke dein Team und versuche es nochmal!'));
         box.append(el('div', { class: 'row', style: 'justify-content:center;gap:10px;margin-top:10px' }, el('button', { class: 'btn sec', onclick: () => { close(r); Dogs.teamModal(); } }, '{i:dog} Team'), el('button', { class: 'btn gold', onclick: () => close(r) }, 'Weiter')));
         cmd.innerHTML = ''; cmd.append(box); cmd.classList.remove('off'); cmd.classList.add('res');
       }
-      function close(r) { ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running || (typeof GoMap !== 'undefined' && GoMap.running) ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
+      function close(r) { window.removeEventListener('resize', onResize); if (st) { st.dispose(); st = null; } ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running || (typeof GoMap !== 'undefined' && GoMap.running) ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
       const onKey = e => { if (e.key === 'Escape') e.stopPropagation(); }; document.addEventListener('keydown', onKey, true);
 
       drawDog('me', true); drawDog('foe', true); drawBox('me'); drawBox('foe'); Audio.bark(); say(opts.foes ? `${F().name} tritt gegen dich an!` : `Ein wilder ${F().name} greift an!`);
@@ -2791,7 +3088,7 @@ const Dogs = (() => {
     if (!team().length) { UI.toast('Du brauchst mindestens eine Karte im Team. Öffne erst ein Pack!', 'bad'); return null; }
     return new Promise(res => {
       let chosen = null; const tp = teamPower(), st = stats(wild), body = el('div', { class: 'col' });
-      body.append(el('div', { class: 'bt-pre' }, el('div', { class: 'bt-pre-art', html: DogArt.svg(wild) }), el('div', { class: 'grow' }, el('b', { class: 'tc' + wild.tier, style: 'font-size:1.1rem' }, wild.name), el('div', { class: 'dim' }, `${RAR[wild.tier].name} · LP ${st.maxHp} · Angriff ${st.atk} · Tempo ${st.spd}`))));
+      body.append(el('div', { class: 'bt-pre' }, el('div', { class: 'bt-pre-art' }, G3.mount(wild, 88)), el('div', { class: 'grow' }, el('b', { class: 'tc' + wild.tier, style: 'font-size:1.1rem' }, wild.name), el('div', { class: 'dim' }, `${RAR[wild.tier].name} · LP ${st.maxHp} · Angriff ${st.atk} · Tempo ${st.spd}`))));
       body.append(el('p', { class: 'dim', style: 'margin:0' }, `Dein Team (Stärke ${tp}): ` + team().map(c => c.name.split(' (')[0]).join(', ')));
       const mkB = d => { const foes = d.n, est = Math.round(power(wild) * (0.8 + foes * 0.45)); const rel = tp / est; const hint = rel > 1.35 ? 'Leicht zu schaffen' : rel > 0.85 ? 'Ausgeglichen' : 'Riskant'; return el('button', { class: 'bt-diff', style: `--c:${d.col}`, onclick: () => { chosen = d; m.close(); } }, el('b', {}, d.name), el('small', {}, `${d.n} Gegner · ${hint}`), el('small', { class: 'dim' }, `Belohnung ×${d.mult}`)); };
       body.append(el('div', { class: 'bt-diffs' }, ...DIFFS.map(mkB)));
@@ -2807,10 +3104,10 @@ const Dogs = (() => {
     function save() { setTeam(sel); onDone && onDone(); }
     function toggle(id) { const i = sel.indexOf(id); if (i >= 0) { if (sel.length === 1) { UI.toast('Mindestens ein Hund muss im Team sein.', 'bad'); return; } sel.splice(i, 1); } else { if (sel.length >= TEAM_MAX) { UI.toast(`Maximal ${TEAM_MAX} Hunde – entferne zuerst einen.`, 'bad'); return; } sel.push(id); } Audio.soft(); save(); draw(); }
     function draw() {
-      slots.innerHTML = ''; for (let i = 0; i < TEAM_MAX; i++) { const id = sel[i], c = id && CardDB.get(id); slots.append(c ? el('button', { class: 'tm-slot on', onclick: () => toggle(id), 'aria-label': 'Aus Team entfernen' }, renderCard(c, { size: 'xs', owned: true, odds: false }), el('small', {}, stat(c)), el('span', { class: 'x' }, '{i:close}')) : el('div', { class: 'tm-slot empty' }, el('span', {}, '{i:plus}'), el('small', {}, 'Frei'))); }
+      slots.innerHTML = ''; for (let i = 0; i < TEAM_MAX; i++) { const id = sel[i], c = id && CardDB.get(id); slots.append(c ? el('button', { class: 'tm-slot on', style: `--c:${RAR[c.tier].color}`, onclick: () => toggle(id), 'aria-label': 'Aus Team entfernen' }, G3.thumb(c, 84), el('b', { style: 'font-size:.74rem;line-height:1.1' }, c.name.split(' (')[0]), el('small', {}, stat(c)), el('span', { class: 'x' }, '{i:close}')) : el('div', { class: 'tm-slot empty' }, el('span', {}, '{i:plus}'), el('small', {}, 'Frei'))); }
       let list = Object.keys(s.cards).map(Number).filter(id => s.cards[id] > 0).map(id => CardDB.get(id)); if (tier) list = list.filter(c => c.tier === tier); list.sort((a, b) => power(b) - power(a));
       const shown = list.slice(0, page * PER); grid.innerHTML = '';
-      shown.forEach(c => { const on = sel.includes(c.id); const b = el('div', { class: 'tm-it' + (on ? ' on' : '') }, renderCard(c, { size: 'xs', owned: true, odds: false, count: s.cards[c.id] > 1 ? s.cards[c.id] : 0, onclick: () => toggle(c.id) }), el('small', { class: 'mono' }, '{i:bolt} ' + power(c))); grid.append(b); });
+      shown.forEach(c => { const on = sel.includes(c.id); const b = el('button', { class: 'tm-it' + (on ? ' on' : ''), style: `--c:${RAR[c.tier].color}`, onclick: () => toggle(c.id) }, G3.thumb(c, 92), el('b', { style: 'font-size:.72rem;line-height:1.1;text-align:center' }, c.name.split(' (')[0]), el('small', { class: 'mono' }, '{i:bolt} ' + power(c) + (s.cards[c.id] > 1 ? ' · ×' + s.cards[c.id] : ''))); grid.append(b); });
       if (!list.length) grid.append(el('div', { class: 'empty' }, el('b', {}, 'Keine Karten'), el('span', { class: 'dim' }, 'Öffne Packs, um Hunde fürs Team zu bekommen.')));
       more.innerHTML = ''; if (list.length > shown.length) more.append(el('button', { class: 'btn sec', onclick: () => { page++; draw(); } }, `Mehr anzeigen (${list.length - shown.length})`));
     }
@@ -2858,7 +3155,7 @@ const Go = (() => {
   function pick(card) {
     return new Promise(res => {
       let chosen = null; const st = Dogs.stats(card), body = el('div', { class: 'col' });
-      body.append(el('div', { class: 'bt-pre' }, el('div', { class: 'bt-pre-art', html: DogArt.svg(card) }), el('div', { class: 'grow' }, el('b', { class: 'tc' + card.tier, style: 'font-size:1.1rem' }, card.name), el('div', { class: 'dim' }, `${RAR[card.tier].name} · WP ${Dogs.power(card)}`), el('div', { class: 'dim', style: 'font-size:.8rem' }, `LP ${st.maxHp} · Angriff ${st.atk} · Tempo ${st.spd}`))));
+      body.append(el('div', { class: 'bt-pre' }, el('div', { class: 'bt-pre-art' }, G3.mount(card, 88)), el('div', { class: 'grow' }, el('b', { class: 'tc' + card.tier, style: 'font-size:1.1rem' }, card.name), el('div', { class: 'dim' }, `${RAR[card.tier].name} · WP ${Dogs.power(card)}`), el('div', { class: 'dim', style: 'font-size:.8rem' }, `LP ${st.maxHp} · Angriff ${st.atk} · Tempo ${st.spd}`))));
       const balls = count('ball') + count('great') + count('ultra');
       body.append(el('div', { class: 'go-pick' },
         el('button', { class: 'go-pb catch' + (balls ? '' : ' off'), onclick: () => { if (!balls) { Audio.error(); UI.toast('Keine Leckerli mehr – besuche einen Knochen-Stop!', 'bad'); return; } chosen = 'catch'; m.close(); } }, el('span', { html: ricon('ball', 34) }), el('b', {}, 'Fangen'), el('small', {}, `${balls} Leckerli im Beutel`)),
@@ -2867,90 +3164,111 @@ const Go = (() => {
     });
   }
 
-  /* ---------- Fang-Begegnung ---------- */
+  /* ---------- Fang-Begegnung (3D) ---------- */
+  function ballTex(id) {
+    return G3.canvasTex(128, 128, (x, w, h) => {
+      const c = ITEMS[id].col; x.fillStyle = c; x.fillRect(0, 0, w, h); const gr = x.createRadialGradient(40, 36, 4, 64, 64, 80); gr.addColorStop(0, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(0,0,0,.25)'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
+      x.fillStyle = 'rgba(255,255,255,.95)'; const P = (cx, cy, r) => { x.beginPath(); x.arc(cx, cy, r, 0, 6.283); x.fill(); }; for (const ox of [0, 128]) { P(ox + 0, 70, 20); P(ox - 22, 44, 9); P(ox - 8, 34, 9); P(ox + 8, 34, 9); P(ox + 22, 44, 9); }
+    });
+  }
   function encounter(card) {
     return new Promise(resolve => {
-      const go = g(), st = Dogs.stats(card), ringCol = tierOfRing(card.tier);
-      let ball = count('ball') ? 'ball' : count('great') ? 'great' : count('ultra') ? 'ultra' : 'ball', berry = false, busy = false, over = false, fled = false;
+      const go = g(), ringCol = tierOfRing(card.tier);
+      let ball = count('ball') ? 'ball' : count('great') ? 'great' : count('ultra') ? 'ultra' : 'ball', berry = false, busy = false, over = false;
       const ov = el('div', { id: 'goOv', class: 'go', style: `--rc:${ringCol};--tc:${RAR[card.tier].color}` });
-      ov.innerHTML = `<div class="bt-sky"></div><div class="bt-ground go-ground"></div>
+      ov.innerHTML = `<canvas id="goCv" class="go-cv"></canvas>
         <div class="go-top"><button class="btn sec sm" id="goRun">{i:run} Weggehen</button><div class="go-wp"><small>WP</small><b>${Dogs.power(card)}</b></div><div style="width:110px"></div></div>
         <div class="go-name"><b class="tc${card.tier}">${card.name}</b><span class="rar" style="--c:${RAR[card.tier].color}">${RAR[card.tier].name}</span></div>
-        <div class="go-stage" id="goStage"><div class="go-dog" id="goDog">${DogArt.svg(card)}</div><div class="go-ring" id="goRing"></div><div class="go-ring in"></div></div>
+        <div class="go-stage" id="goStage"><div class="go-ring" id="goRing"></div><div class="go-ring in"></div></div>
         <div class="go-msg" id="goMsg"></div>
         <div class="go-hint" id="goHint">Wische den Ball nach oben auf den Hund!</div>
         <div class="go-bar"><button class="go-item" id="goBallSel" aria-label="Leckerli wechseln"></button><div class="go-ballwrap"><div class="go-ball" id="goBall"></div></div><button class="go-item" id="goBerry" aria-label="Himbeer-Snack geben"></button></div>
         <div id="goRes"></div>`;
       $('#overlays').append(ov); City.pause(true); Audio.setScene('off'); Audio.bark();
-      const $o = q => $(q, ov), dog = $o('#goDog'), ring = $o('#goRing'), msg = $o('#goMsg'), ballEl = $o('#goBall'), hint = $o('#goHint');
+      const $o = q => $(q, ov), ring = $o('#goRing'), msg = $o('#goMsg'), ballEl = $o('#goBall'), hint = $o('#goHint'), stageEl = $o('#goStage');
+      const st = G3.makeStage($o('#goCv'), { fov: 46, bg: '#7ec0ff', fog: '#9fd4ff', fogNear: 18, fogFar: 60 }); G3.arenaGround(st, { seed: 'go' + card.id, disc: '#e2d9c0' });
+      const dogM = G3.makeCardDog(card, { ownMat: true, scale: 2.1 }); st.add(dogM.g); dogM.mode = 'idle'; dogM.g.position.set(0, 0, 0); dogM.g.rotation.y = 0.35;
+      const center = new THREE.Vector3(0, 0.95 * dogM.sc * 0.55 + 0.35, 0);
+      const ballMat = {}; const ballMesh = new THREE.Mesh(new THREE.SphereGeometry(0.16, 20, 14), new THREE.MeshLambertMaterial({ map: ballTex(ball) })); ballMesh.userData.own = true; st.add(ballMesh);
+      const camSetup = () => { const asp = innerWidth / innerHeight; st.size(); st.camera.fov = asp < 0.75 ? 54 : 44; st.camera.aspect = asp; st.camera.updateProjectionMatrix(); st.camera.position.set(0, 3.2, asp < 0.75 ? 9.2 : 8.2); st.camera.lookAt(0, 1.55, 0); st.camera.updateMatrixWorld(); layout(); };
+      const at = (sx, sy, dist) => { const v = new THREE.Vector3((sx / innerWidth) * 2 - 1, -(sy / innerHeight) * 2 + 1, 0.5).unproject(st.camera); return v.sub(st.camera.position).normalize().multiplyScalar(dist).add(st.camera.position); };
+      let dogScr = { x: 0, y: 0, r: 80 };
+      function layout() { const p = st.project(center), p2 = st.project(center.clone().add(new THREE.Vector3(1, 0, 0))); const ppm = Math.abs(p2.x - p.x); dogScr = { x: p.x, y: p.y, r: ppm * 0.62 * dogM.sc }; stageEl.style.cssText = `left:${p.x}px;top:${p.y}px;width:${dogScr.r * 1.7}px;transform:translate(-50%,-50%)`; ballRest(); }
+      const camDist = () => st.camera.position.distanceTo(center);
+      let restPos = null, ballTimer = 0, ballFree = false;
+      function ballRest() { restPos = at(innerWidth / 2, innerHeight - 62, 4.4); }
+      const swapTex = () => { ballMesh.material.map = ballTex(ball); ballMesh.material.needsUpdate = true; };
+      st.onFrame((dt, t) => { if (dogM.mode && !dogM.gone) dogM.update(t, dogM.mode, 1); if (!ballFree && restPos && !drag) { ballMesh.position.copy(restPos); ballMesh.position.y += Math.sin(t * 3) * 0.05; ballMesh.rotation.y = t * 1.2; ballMesh.visible = !over && !busyHide; } });
+      let busyHide = false;
+      camSetup(); st.start(); window.addEventListener('resize', camSetup);
       const say = (t, cls = '') => { msg.textContent = t; msg.className = 'go-msg ' + cls; void msg.offsetWidth; msg.classList.add('on'); };
       function drawBar() {
         const cur = ball; $o('#goBallSel').innerHTML = `<span>${ricon(cur, 34)}</span><b>${count(cur)}</b><small>${ITEMS[cur].name}</small>`;
         const be = $o('#goBerry'); be.innerHTML = `<span>${ricon('berry', 34)}</span><b>${count('berry')}</b><small>${berry ? 'gegeben' : 'Snack'}</small>`; be.classList.toggle('on', berry); be.classList.toggle('off', !berry && !count('berry'));
-        ballEl.innerHTML = ricon(cur, 64); ballEl.classList.toggle('empty', count(cur) <= 0);
+        ballEl.classList.toggle('empty', count(cur) <= 0); swapTex();
       }
       $o('#goBallSel').onclick = () => { if (busy) return; const avail = ['ball', 'great', 'ultra'].filter(i => count(i) > 0); if (!avail.length) { Audio.error(); return; } ball = avail[(avail.indexOf(ball) + 1) % avail.length]; Audio.soft(); drawBar(); };
-      $o('#goBerry').onclick = () => { if (busy || berry || !use('berry')) return; berry = true; Audio.sparkle(); say('Der Hund wird ruhiger …', 'good'); dog.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.1) rotate(-3deg)' }, { transform: 'scale(1)' }], { duration: 500 }); drawBar(); };
+      $o('#goBerry').onclick = () => { if (busy || berry || !use('berry')) return; berry = true; Audio.sparkle(); say('Der Hund wird ruhiger …', 'good'); st.burst(center, '#ef4444', 18, 2, 0.9); dogM.mode = 'happy'; setTimeout(() => { if (!dogM.gone) dogM.mode = 'idle'; }, 1100); drawBar(); };
       $o('#goRun').onclick = () => { if (busy) return; end({ caught: false, fled: false, left: true }); };
       const ringScale = () => { try { return new DOMMatrix(getComputedStyle(ring).transform).a || 1; } catch (e) { return 1; } };
-      const centerOf = e => { const b = e.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2, b.width, b.height]; };
       let drag = null;
-      ballEl.onpointerdown = e => { if (busy || over) return; if (count(ball) <= 0) { Audio.error(); say('Keine Leckerli dieser Sorte!', 'bad'); return; } e.preventDefault(); drag = { x0: e.clientX, y0: e.clientY, pts: [[performance.now(), e.clientX, e.clientY]] }; try { ballEl.setPointerCapture(e.pointerId); } catch (x) { } ballEl.classList.add('held'); ballEl.style.transition = 'none'; hint.classList.add('hide'); };
-      ballEl.onpointermove = e => { if (!drag) return; drag.pts.push([performance.now(), e.clientX, e.clientY]); if (drag.pts.length > 14) drag.pts.shift(); ballEl.style.transform = `translate(${e.clientX - drag.x0}px,${e.clientY - drag.y0}px)`; };
+      ballEl.onpointerdown = e => { if (busy || over) return; if (count(ball) <= 0) { Audio.error(); say('Keine Leckerli dieser Sorte!', 'bad'); return; } e.preventDefault(); drag = { x0: e.clientX, y0: e.clientY, pts: [[e.timeStamp, e.clientX, e.clientY]] }; try { ballEl.setPointerCapture(e.pointerId); } catch (x) { } ballEl.classList.add('held'); hint.classList.add('hide'); ballMesh.position.copy(at(e.clientX, e.clientY, 4.4)); };
+      ballEl.onpointermove = e => { if (!drag) return; drag.pts.push([e.timeStamp, e.clientX, e.clientY]); if (drag.pts.length > 14) drag.pts.shift(); ballMesh.position.copy(at(e.clientX, e.clientY, 4.4)); };
       const release = e => {
         if (!drag) return; const d = drag; drag = null; ballEl.classList.remove('held');
-        const now = performance.now(), recent = d.pts.filter(p => now - p[0] < 130), a = recent[0] || d.pts[0], b = d.pts[d.pts.length - 1], dt = Math.max(16, b[0] - a[0]), vx = (b[1] - a[1]) / dt, vy = (b[2] - a[2]) / dt;
-        if (vy > -0.4 || Math.hypot(b[1] - d.x0, b[2] - d.y0) < 30) { ballEl.style.transition = 'transform .25s var(--ease-spring)'; ballEl.style.transform = ''; hint.classList.remove('hide'); return; }
-        // Kurvenwurf: deutliche seitliche Auslenkung auf dem Weg
+        const b = d.pts[d.pts.length - 1], recent = d.pts.filter(p => b[0] - p[0] < 130), a = recent[0] || d.pts[0], dt = Math.max(16, b[0] - a[0]); let vx = (b[1] - a[1]) / dt, vy = (b[2] - a[2]) / dt; { const tdx = b[1] - d.x0, tdy = b[2] - d.y0, tot = Math.hypot(tdx, tdy); if (vy > -0.4 && tdy < -70 && Math.abs(tdx) < Math.abs(tdy) * 1.6) { vx = tdx / tot; vy = tdy / tot; } }
+        ov._last = { vx, vy, n: d.pts.length, dt, ts: d.pts.map(p => Math.round(p[0])).join(',') };
+        if (vy > -0.4 || Math.hypot(b[1] - d.x0, b[2] - d.y0) < 30) { hint.classList.remove('hide'); return; }
         let dev = 0; { const x1 = d.pts[0][1], y1 = d.pts[0][2], x2 = b[1], y2 = b[2], L = Math.hypot(x2 - x1, y2 - y1) || 1; d.pts.forEach(p => { dev = Math.max(dev, Math.abs((p[1] - x1) * (y2 - y1) - (p[2] - y1) * (x2 - x1)) / L); }); }
         throwBall(b[1], b[2], vx, vy, dev > 38);
       };
       ballEl.onpointerup = release; ballEl.onpointercancel = release;
       async function throwBall(rx, ry, vx, vy, curve) {
-        busy = true; use(ball); const used = ball; drawBar(); Audio.swish(1);
-        const [dx, dy, dw] = centerOf(dog), scale = ringScale(), vw = innerWidth, vh = innerHeight;
-        const lx = clamp(rx + vx * 230, 10, vw - 10), ly = clamp(ry + vy * 230, 10, vh - 10), dist = Math.hypot(lx - dx, ly - dy), hit = dist < dw * 0.4;
-        const bw = ballEl.getBoundingClientRect(), fx = bw.left + bw.width / 2, fy = bw.top + bw.height / 2;
-        const fl = el('div', { class: 'go-fly', html: ricon(used, 64) }); fl.style.left = fx + 'px'; fl.style.top = fy + 'px'; ov.append(fl); ballEl.style.visibility = 'hidden'; ballEl.style.transform = '';
-        const tx = hit ? dx : lx, ty = hit ? dy : ly, mx = (fx + tx) / 2 + (curve ? (vx >= 0 ? -1 : 1) * 70 : 0), my = Math.min(fy, ty) - 70;
-        const anim = fl.animate([{ transform: 'translate(-50%,-50%) scale(1)' }, { transform: `translate(calc(-50% + ${mx - fx}px),calc(-50% + ${my - fy}px)) scale(.8)`, offset: 0.5 }, { transform: `translate(calc(-50% + ${tx - fx}px),calc(-50% + ${ty - fy}px)) scale(${hit ? 0.62 : 0.5})` }], { duration: 640, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
-        await anim.finished.catch(() => { });
-        if (!hit) { say('Daneben!', 'bad'); Audio.error(); fl.animate([{ opacity: 1 }, { opacity: 0, transform: `translate(calc(-50% + ${tx - fx}px),calc(-50% + ${ty - fy + 120}px)) scale(.4)` }], { duration: 450, fill: 'forwards' }); await sleep(450); fl.remove(); return nextBall(); }
-        // Treffer: Bonus durch Ring
+        busy = true; ballFree = true; use(ball); const used = ball; drawBar(); Audio.swish(1);
+        const scale = ringScale(), lx = clamp(rx + vx * 230, 10, innerWidth - 10), ly = clamp(ry + vy * 230, 10, innerHeight - 10), dist = Math.hypot(lx - dogScr.x, ly - dogScr.y), hit = dist < dogScr.r * 1.2;
+        const fx = rx, fy = ry, tx = hit ? dogScr.x : lx, ty = hit ? dogScr.y : ly, mx = (fx + tx) / 2 + (curve ? (vx >= 0 ? -1 : 1) * 70 : 0), my = Math.min(fy, ty) - 80, d0 = 4.4, d1 = hit ? camDist() : 9;
+        await st.tween(0.64, k => { const u = 1 - k, sx = u * u * fx + 2 * u * k * mx + k * k * tx, sy = u * u * fy + 2 * u * k * my + k * k * ty; ballMesh.position.copy(at(sx, sy, d0 + (d1 - d0) * k)); ballMesh.rotation.x += 0.35; ballMesh.rotation.z += 0.12; }, G3.ease.lin);
+        if (!hit) { say('Daneben!', 'bad'); Audio.error(); const p0 = ballMesh.position.clone(); await st.tween(0.5, k => { ballMesh.position.set(p0.x, Math.max(0.2, p0.y - k * k * 6), p0.z - k * 2); }, G3.ease.lin); ballFree = false; return nextBall(); }
         let bonus = 1, txt = 'Treffer!'; if (scale < 0.36) { bonus = 1.9; txt = 'Ausgezeichnet!'; } else if (scale < 0.62) { bonus = 1.5; txt = 'Toll!'; } else if (scale < 0.92) { bonus = 1.2; txt = 'Gut!'; } if (curve) { bonus *= 1.15; txt = 'Kurvenwurf · ' + txt; }
-        say(txt, 'good'); Audio.thud(0.3, 140); ring.style.visibility = 'hidden';
-        dog.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.12)', opacity: 0 }], { duration: 300, fill: 'forwards', easing: 'ease-in' }); await sleep(260);
+        say(txt, 'good'); Audio.thud(0.3, 140); ring.style.visibility = 'hidden'; st.burst(center, '#ffffff', 16, 2.4, 0.6);
+        // Hund wird eingesaugt
+        ballMesh.position.copy(center); await st.tween(0.3, k => { dogM.g.scale.setScalar(Math.max(0.01, 1 - k)); dogM.g.position.y = k * (center.y * 0.6); }, G3.ease.out); dogM.gone = true; dogM.g.visible = false;
+        // Ball fällt und hüpft
+        await st.tween(0.7, k => { ballMesh.position.set(0, 0.16 + (center.y - 0.16) * (1 - G3.ease.bounce(k)), 0.4); ballMesh.rotation.z = k * 2; }, G3.ease.lin);
         const p = clamp((BASE[card.tier] || 0.05) * ITEMS[used].mult * bonus * (berry ? 1.5 : 1), 0.02, 0.97), ok = Math.random() < p, wob = ok ? 3 : 1 + Math.floor(Math.random() * 2);
-        for (let i = 0; i < wob; i++) { await sleep(450); fl.animate([{ transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(0)' }, { transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(-28deg)' }, { transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(24deg)' }, { transform: 'translate(calc(-50% + ' + (tx - fx) + 'px),calc(-50% + ' + (ty - fy) + 'px)) scale(.62) rotate(0)' }], { duration: 600, fill: 'forwards' }); Audio.thud(0.25, 100 + i * 20); await sleep(600); }
-        if (ok) { await sleep(250); caught(fl, tx, ty); return; }
+        for (let i = 0; i < wob; i++) { await st.sleep(420); Audio.thud(0.25, 100 + i * 20); await st.tween(0.6, k => { ballMesh.rotation.z = Math.sin(k * Math.PI * 4) * 0.5 * (1 - k * 0.3); ballMesh.position.x = Math.sin(k * Math.PI * 4) * 0.12; }, G3.ease.lin); ballMesh.position.x = 0; ballMesh.rotation.z = 0; }
+        if (ok) { await st.sleep(250); caught(); return; }
         // ausgebrochen
-        fl.remove(); dog.animate([{ transform: 'scale(.12)', opacity: 0 }, { transform: 'scale(1.1)', opacity: 1 }, { transform: 'scale(1)', opacity: 1 }], { duration: 380, fill: 'forwards', easing: 'cubic-bezier(.3,1.5,.5,1)' }); ring.style.visibility = ''; say('Ausgebrochen!', 'bad'); Audio.error(); await sleep(700);
+        st.burst(new THREE.Vector3(0, 0.5, 0.4), '#fca5a5', 24, 3, 0.8); ballMesh.visible = false; dogM.g.visible = true; dogM.gone = false; dogM.g.position.y = 0; dogM.g.scale.setScalar(0.01); dogM.mode = 'idle'; await st.tween(0.4, k => dogM.g.scale.setScalar(Math.max(0.01, k)), G3.ease.back);
+        ring.style.visibility = ''; ballFree = false; say('Ausgebrochen!', 'bad'); Audio.error(); await st.sleep(600);
         const flee = Math.random() < (0.1 + card.tier * 0.022) * (berry ? 0.5 : 1);
-        if (flee) { fled = true; say('Der Hund ist weggelaufen!', 'bad'); dog.animate([{ transform: 'translateX(0)', opacity: 1 }, { transform: 'translateX(70vw) scale(.7)', opacity: 0 }], { duration: 600, fill: 'forwards', easing: 'ease-in' }); Audio.whoosh(0.4, 0.2); await sleep(800); return end({ caught: false, fled: true }); }
+        if (flee) { say('Der Hund ist weggelaufen!', 'bad'); dogM.mode = 'run'; dogM.g.rotation.y = 1.6; Audio.whoosh(0.4, 0.2); await st.tween(0.7, k => { dogM.g.position.x = k * 14; }, G3.ease.lin); return end({ caught: false, fled: true }); }
         nextBall();
       }
       function nextBall() {
         const any = ['ball', 'great', 'ultra'].some(i => count(i) > 0);
         if (!any) { say('Keine Leckerli mehr!', 'bad'); setTimeout(() => end({ caught: false, fled: false, left: true }), 1200); return; }
         if (count(ball) <= 0) ball = ['ball', 'great', 'ultra'].find(i => count(i) > 0);
-        ballEl.style.visibility = ''; ballEl.style.transform = ''; ballEl.animate([{ transform: 'translateY(60px) scale(.5)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 350, easing: 'var(--ease-spring)' }); drawBar(); busy = false; hint.classList.remove('hide');
+        ballFree = false; drawBar(); busy = false; hint.classList.remove('hide');
       }
-      function caught(fl, tx, ty) {
-        over = true; const s = S(); Audio.fanfare(Math.min(12, 4 + card.tier)); vib([20, 40, 80]);
-        for (let i = 0; i < 10; i++) { const star = el('div', { class: 'go-star' }, '{i:sparkle}'); star.style.left = tx + 'px'; star.style.top = ty + 'px'; star.style.setProperty('--dx', (Math.cos(i / 10 * 6.283) * 110) + 'px'); star.style.setProperty('--dy', (Math.sin(i / 10 * 6.283) * 110) + 'px'); ov.append(star); setTimeout(() => star.remove(), 900); }
-        fl.animate([{ filter: 'brightness(1)' }, { filter: 'brightness(2.5)' }, { filter: 'brightness(1)' }], { duration: 700 });
+      function caught() {
+        over = true; ballFree = true; const s = S(); Audio.fanfare(Math.min(12, 4 + card.tier)); vib([20, 40, 80]);
+        st.burst(new THREE.Vector3(0, 0.6, 0.4), '#ffd24a', 50, 4.5, 1.2); st.shock(new THREE.Vector3(0, 0.1, 0.4), '#ffd24a', 5, 0.9);
+        ballMesh.visible = false; dogM.g.visible = true; dogM.gone = false; dogM.g.position.y = 0; dogM.g.rotation.y = 0.2; dogM.g.scale.setScalar(0.01); dogM.mode = 'happy'; st.tween(0.55, k => dogM.g.scale.setScalar(Math.max(0.01, k)), G3.ease.back);
+        ring.style.visibility = 'hidden'; hint.classList.add('hide');
         const isNew = !s.disc[card.id]; if (isNew) { s.disc[card.id] = Date.now(); s.stats.newCards++; Quests.progress('new', 1); }
         s.cards[card.id] = (s.cards[card.id] || 0) + 1; let ed = null; if (Math.random() < 0.012) { ed = 'shiny'; Ed.add(card.id, ed); }
         go.caught = (go.caught || 0) + 1; const xp = 40 + card.tier * 25 + (isNew ? 100 : 0); Economy.addXp(xp); Quests.progress('catch'); Ach.check();
         const coins = Math.round(10 + card.value * 0.03); Economy.add(coins, true, 'Fang-Bonus'); Store.save(true); Bus.emit('stateChanged'); Bus.emit('go');
+        const stt = Dogs.stats(card);
         setTimeout(() => {
-          const box = el('div', { class: 'bt-res win go-resbox' }, el('h2', {}, '{i:trophy} Gefangen!'), renderCard(card, { size: 'sm', owned: true, isNew, edition: ed, count: s.cards[card.id] > 1 ? s.cards[card.id] : 0, live: true }), el('div', { class: 'bt-rw' }, el('span', { class: 'price' }, '{i:coin} +' + fmt(coins)), el('span', {}, '{i:star} +' + xp + ' XP')), ed ? el('p', { class: 'good' }, '{i:sparkle} Glänzende Special Edition!') : null, el('button', { class: 'btn gold', onclick: () => end({ caught: true, card, isNew }) }, 'Weiter'));
+          const box = el('div', { class: 'bt-res win go-resbox' }, el('h2', {}, '{i:trophy} Gefangen!'), el('div', { class: 'go-caught-name' }, el('b', { class: 'tc' + card.tier }, card.name), isNew ? el('span', { class: 'new-pill' }, 'NEU im Album') : null, ed ? el('span', { class: 'new-pill', style: 'background:#7df9ff;color:#06323a' }, 'Glänzend!') : null), el('div', { class: 'dim', style: 'font-size:.85rem' }, `${RAR[card.tier].name} · LP ${stt.maxHp} · Angriff ${stt.atk} · Tempo ${stt.spd} · ${s.cards[card.id]}× im Besitz`), el('div', { class: 'bt-rw' }, el('span', { class: 'price' }, '{i:coin} +' + fmt(coins)), el('span', {}, '{i:star} +' + xp + ' XP')), el('button', { class: 'btn gold', onclick: () => end({ caught: true, card, isNew }) }, 'Weiter'));
           $o('#goRes').append(box); Audio.sparkle();
-        }, 900);
+        }, 1000);
       }
-      function end(r) { if (!ov.isConnected) return; ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running || GoMap.running ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
+      function end(r) { if (!ov.isConnected) return; window.removeEventListener('resize', camSetup); st.dispose(); ov.remove(); document.removeEventListener('keydown', onKey, true); if (!UI.modalOpen()) City.pause(false); Audio.setScene(City.running || GoMap.running ? 'city' : 'menu'); UI.refreshHud(); UI.flushToasts(); resolve(r); }
       const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); if (!busy && !over) end({ caught: false, fled: false, left: true }); } }; document.addEventListener('keydown', onKey, true);
-      drawBar(); say(`Ein wilder ${card.name.split(' (')[0]}!`);
+      ov._dbg = () => ({ dogScr, vw: innerWidth, vh: innerHeight }); drawBar(); say(`Ein wilder ${card.name.split(' (')[0]}!`);
       if (!['ball', 'great', 'ultra'].some(i => count(i) > 0)) { say('Du hast keine Leckerli!', 'bad'); setTimeout(() => end({ caught: false, fled: false, left: true }), 1500); }
     });
   }
@@ -2994,7 +3312,7 @@ const Go = (() => {
       let ok = false; const tm = Dogs.team(), avg = tm.reduce((s, c) => s + c.tier, 0) / tm.length, rnd = mulberry32(hashStr(a.id + todayStr()));
       const foes = []; for (let i = 0; i < 3; i++) { const t = clamp(Math.round(avg + (i === 2 ? 1 : 0) + (rnd() - 0.5) * 1.5), 1, 9), arr = CardDB.byTier[t]; foes.push(arr[Math.floor(rnd() * arr.length)]); }
       const tp = Dogs.teamPower(), ep = foes.reduce((s, c) => s + Dogs.power(c), 0), hint = tp / ep > 1.25 ? 'Gute Chancen' : tp / ep > 0.8 ? 'Ausgeglichen' : 'Sehr riskant';
-      const body = el('div', { class: 'col' }, el('p', { style: 'margin:0' }, `Arena-Wächter ${a.guard} verteidigt diese Arena mit 3 Hunden.`), el('div', { class: 'row', style: 'justify-content:center;gap:8px' }, ...foes.map(c => renderCard(c, { size: 'xs', owned: true, odds: false }))), el('p', { class: 'dim', style: 'margin:0' }, `Dein Team: Stärke ${tp} · Gegner: ${ep} · ${hint}. Sieg gibt Coins, XP und Leckerli.`));
+      const body = el('div', { class: 'col' }, el('p', { style: 'margin:0' }, `Arena-Wächter ${a.guard} verteidigt diese Arena mit 3 Hunden.`), el('div', { class: 'row', style: 'justify-content:center;gap:8px' }, ...foes.map(c => el('div', { class: 'foe-th', style: `--c:${RAR[c.tier].color}` }, G3.thumb(c, 84), el('small', {}, c.name.split(' (')[0])))), el('p', { class: 'dim', style: 'margin:0' }, `Dein Team: Stärke ${tp} · Gegner: ${ep} · ${hint}. Sieg gibt Coins, XP und Leckerli.`));
       const m = UI.modal({ title: '{i:flag} ' + a.name, body, onClose: () => setTimeout(async () => { if (!ok) return res(null); const r = await Dogs.battle(foes[0], { id: 'arena', name: 'Arena', n: 3, mult: 2.2, hp: 1.05 }, { foes, noRecruit: true, label: a.name }); if (r && r.won) { g().arenas[a.id] = Date.now() + ARENA_CD; give('great', 2); if (Math.random() < 0.35) give('ultra', 1); give('ball', 5); Economy.addXp(60); UI.toast('{i:flag} Arena erobert! +2 Super-Leckerli, +5 Leckerli', 'gold'); Store.save(true); } res(r); }), actions: [{ label: 'Team ändern', cls: 'sec', keep: true, onclick: () => Dogs.teamModal() }, { label: '{i:sword} Kämpfen', cls: 'gold', onclick: () => { ok = true; } }] });
     });
   }
@@ -3005,32 +3323,23 @@ const Go = (() => {
   return { ITEMS, ricon, count, give, use, spawnCard, pick, encounter, bagModal, spin, stopReady, stopLeft, arena, arenaReady, arenaLeft, walkBonus, g };
 })();
 
-/* ------------------------------ CITY GO · STANDORT (echte Karte) ------------------------------ */
+/* ------------------------------ CITY GO · STANDORT (3D-Karte mit echtem Standort) ------------------------------ */
 const GoMap = (() => {
-  const CELL = 120, DOG_RANGE = 75, STOP_RANGE = 45, ARENA_RANGE = 60, ZOOM = 18, SCALE = 2.4;   // SCALE = Pixel pro Meter
+  const CELL = 120, DOG_RANGE = 75, STOP_RANGE = 45, ARENA_RANGE = 60, ZOOM = 18, BLK = 60;
   const DEMO = { lat: 52.5163, lon: 13.3777 };
-  let ov = null, cv = null, cx = null, raf = 0, running = false, geo = null, watch = null, mode = 'intro', tilesOn = true, W = 0, H = 0, dpr = 1;
-  let pos = { x: 0, z: 0 }, tgt = null, heading = 0, acc = 0, lastT = 0, walkAcc = 0, status = '', lureUntil = 0, hits = [], gpsErr = '';
-  const tiles = new Map(); let tileOk = 0, tileFail = 0; const imgs = new Map();
+  let ov = null, st = null, running = false, geo = null, watch = null, mode = 'intro', tilesOn = true, lureUntil = 0;
+  let pos = { x: 0, z: 0 }, tgt = null, heading = 0, acc = 0, walkAcc = 0, camYaw = 0, camDist = 58, geoOff = { x: 0, z: 0 }, speedNow = 0;
+  let tileOk = 0, tileFail = 0, avatar = null, pet = null, rangeRing = null, groundFallback = null, hudT = 0, loader = null;
+  const objs = new Map(), blocks = new Map(), tileMs = new Map();
   const R2D = 180 / Math.PI;
-
   const toXY = (lat, lon) => ({ x: (lon - geo.lon) * 111320 * Math.cos(geo.lat / R2D), z: -(lat - geo.lat) * 111320 });
   const tileLon = (x, z) => x / Math.pow(2, z) * 360 - 180, tileLat = (y, z) => { const n = Math.PI - 2 * Math.PI * y / Math.pow(2, z); return R2D * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n))); };
   const lon2tile = (lon, z) => Math.floor((lon + 180) / 360 * Math.pow(2, z)), lat2tile = (lat, z) => Math.floor((1 - Math.log(Math.tan(lat / R2D) + 1 / Math.cos(lat / R2D)) / Math.PI) / 2 * Math.pow(2, z));
   const toLL = (x, z) => ({ lat: geo.lat - z / 111320, lon: geo.lon + x / (111320 * Math.cos(geo.lat / R2D)) });
 
-  function getTile(z, x, y) {
-    const k = z + '/' + x + '/' + y; let t = tiles.get(k); if (t) return t;
-    t = { img: new Image(), ok: false, fail: false }; t.img.onload = () => { t.ok = true; tileOk++; }; t.img.onerror = () => { t.fail = true; tileFail++; };
-    t.img.src = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`; tiles.set(k, t);
-    if (tiles.size > 140) { const first = tiles.keys().next().value; tiles.delete(first); }
-    return t;
-  }
-
-  /* ---------- Welt: deterministisch aus Zellen ---------- */
+  /* ---------- Welt: deterministisch aus Zellen (ortsgebunden) ---------- */
   function cellObjects(ci, cj, now) {
-    const out = [], r = mulberry32(hashStr('gm' + ci + ',' + cj)), o = { x: (ci + 0.15 + r() * 0.7) * CELL, z: (cj + 0.15 + r() * 0.7) * CELL };
-    const kind = r();
+    const out = [], r = mulberry32(hashStr('gm' + ci + ',' + cj)), o = { x: (ci + 0.15 + r() * 0.7) * CELL, z: (cj + 0.15 + r() * 0.7) * CELL }, kind = r();
     if (kind < 0.17) out.push({ t: 'stop', id: `gms_${ci}_${cj}`, x: o.x, z: o.z });
     else if (kind < 0.2) out.push({ t: 'arena', id: `gma_${ci}_${cj}`, x: o.x, z: o.z, name: ['Rathaus-Arena', 'Park-Arena', 'Brunnen-Arena', 'Hügel-Arena'][Math.floor(r() * 4)], guard: ['Bello', 'Luna', 'Rocco', 'Maja'][Math.floor(r() * 4)] });
     const slotMs = 12 * 60 * 1000, off = Math.floor(r() * slotMs), slot = Math.floor((now + off) / slotMs), rr = mulberry32(hashStr(`gd${ci},${cj},${slot}`));
@@ -3040,113 +3349,140 @@ const GoMap = (() => {
   }
   function worldNear(px, pz) {
     const now = Date.now(), ci0 = Math.floor((px + geoOff.x) / CELL), cj0 = Math.floor((pz + geoOff.z) / CELL), list = [];
-    for (let i = ci0 - 3; i <= ci0 + 3; i++) for (let j = cj0 - 3; j <= cj0 + 3; j++) cellObjects(i, j, now).forEach(o => list.push(Object.assign({}, o, { x: o.x - geoOff.x, z: o.z - geoOff.z })));
+    for (let i = ci0 - 2; i <= ci0 + 2; i++) for (let j = cj0 - 2; j <= cj0 + 2; j++) cellObjects(i, j, now).forEach(o => list.push(Object.assign({}, o, { x: o.x - geoOff.x, z: o.z - geoOff.z })));
     return list;
   }
-  let geoOff = { x: 0, z: 0 };                // Weltkoordinaten sind an die Geo-Position gebunden (Origin -> Meter ab Lat/Lon 0)
 
-  /* ---------- Zeichnen ---------- */
-  function dogImg(card) {
-    let e = imgs.get(card.id); if (e) return e;
-    e = new Image(); e.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DogArt.svg(card).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" ')); imgs.set(card.id, e); if (imgs.size > 80) imgs.delete(imgs.keys().next().value); return e;
+  /* ---------- 3D-Objekte ---------- */
+  function makeStopObj(o) {
+    const g = new THREE.Group(), GEO = G3.GEO;
+    const base = new THREE.Mesh(GEO.cyl, G3.M('#2b6cb0')); base.scale.set(1.5, 3.6, 1.5); base.position.y = 1.8; g.add(base);
+    const dm = new THREE.MeshLambertMaterial({ color: G3.lin('#38bdf8'), emissive: G3.lin('#0a4a7a') }), disc = new THREE.Mesh(GEO.cyl, dm); disc.scale.set(3, 0.35, 3); disc.position.y = 5.2; g.add(disc);
+    const top = new THREE.Mesh(GEO.sphLo, dm); top.scale.setScalar(0.9); top.position.y = 6.3; g.add(top);
+    const bm = new THREE.MeshBasicMaterial({ color: G3.lin('#38bdf8'), transparent: true, opacity: 0.18, depthWrite: false, toneMapped: false }), beam = new THREE.Mesh(GEO.cyl, bm); beam.scale.set(1.0, 60, 1.0); beam.position.y = 30; g.add(beam);
+    const lab = G3.sprite('KNOCHEN-STOP', { w: 512, h: 96, bg: 'rgba(12,60,110,.92)', border: '#38bdf8', fs: 46, sw: 8 }); lab.position.y = 8.6; g.add(lab);
+    const hit = new THREE.Mesh(GEO.sphLo, new THREE.MeshBasicMaterial({ visible: false })); hit.scale.setScalar(5); hit.position.y = 4; hit.userData.obj = o; g.add(hit);
+    return { g, hit, disc, dm, bm, lab, rdy: true, kind: 'stop' };
   }
-  const sx = x => W / 2 + (x - pos.x) * SCALE, sy = z => H * 0.6 + (z - pos.z) * SCALE;
-  function drawMap(t) {
-    cx.fillStyle = '#cfe5c1'; cx.fillRect(0, 0, W, H);
-    if (tilesOn && tileOk + tileFail < 6 || tileOk > 0) {
-      const ll0 = toLL(pos.x - W / 2 / SCALE, pos.z - H * 0.6 / SCALE), ll1 = toLL(pos.x + W / 2 / SCALE, pos.z + H * 0.4 / SCALE);
-      const x0 = lon2tile(ll0.lon, ZOOM), x1 = lon2tile(ll1.lon, ZOOM), y0 = lat2tile(ll0.lat, ZOOM), y1 = lat2tile(ll1.lat, ZOOM);
-      for (let tx = x0; tx <= x1; tx++) for (let ty = y0; ty <= y1; ty++) {
-        const tl = getTile(ZOOM, tx, ty); if (!tl.ok) continue;
-        const a = toXY(tileLat(ty, ZOOM), tileLon(tx, ZOOM)), b = toXY(tileLat(ty + 1, ZOOM), tileLon(tx + 1, ZOOM));
-        cx.drawImage(tl.img, sx(a.x), sy(a.z), (b.x - a.x) * SCALE + 0.6, (b.z - a.z) * SCALE + 0.6);
-      }
-    } else {
-      // Fallback: stilisierte Karte mit Straßenraster
-      const step = 60, gx0 = Math.floor((pos.x - W / 2 / SCALE) / step), gx1 = Math.ceil((pos.x + W / 2 / SCALE) / step), gz0 = Math.floor((pos.z - H * 0.6 / SCALE) / step), gz1 = Math.ceil((pos.z + H * 0.4 / SCALE) / step);
-      for (let i = gx0; i <= gx1; i++) for (let j = gz0; j <= gz1; j++) { const r = mulberry32(hashStr('bk' + i + ',' + j)), v = r(); cx.fillStyle = v < 0.2 ? '#a8d8f0' : v < 0.45 ? '#b6dca0' : '#e7e1d2'; cx.fillRect(sx(i * step) + 6, sy(j * step) + 6, step * SCALE - 12, step * SCALE - 12); }
-      cx.strokeStyle = '#fff'; cx.lineWidth = 7; cx.lineCap = 'round';
-      for (let i = gx0; i <= gx1; i++) { cx.beginPath(); cx.moveTo(sx(i * step), 0); cx.lineTo(sx(i * step), H); cx.stroke(); }
-      for (let j = gz0; j <= gz1; j++) { cx.beginPath(); cx.moveTo(0, sy(j * step)); cx.lineTo(W, sy(j * step)); cx.stroke(); }
-    }
-    // Tageszeit
-    const hr = new Date().getHours() + new Date().getMinutes() / 60, night = hr < 5.5 || hr > 21 ? 0.42 : hr < 7 ? 0.2 : hr > 19 ? 0.22 : 0; if (night) { cx.fillStyle = `rgba(10,14,50,${night})`; cx.fillRect(0, 0, W, H); }
+  function makeArenaObj(o) {
+    const g = new THREE.Group(), GEO = G3.GEO;
+    const plat = new THREE.Mesh(GEO.cyl, G3.M('#9aa3b2')); plat.scale.set(7, 0.7, 7); plat.position.y = 0.35; g.add(plat);
+    const ring = new THREE.Mesh(GEO.cyl, G3.M('#d6dae3')); ring.scale.set(5.6, 0.8, 5.6); ring.position.y = 0.4; g.add(ring);
+    const pil = new THREE.Mesh(GEO.cyl, G3.M('#f1f5f9')); pil.scale.set(0.9, 9, 0.9); pil.position.y = 5; g.add(pil);
+    const fm = new THREE.MeshLambertMaterial({ color: G3.lin('#ef4444'), emissive: G3.lin('#400a0a'), side: THREE.DoubleSide }), flag = new THREE.Mesh(GEO.box, fm); flag.scale.set(4, 2.4, 0.15); flag.position.set(2.4, 8.4, 0); g.add(flag);
+    const bm = new THREE.MeshBasicMaterial({ color: G3.lin('#ef4444'), transparent: true, opacity: 0.16, depthWrite: false, toneMapped: false }), beam = new THREE.Mesh(GEO.cyl, bm); beam.scale.set(1.2, 60, 1.2); beam.position.y = 30; g.add(beam);
+    const lab = G3.sprite([o.name, 'Hunde-Arena'], { w: 512, h: 128, bg: 'rgba(90,16,16,.92)', border: '#fca5a5', fs: 46, sw: 9 }); lab.position.y = 12; g.add(lab);
+    const hit = new THREE.Mesh(GEO.sphLo, new THREE.MeshBasicMaterial({ visible: false })); hit.scale.setScalar(8); hit.position.y = 4; hit.userData.obj = o; g.add(hit);
+    return { g, hit, fm, bm, flag, lab, rdy: true, kind: 'arena' };
   }
-  function drawObjects(t) {
-    hits = []; const list = worldNear(pos.x, pos.z);
-    list.sort((a, b) => a.z - b.z);
+  function makeDogObj(o) {
+    const m = G3.makeCardDog(o.card, { scale: 2.4 }), rc = RAR[o.card.tier].color, GEO = G3.GEO, g = m.g;
+    const tag = G3.sprite([o.card.name.split(' (')[0], RAR[o.card.tier].name + ' · WP ' + Dogs.power(o.card)], { w: 512, h: 128, bg: 'rgba(70,10,20,.9)', border: rc, fs: 42, sw: 8 }); tag.position.y = m.headY + 3.4; g.add(tag);
+    const ring = new THREE.Mesh(GEO.ring, new THREE.MeshBasicMaterial({ color: G3.lin('#ef4444'), transparent: true, opacity: 0.85, depthWrite: false, toneMapped: false, side: THREE.DoubleSide })); ring.scale.set(3.6, 1, 3.6); ring.position.y = 0.1; g.add(ring);
+    const hit = new THREE.Mesh(GEO.sphLo, new THREE.MeshBasicMaterial({ visible: false })); hit.scale.setScalar(4.2); hit.position.y = 2; hit.userData.obj = o; g.add(hit);
+    return { g, hit, m, ring, tag, kind: 'dog', yaw: Math.random() * 6.28 };
+  }
+  function dropObj(e) { st.remove(e.g); e.g.traverse(ob => { if (ob.isSprite && ob.material && ob.material.map) ob.material.map.dispose(); }); if (e.m) e.m.dispose(); }
+  function syncObjects() {
+    const list = worldNear(pos.x, pos.z), seen = new Set();
     for (const o of list) {
-      const x = sx(o.x), y = sy(o.z); if (x < -60 || x > W + 60 || y < -80 || y > H + 60) continue; const d = Math.hypot(o.x - pos.x, o.z - pos.z);
-      if (o.t === 'dog') {
-        const near = d <= DOG_RANGE, bob = near ? Math.sin(t * 5 + o.x) * 3 : 0, rc = RAR[o.card.tier].color, r = 27;
-        cx.save(); cx.translate(x, y - r - 4 + bob); cx.shadowColor = rc; cx.shadowBlur = near ? 18 : 6; cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(0, 0, r, 0, 6.283); cx.fill(); cx.shadowBlur = 0;
-        cx.save(); cx.beginPath(); cx.arc(0, 0, r - 3, 0, 6.283); cx.clip(); cx.fillStyle = RAR[o.card.tier].color + '55'; cx.fillRect(-r, -r, r * 2, r * 2); const im = dogImg(o.card); if (im.complete && im.naturalWidth) cx.drawImage(im, -r + 1, -r + 4, r * 2 - 2, r * 2 - 2); cx.restore();
-        cx.lineWidth = 4; cx.strokeStyle = rc; cx.beginPath(); cx.arc(0, 0, r, 0, 6.283); cx.stroke(); cx.restore();
-        cx.fillStyle = rc; cx.beginPath(); cx.moveTo(x - 7, y - 8 + bob); cx.lineTo(x + 7, y - 8 + bob); cx.lineTo(x, y + 2 + bob); cx.fill();
-        if (!near) { cx.fillStyle = 'rgba(15,12,45,.8)'; cx.font = '700 11px Fredoka,sans-serif'; cx.textAlign = 'center'; const tx = Math.round(d) + ' m', w = cx.measureText(tx).width + 10; cx.fillRect(x - w / 2, y + 4, w, 16); cx.fillStyle = '#fff'; cx.fillText(tx, x, y + 16); }
-        hits.push({ o, x, y: y - r - 4, r: r + 8 });
-      } else if (o.t === 'stop') {
-        const rdy = Go.stopReady(o.id), near = d <= STOP_RANGE, col = rdy ? '#38bdf8' : '#a78bfa', bob = Math.sin(t * 2 + o.x) * 2;
-        cx.save(); cx.translate(x, y); cx.globalAlpha = 0.35; cx.fillStyle = col; cx.beginPath(); cx.ellipse(0, 0, 26 + (near ? Math.sin(t * 4) * 3 : 0), 10, 0, 0, 6.283); cx.fill(); cx.globalAlpha = 1;
-        cx.fillStyle = '#1e3a8a'; cx.fillRect(-5, -26, 10, 26); cx.translate(0, -34 + bob); cx.shadowColor = col; cx.shadowBlur = 14; cx.fillStyle = col; cx.beginPath(); cx.arc(0, 0, 17, 0, 6.283); cx.fill(); cx.shadowBlur = 0; cx.strokeStyle = '#fff'; cx.lineWidth = 3; cx.stroke();
-        cx.strokeStyle = '#fff'; cx.lineWidth = 4; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(-6, 6); cx.lineTo(6, -6); cx.stroke(); cx.fillStyle = '#fff'; [[-8, 4], [-4, 8], [8, -4], [4, -8]].forEach(([a, b]) => { cx.beginPath(); cx.arc(a, b, 3.2, 0, 6.283); cx.fill(); }); cx.restore();
-        hits.push({ o, x, y: y - 34, r: 28 });
-      } else {
-        const rdy = Go.arenaReady(o.id), near = d <= ARENA_RANGE, col = rdy ? '#ef4444' : '#facc15';
-        cx.save(); cx.translate(x, y); cx.globalAlpha = 0.3; cx.fillStyle = col; cx.beginPath(); cx.ellipse(0, 0, 36, 13, 0, 0, 6.283); cx.fill(); cx.globalAlpha = 1;
-        cx.fillStyle = '#e5e7eb'; cx.fillRect(-4, -54, 8, 54); cx.fillStyle = col; cx.shadowColor = col; cx.shadowBlur = near ? 16 : 6; cx.beginPath(); cx.moveTo(4, -54); cx.lineTo(34 + Math.sin(t * 3) * 3, -46); cx.lineTo(4, -36); cx.closePath(); cx.fill(); cx.shadowBlur = 0;
-        cx.font = '700 11px Fredoka,sans-serif'; cx.textAlign = 'center'; cx.fillStyle = 'rgba(15,12,45,.85)'; const w = cx.measureText(o.name).width + 12; cx.fillRect(-w / 2, 6, w, 17); cx.fillStyle = '#fff'; cx.fillText(o.name, 0, 18); cx.restore();
-        hits.push({ o, x, y: y - 36, r: 34 });
-      }
+      seen.add(o.id); let e = objs.get(o.id);
+      if (!e) { e = o.t === 'dog' ? makeDogObj(o) : o.t === 'stop' ? makeStopObj(o) : makeArenaObj(o); e.o = o; e.g.position.set(o.x, 0, o.z); st.add(e.g); objs.set(o.id, e); if (e.kind === 'dog') e.g.rotation.y = e.yaw; }
+    }
+    for (const [id, e] of objs) if (!seen.has(id)) { dropObj(e); objs.delete(id); }
+  }
+  function updateObjects(dt, t) {
+    for (const [id, e] of objs) {
+      const o = e.o, d = Math.hypot(o.x - pos.x, o.z - pos.z); e.g.visible = d < 280;
+      if (e.kind === 'dog') { const near = d <= DOG_RANGE; e.m.update(t, near ? 'happy' : 'idle', 1); e.ring.material.opacity = near ? 0.95 : 0.4; e.ring.scale.setScalar(3.6 + Math.sin(t * 4) * (near ? 0.3 : 0.05)); e.tag.visible = d < 140; const f = clamp(d / 70, 0.7, 1.5); e.tag.scale.set(e.tag.userData.base[0] * f, e.tag.userData.base[1] * f, 1); }
+      else if (e.kind === 'stop') { e.disc.rotation.y += dt * 2.4; e.disc.position.y = 5.2 + Math.sin(t * 2 + o.x) * 0.2; const r = Go.stopReady(o.id); if (r !== e.rdy) { e.rdy = r; e.dm.color.copy(new THREE.Color(r ? '#38bdf8' : '#a78bfa').convertSRGBToLinear()); e.dm.emissive.copy(new THREE.Color(r ? '#0a4a7a' : '#2a1850').convertSRGBToLinear()); e.bm.color.copy(e.dm.color); e.bm.opacity = r ? 0.18 : 0.06; } e.lab.visible = d < 160; }
+      else { e.flag.rotation.y = Math.sin(t * 1.5 + o.x) * 0.25; const r = Go.arenaReady(o.id); if (r !== e.rdy) { e.rdy = r; e.fm.color.copy(new THREE.Color(r ? '#ef4444' : '#facc15').convertSRGBToLinear()); e.bm.color.copy(e.fm.color); } e.lab.visible = d < 200; }
     }
   }
-  function drawPlayer(t) {
-    const x = W / 2 + 0, y = H * 0.6; const px = sx(pos.x), py = sy(pos.z);
-    cx.save(); cx.translate(px, py);
-    cx.fillStyle = 'rgba(56,189,248,.10)'; cx.strokeStyle = 'rgba(56,189,248,.5)'; cx.lineWidth = 2; cx.beginPath(); cx.arc(0, 0, STOP_RANGE * SCALE, 0, 6.283); cx.fill(); cx.setLineDash([6, 6]); cx.stroke(); cx.setLineDash([]);
-    if (acc > 0 && mode === 'gps') { cx.fillStyle = 'rgba(59,130,246,.12)'; cx.beginPath(); cx.arc(0, 0, Math.min(acc, 80) * SCALE, 0, 6.283); cx.fill(); }
-    cx.rotate(heading); cx.fillStyle = 'rgba(255,255,255,.9)'; cx.beginPath(); cx.moveTo(0, -30); cx.lineTo(10, -14); cx.lineTo(-10, -14); cx.closePath(); cx.fill(); cx.rotate(-heading);
-    cx.shadowColor = '#000a'; cx.shadowBlur = 8; cx.fillStyle = S().settings.color || '#ff7a45'; cx.beginPath(); cx.arc(0, 0, 15, 0, 6.283); cx.fill(); cx.shadowBlur = 0; cx.lineWidth = 4; cx.strokeStyle = '#fff'; cx.stroke();
-    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(0, -3, 4.5, 0, 6.283); cx.fill(); cx.beginPath(); cx.ellipse(0, 7, 7, 4.5, 0, 0, 6.283); cx.fill();
-    cx.restore();
-    // Begleithund
-    const bx = px - Math.sin(heading) * 24 + 14, by = py + Math.cos(heading) * 24 + 8; cx.fillStyle = '#c58b4e'; cx.strokeStyle = '#fff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(bx, by + Math.sin(t * 6) * 1.5, 8, 0, 6.283); cx.fill(); cx.stroke();
+
+  /* ---------- Boden: Kartenkacheln oder Ersatz-Stadt ---------- */
+  function setupGround() {
+    const tex = G3.canvasTex(256, 256, (x, w, h) => { x.fillStyle = '#b9dca0'; x.fillRect(0, 0, w, h); x.fillStyle = '#d8d2c0'; x.fillRect(22, 22, w - 44, h - 44); x.fillStyle = '#9a9aa4'; x.fillRect(0, 0, w, 22); x.fillRect(0, h - 22, w, 22); x.fillRect(0, 0, 22, h); x.fillRect(w - 22, 0, 22, h); }, 1);
+    const SZ = 960; tex.repeat.set(SZ / BLK, SZ / BLK); tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    groundFallback = new THREE.Mesh(new THREE.PlaneGeometry(SZ, SZ).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ map: tex })); groundFallback.position.y = -0.06; groundFallback.userData.own = true; st.add(groundFallback);
+    rangeRing = new THREE.Mesh(new THREE.RingGeometry(STOP_RANGE - 0.5, STOP_RANGE, 72).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: G3.lin('#38bdf8'), transparent: true, opacity: 0.55, depthWrite: false, toneMapped: false })); rangeRing.position.y = 0.25; rangeRing.userData.own = true; st.add(rangeRing);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(STOP_RANGE, 64).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: G3.lin('#38bdf8'), transparent: true, opacity: 0.07, depthWrite: false, toneMapped: false })); rangeRing.add(disc);
+    loader = new THREE.TextureLoader(); loader.setCrossOrigin('anonymous');
   }
-  function frame(now) {
-    if (!running) return; raf = requestAnimationFrame(frame); const dt = Math.min(0.1, (now - lastT) / 1000 || 0.016); lastT = now; const t = now / 1000;
-    if (mode === 'gps' || mode === 'demo') {
-      if (tgt) {
-        const dx = tgt.x - pos.x, dz = tgt.z - pos.z, d = Math.hypot(dx, dz);
-        if (d > 0.3) { const sp = mode === 'demo' ? 9 : Math.max(2, d * 1.6), st = Math.min(d, sp * dt); pos.x += dx / d * st; pos.z += dz / d * st; heading = Math.atan2(dx, -dz); if (st > 0.0001) moved(st); }
-        else if (mode === 'demo') tgt = null;
+  function ensureTiles() {
+    if (!tilesOn || !geo) return; if (tileOk === 0 && tileFail >= 8) return;
+    const ll0 = toLL(pos.x - 130, pos.z - 130), ll1 = toLL(pos.x + 130, pos.z + 130), x0 = lon2tile(ll0.lon, ZOOM), x1 = lon2tile(ll1.lon, ZOOM), y0 = lat2tile(ll0.lat, ZOOM), y1 = lat2tile(ll1.lat, ZOOM);
+    for (let tx = x0; tx <= x1; tx++) for (let ty = y0; ty <= y1; ty++) {
+      const k = tx + '/' + ty; if (tileMs.has(k)) continue;
+      const a = toXY(tileLat(ty, ZOOM), tileLon(tx, ZOOM)), b = toXY(tileLat(ty + 1, ZOOM), tileLon(tx + 1, ZOOM)); const rec = { mesh: null, x: (a.x + b.x) / 2, z: (a.z + b.z) / 2 }; tileMs.set(k, rec);
+      loader.load(`https://tile.openstreetmap.org/${ZOOM}/${tx}/${ty}.png`, t => { if (!running || !st) return; tileOk++; t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); m.scale.set(b.x - a.x + 0.15, 1, b.z - a.z + 0.15); m.position.set(rec.x, 0, rec.z); rec.mesh = m; st.add(m); }, undefined, () => { tileFail++; });
+    }
+    for (const [k, rec] of tileMs) if (Math.hypot(rec.x - pos.x, rec.z - pos.z) > 420) { if (rec.mesh) { st.remove(rec.mesh); rec.mesh.material.map.dispose(); rec.mesh.geometry.dispose(); rec.mesh.material.dispose(); } tileMs.delete(k); }
+  }
+  function syncBlocks() {
+    const noTiles = !tilesOn || (tileOk === 0 && tileFail >= 8), want = new Set();
+    if (groundFallback) { groundFallback.position.x = Math.round(pos.x / BLK) * BLK; groundFallback.position.z = Math.round(pos.z / BLK) * BLK; }
+    if (noTiles) {
+      const bx0 = Math.floor((pos.x - 140) / BLK), bx1 = Math.floor((pos.x + 140) / BLK), bz0 = Math.floor((pos.z - 140) / BLK), bz1 = Math.floor((pos.z + 140) / BLK);
+      for (let i = bx0; i <= bx1; i++) for (let j = bz0; j <= bz1; j++) {
+        const k = i + ',' + j; want.add(k); if (blocks.has(k)) continue;
+        const r = mulberry32(hashStr('bd' + Math.round(i + geoOff.x / BLK) + ',' + Math.round(j + geoOff.z / BLK))), mb = new G3.MB(), pal = ['#f4b6a1', '#f6e3a1', '#b9d9a6', '#a9c8f0', '#e4bff0', '#f3c9a3', '#e3ddd3'], n = r() < 0.25 ? 0 : 1 + Math.floor(r() * 3);
+        for (let q = 0; q < n; q++) { const w = 12 + r() * 16, d = 12 + r() * 16, h = 6 + r() * 14, x = i * BLK + 11 + r() * (BLK - 22 - w) + w / 2, z = j * BLK + 11 + r() * (BLK - 22 - d) + d / 2; mb.add(G3.GEO.box, G3.mtx(x, h / 2, z, w, h, d), pal[Math.floor(r() * pal.length)]).add(G3.GEO.box, G3.mtx(x, h + 0.5, z, w + 1.2, 1, d + 1.2), r() < 0.5 ? '#b4442a' : '#475569'); }
+        if (n === 0) for (let q = 0; q < 3; q++) { const x = i * BLK + 12 + r() * (BLK - 24), z = j * BLK + 12 + r() * (BLK - 24), s = 1.5 + r(); mb.add(G3.GEO.cyl6, G3.mtx(x, 1.5 * s, z, 0.35 * s, 3 * s, 0.35 * s), '#7a5230').add(G3.GEO.ico, G3.mtx(x, 4.4 * s, z, 1.8 * s, 1.8 * s, 1.8 * s), '#4caf50'); }
+        const mesh = mb.build(G3.vcMat(), false); st.add(mesh); blocks.set(k, mesh);
       }
     }
-    if (W) { drawMap(t); if (mode !== 'intro') { drawObjects(t); drawPlayer(t); } }
-    if ((frame.hudT = (frame.hudT || 0) - dt) <= 0) { frame.hudT = 0.5; drawHud(); }
+    for (const [k, m] of blocks) if (!want.has(k)) { st.remove(m); m.geometry.dispose(); blocks.delete(k); }
   }
-  function moved(st) { const go = Go.g(); if (st < 30) { go.meters = (go.meters || 0) + st; walkAcc += st; if (walkAcc >= 150) { walkAcc -= 150; if (Go.walkBonus()) UI.floatText('+1 Leckerli', '#c98a4b', '#mapInfo'); } } }
+
+  /* ---------- Hauptschleife ---------- */
+  function tickMove(dt) {
+    if (!tgt) return; const dx = tgt.x - pos.x, dz = tgt.z - pos.z, d = Math.hypot(dx, dz);
+    if (d > 0.25) { const sp = mode === 'demo' ? 10 : Math.max(2.5, d * 1.8), stp = Math.min(d, sp * dt); pos.x += dx / d * stp; pos.z += dz / d * stp; heading = Math.atan2(dx, dz); speedNow = stp / dt; if (stp > 0) moved(stp); } else { speedNow = 0; if (mode === 'demo') tgt = null; }
+  }
+  function moved(stp) { const go = Go.g(); if (stp < 30) { go.meters = (go.meters || 0) + stp; walkAcc += stp; if (walkAcc >= 150) { walkAcc -= 150; if (Go.walkBonus()) UI.floatText('+1 Leckerli', '#c98a4b', '#mapInfo'); } } }
+  let syncT = 0;
+  function onFrame(dt, t) {
+    if (!running) return; speedNow *= 0.9; if (mode === 'gps' || mode === 'demo') tickMove(dt);
+    const pitch = 0.92, cy = Math.sin(pitch) * camDist, cr = Math.cos(pitch) * camDist;
+    st.camera.position.set(pos.x + Math.sin(camYaw) * cr, cy, pos.z + Math.cos(camYaw) * cr); st.camera.lookAt(pos.x - Math.sin(camYaw) * 6, 0, pos.z - Math.cos(camYaw) * 6);
+    if (avatar) { const moving = speedNow > 0.8; G3.walkAnim(avatar, t * 9, moving ? 1 : 0); avatar.g.position.set(pos.x, Math.abs(Math.sin(t * 9)) * (moving ? 0.12 : 0), pos.z); let dy = heading - avatar.g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); avatar.g.rotation.y += dy * Math.min(1, dt * 8); }
+    if (pet) { const bx = pos.x - Math.sin(heading) * 3.4 + Math.cos(heading) * 2.4, bz = pos.z - Math.cos(heading) * 3.4 - Math.sin(heading) * 2.4, dx = bx - pet.g.position.x, dz = bz - pet.g.position.z, d = Math.hypot(dx, dz); const sp = d > 14 ? 40 : Math.min(14, d * 3.5); if (d > 0.3) { pet.g.position.x += dx / d * Math.min(d, sp * dt); pet.g.position.z += dz / d * Math.min(d, sp * dt); let dy = Math.atan2(dx, dz) - pet.g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); pet.g.rotation.y += dy * Math.min(1, dt * 10); } pet.update(t, d > 0.6 ? 'run' : 'idle', clamp(d / 3, 0, 1)); }
+    if (rangeRing) rangeRing.position.set(pos.x, 0.25, pos.z);
+    if ((syncT -= dt) <= 0) { syncT = 0.8; syncObjects(); ensureTiles(); syncBlocks(); }
+    updateObjects(dt, t);
+    const hr = new Date().getHours() + new Date().getMinutes() / 60, day = hr > 7 && hr < 19 ? 1 : hr > 5.5 && hr < 21 ? 0.55 : 0.2;
+    st.hemi.intensity = 0.4 + 0.6 * day; st.sun.intensity = 0.2 + 0.95 * day; st.scene.background.setRGB(0.62, 0.83, 1).multiplyScalar(0.2 + 0.8 * day);
+    if ((hudT -= dt) <= 0) { hudT = 0.5; drawHud(); }
+  }
 
   /* ---------- HUD ---------- */
   function drawHud() {
-    if (!ov) return; const s = S(), info = $('#mapInfo', ov); const xpP = clamp(s.xp / Economy.xpNeed(s.level) * 100, 0, 100);
+    if (!ov) return; const s = S(), info = $('#mapInfo', ov), xpP = clamp(s.xp / Economy.xpNeed(s.level) * 100, 0, 100);
     info.innerHTML = `<span class="c-coin">{i:coin}${fmtShort(s.coins)}</span><span>{i:star} Lv ${s.level}</span><span class="bar xb"><i style="width:${xpP}%"></i></span><span>{i:run} ${fmt(Math.round(Go.g().meters || 0))} m</span>`;
     $('#mapBag b', ov).textContent = Go.count('ball') + Go.count('great') + Go.count('ultra');
-    const st = $('#mapStatus', ov); st.className = 'map-status ' + (mode === 'gps' ? 'ok' : mode === 'demo' ? 'demo' : ''); st.innerHTML = mode === 'gps' ? `{i:pin} GPS${acc ? ' · ±' + Math.round(acc) + ' m' : ''}` : mode === 'demo' ? '{i:pin} Demo · tippe zum Laufen' : '{i:pin} Standort wird gesucht …';
+    const stt = $('#mapStatus', ov); stt.className = 'map-status ' + (mode === 'gps' ? 'ok' : mode === 'demo' ? 'demo' : ''); stt.innerHTML = mode === 'gps' ? `{i:pin} GPS${acc ? ' · ±' + Math.round(acc) + ' m' : ''}` : mode === 'demo' ? '{i:pin} Demo · tippe zum Laufen' : '{i:pin} Standort wird gesucht …';
     const lure = $('#mapLure', ov); lure.classList.toggle('hidden', !(Go.count('lure') > 0 || Date.now() < lureUntil)); lure.innerHTML = Date.now() < lureUntil ? `{i:sparkle} ${fmtDur(lureUntil - Date.now())}` : `{i:sparkle} Köder ×${Go.count('lure')}`;
     $('#mapAttr', ov).style.display = tileOk > 0 ? 'block' : 'none';
   }
 
   /* ---------- Eingabe ---------- */
+  function pickAt(cx, cy) {
+    const rc = new THREE.Raycaster(), v = new THREE.Vector2((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); rc.setFromCamera(v, st.camera);
+    const hits = []; objs.forEach(e => hits.push(e.hit)); const h = rc.intersectObjects(hits, false);
+    if (h.length) return { obj: h[0].object.userData.obj };
+    const pt = new THREE.Vector3(); if (rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), pt)) return { ground: pt };
+    return null;
+  }
   async function tapAt(px, py) {
-    if (UI.modalOpen()) return; let best = null, bd = 1e9;
-    for (const h of hits) { const d = Math.hypot(h.x - px, h.y - py); if (d < h.r + 10 && d < bd) { bd = d; best = h.o; } }
-    if (!best) { if (mode === 'demo') { tgt = { x: pos.x + (px - sx(pos.x)) / SCALE, z: pos.z + (py - sy(pos.z)) / SCALE }; } return; }
-    const d = Math.hypot(best.x - pos.x, best.z - pos.z), range = best.t === 'dog' ? DOG_RANGE : best.t === 'stop' ? STOP_RANGE : ARENA_RANGE;
+    if (UI.modalOpen() || !st) return; const p = pickAt(px, py); if (!p) return;
+    if (p.ground) { if (mode === 'demo') tgt = { x: p.ground.x, z: p.ground.z }; return; }
+    const best = p.obj, d = Math.hypot(best.x - pos.x, best.z - pos.z), range = best.t === 'dog' ? DOG_RANGE : best.t === 'stop' ? STOP_RANGE : ARENA_RANGE;
     if (d > range) { Audio.error(); UI.toast(`Noch ${Math.round(d - range)} m zu weit weg – geh näher heran!`, 'bad'); return; }
     Audio.click();
     if (best.t === 'stop') { Go.spin(best.id); return; }
     if (best.t === 'arena') { await Go.arena({ id: best.id, name: best.name, guard: best.guard }); return; }
-    const gone = Go.g().gone || (Go.g().gone = {}), mark = () => { gone[best.id] = Date.now(); const ks = Object.keys(gone); if (ks.length > 300) ks.sort((a, b) => gone[a] - gone[b]).slice(0, ks.length - 300).forEach(k => delete gone[k]); Store.save(); };
+    const gone = Go.g().gone || (Go.g().gone = {}), mark = () => { gone[best.id] = Date.now(); const ks = Object.keys(gone); if (ks.length > 300) ks.sort((a, b) => gone[a] - gone[b]).slice(0, ks.length - 300).forEach(k => delete gone[k]); Store.save(); const e = objs.get(best.id); if (e && st) { dropObj(e); objs.delete(best.id); } };
     const c = await Go.pick(best.card);
     if (c === 'catch') { const r = await Go.encounter(best.card); if (r && (r.caught || r.fled)) mark(); }
     else if (c === 'fight') { const r = await Dogs.challenge(best.card); if (r && r.won) mark(); }
@@ -3160,50 +3496,58 @@ const GoMap = (() => {
     const n = toXY(c.latitude, c.longitude); if (mode !== 'gps') mode = 'gps'; const d = Math.hypot(n.x - (tgt ? tgt.x : pos.x), n.z - (tgt ? tgt.z : pos.z)); if (d < 1.5) return; tgt = n;
   }
   function onErr(e) {
-    if (e && e.code === 1) { gpsErr = 'Standortzugriff verweigert.'; goDemo('Standortzugriff wurde nicht erlaubt (oder von der App blockiert). Du spielst im Demo-Modus – tippe auf die Karte, um zu laufen.'); }
-    else if (!geo) { gpsErr = 'Kein GPS-Signal.'; setTimeout(() => { if (!geo && running && mode === 'intro') goDemo('Kein GPS-Signal gefunden – Demo-Modus aktiv.'); }, 8000); }
+    if (e && e.code === 1) goDemo('Standortzugriff wurde nicht erlaubt (oder von der App blockiert). Du spielst im Demo-Modus – tippe auf den Boden, um zu laufen.');
+    else if (!geo) setTimeout(() => { if (!geo && running && mode === 'intro') goDemo('Kein GPS-Signal gefunden – Demo-Modus aktiv.'); }, 8000);
   }
   function startGps() {
-    mode = 'intro';
-    if (!navigator.geolocation) return goDemo('Dieses Gerät/diese App bietet keinen Standort. Demo-Modus aktiv.');
+    mode = 'intro'; if (!navigator.geolocation) return goDemo('Dieses Gerät/diese App bietet keinen Standort. Demo-Modus aktiv.');
     try { watch = navigator.geolocation.watchPosition(onFix, onErr, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }); } catch (e) { goDemo('Standort nicht verfügbar. Demo-Modus aktiv.'); }
     setTimeout(() => { if (running && mode === 'intro' && !geo) goDemo('Der Standort antwortet nicht. Demo-Modus aktiv.'); }, 15000);
   }
-  function goDemo(msg) {
-    if (watch != null && navigator.geolocation) { navigator.geolocation.clearWatch(watch); watch = null; }
-    setGeo(DEMO.lat, DEMO.lon); pos = { x: 0, z: 0 }; tgt = null; mode = 'demo'; if (msg) UI.toast(msg, '');
-  }
+  function goDemo(msg) { if (watch != null && navigator.geolocation) { navigator.geolocation.clearWatch(watch); watch = null; } setGeo(DEMO.lat, DEMO.lon); pos = { x: 0, z: 0 }; tgt = null; mode = 'demo'; if (msg) UI.toast(msg, ''); }
 
   /* ---------- Start / Ende ---------- */
-  function resize() { if (!cv) return; dpr = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px'; cx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   function begin(useGps, online) {
-    tilesOn = online; tileOk = 0; tileFail = 0; tiles.clear();
+    tilesOn = online; tileOk = 0; tileFail = 0; tileMs.clear(); objs.clear(); blocks.clear();
     ov = el('div', { id: 'mapOv' }); ov.innerHTML = `<canvas id="mapCv"></canvas>
       <div class="map-top"><div class="row" style="gap:8px"><button class="icon-btn" id="mapBack" aria-label="Zurück">{i:back}</button><button class="icon-btn" id="mapTeam" aria-label="Team">{i:dog}</button><button class="icon-btn" id="mapBag" aria-label="Beutel">{i:bag}<b>0</b></button><button class="icon-btn" id="mapDex" aria-label="Album">{i:book}</button></div><div class="cglass" id="mapInfo"></div></div>
       <div class="map-status" id="mapStatus"></div>
       <button class="btn sm map-lure hidden" id="mapLure"></button>
-      <button class="icon-btn map-center" id="mapCenter" aria-label="Zentrieren">{i:target}</button>
+      <button class="icon-btn map-center" id="mapCenter" aria-label="Kamera zurücksetzen">{i:target}</button>
       <div id="mapAttr">© OpenStreetMap-Mitwirkende</div>`;
-    document.body.append(ov); cv = $('#mapCv', ov); cx = cv.getContext('2d'); resize(); window.addEventListener('resize', resize);
-    UI.inCity = true; running = true; lastT = performance.now(); Audio.setScene('city');
+    document.body.append(ov);
+    try {
+      st = G3.makeStage($('#mapCv', ov), { fov: 52, bg: '#9fd4ff', fog: '#bfe3ff', fogNear: 90, fogFar: 330, exposure: 1.0 }); st.size(); setupGround();
+      avatar = G3.makePerson({ shirt: S().settings.color || '#ff7a45', pants: '#334155' }); avatar.g.scale.setScalar(2.1); st.add(avatar.g);
+      const t = Dogs.team(); if (t.length) pet = G3.makeCardDog(t[0], { scale: 2.0 }); else { const old = G3.makeDog('#c58b4e'); pet = { g: old.g, update: (tt, md, a) => { old.legs.forEach((l, k) => { l.rotation.x = Math.sin(tt * 12 + k) * 0.7 * a; }); } }; } pet.g.position.set(-3, 0, 3); st.add(pet.g);
+      st.onFrame(onFrame); st.start(); window.addEventListener('resize', onResize);
+    } catch (e) { console.warn('Karte konnte nicht gestartet werden', e); if (st) { st.dispose(); st = null; } ov.remove(); ov = null; UI.toast('Die 3D-Karte braucht WebGL.', 'bad'); return; }
+    UI.inCity = true; running = true; Audio.setScene('city');
     $('#mapBack', ov).onclick = () => leave(); $('#mapTeam', ov).onclick = () => Dogs.teamModal(); $('#mapBag', ov).onclick = () => Go.bagModal({ inCity: true, onLure: useLure }); $('#mapDex', ov).onclick = () => UI.cityAlbum();
-    $('#mapLure', ov).onclick = () => { if (Date.now() < lureUntil) return; Go.bagModal({ inCity: true, onLure: useLure }); }; $('#mapCenter', ov).onclick = () => { if (mode === 'gps' && tgt) pos = { x: tgt.x, z: tgt.z }; };
-    let dn = null; cv.addEventListener('pointerdown', e => { dn = { x: e.clientX, y: e.clientY, t: performance.now() }; }); cv.addEventListener('pointerup', e => { if (dn && Math.hypot(e.clientX - dn.x, e.clientY - dn.y) < 12) tapAt(e.clientX, e.clientY); dn = null; });
-    raf = requestAnimationFrame(frame); if (useGps) startGps(); else goDemo('Demo-Modus: Tippe auf die Karte, um dorthin zu laufen.');
+    $('#mapLure', ov).onclick = () => { if (Date.now() < lureUntil) return; Go.bagModal({ inCity: true, onLure: useLure }); }; $('#mapCenter', ov).onclick = () => { camYaw = 0; camDist = 58; };
+    const cv = $('#mapCv', ov), ptrs = new Map(); let dn = null, pinch0 = 0, dist0 = 0;
+    cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 1) dn = { x: e.clientX, y: e.clientY, t: e.timeStamp, moved: 0 }; else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = camDist; dn = null; } });
+    cv.addEventListener('pointermove', e => { const p = ptrs.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x; p.x = e.clientX; p.y = e.clientY; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; camDist = clamp(dist0 * pinch0 / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), 22, 100); return; } if (dn) { dn.moved += Math.abs(dx) + Math.abs(e.movementY || 0); if (dn.moved > 12) camYaw -= dx * 0.008; } });
+    cv.addEventListener('pointerup', e => { const had = ptrs.delete(e.pointerId); if (had && dn && dn.moved <= 12 && e.timeStamp - dn.t < 600) tapAt(e.clientX, e.clientY); if (!ptrs.size) dn = null; });
+    cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); dn = null; });
+    cv.addEventListener('wheel', e => { e.preventDefault(); camDist = clamp(camDist + e.deltaY * 0.04, 22, 100); }, { passive: false });
+    if (useGps) startGps(); else goDemo('Demo-Modus: Tippe auf den Boden, um dorthin zu laufen.');
   }
-  function useLure() { if (!Go.use('lure')) return; lureUntil = Date.now() + 5 * 60 * 1000; Audio.sparkle(); UI.toast('{i:sparkle} Glücksköder aktiv! 5 Minuten lang mehr Hunde in deiner Nähe.', 'good'); }
+  function onResize() { if (st) st.size(); }
+  function useLure() { if (!Go.use('lure')) return; lureUntil = Date.now() + 5 * 60 * 1000; Audio.sparkle(); UI.toast('{i:sparkle} Glücksköder aktiv! 5 Minuten lang mehr Hunde in deiner Nähe.', 'good'); syncT = 0; }
   function leave() {
-    running = false; cancelAnimationFrame(raf); if (watch != null && navigator.geolocation) navigator.geolocation.clearWatch(watch); watch = null; window.removeEventListener('resize', resize);
-    if (ov) ov.remove(); ov = null; geo = null; mode = 'intro'; tgt = null; UI.inCity = false; Audio.setScene('menu'); UI.rerender(); Store.save(true);
+    running = false; if (watch != null && navigator.geolocation) navigator.geolocation.clearWatch(watch); watch = null; window.removeEventListener('resize', onResize);
+    objs.forEach(e => { if (e.m) e.m.dispose(); }); objs.clear(); blocks.clear(); tileMs.clear(); if (st) { st.dispose(); st = null; }
+    avatar = pet = rangeRing = groundFallback = null; if (ov) ov.remove(); ov = null; geo = null; mode = 'intro'; tgt = null; UI.inCity = false; Audio.setScene('menu'); UI.rerender(); Store.save(true);
   }
   function enter() {
     let online = true;
     const chk = el('input', { type: 'checkbox', checked: true, id: 'mapOnline', onchange: e => { online = e.target.checked; } });
     UI.modal({ title: '{i:pin} City Go · Standort', body: el('div', { class: 'col' },
-      el('p', { style: 'margin:0' }, 'Hier läufst du in der echten Welt: Hunde, Knochen-Stops und Arenen erscheinen rund um deinen Standort. Du musst hingehen, um sie zu erreichen.'),
-      el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'Dein Standort bleibt auf deinem Gerät und wird nirgends gespeichert oder gesendet. Die Karte wird als Bilder von OpenStreetMap geladen – dabei sieht der Kartenserver grob, welche Gegend du ansiehst.'),
+      el('p', { style: 'margin:0' }, 'Hier läufst du in der echten Welt – komplett in 3D: Hunde, Knochen-Stops und Arenen erscheinen rund um deinen Standort. Du musst hingehen, um sie zu erreichen.'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'Dein Standort bleibt auf deinem Gerät und wird nirgends gespeichert oder gesendet. Die Straßenkarte wird als Kacheln von OpenStreetMap geladen – dabei sieht der Kartenserver grob, welche Gegend du ansiehst.'),
       el('label', { class: 'row', style: 'gap:8px;font-size:.9rem' }, chk, 'Online-Karte (OpenStreetMap) laden'),
-      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Tipp: Wenn dein Gerät oder diese App keinen Standort erlaubt, kannst du im Demo-Modus spielen – dann läufst du per Tippen.')),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Steuerung: ein Finger wischt = Kamera drehen, zwei Finger = zoomen, antippen = Objekt wählen. Ohne Standort: Demo-Modus, dort tippst du auf den Boden zum Laufen.')),
       actions: [{ label: 'Demo-Modus', cls: 'sec', onclick: () => setTimeout(() => begin(false, online)) }, { label: '{i:pin} Standort nutzen', cls: 'gold', onclick: () => setTimeout(() => begin(true, online)) }] });
   }
   return { enter, leave, get running() { return running; } };
@@ -3224,36 +3568,7 @@ const City = (() => {
   const NPC_E = []; const parade = { dogs: [], on: false, t: 0, near: 0 };
   const evt = { next: 40, cur: null };
   let targetI = null, hudDirty = 0;
-  /* ---------- Farben & Materialien ---------- */
-  const lin = hex => new THREE.Color(hex).convertSRGBToLinear();
-  const mats = {};
-  const M = (hex, o = {}) => { const k = hex + JSON.stringify(o); return mats[k] || (mats[k] = new THREE.MeshLambertMaterial(Object.assign({ color: lin(hex) }, o))); };
-  let VC = null; const vcMat = () => VC || (VC = new THREE.MeshLambertMaterial({ vertexColors: true }));
-  const canvasTex = (w, h, draw, rep) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); } t.anisotropy = 4; return t; };
-  /* ---------- Geometrie-Zusammenführung ---------- */
-  let _m, _q, _e, _p, _s;
-  const mtx = (x, y, z, sx = 1, sy = 1, sz = 1, ry = 0, rx = 0, rz = 0) => (_m || (_q = new THREE.Quaternion(), _e = new THREE.Euler(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), _m = new THREE.Matrix4())).compose(_p.set(x, y, z), _q.setFromEuler(_e.set(rx, ry, rz)), _s.set(sx, sy, sz));
-  class MB {
-    constructor() { this.p = []; this.n = []; this.c = []; this.u = []; }
-    add(geo, m, hex, uvs) {
-      const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(m); const P = g.attributes.position.array, Nn = g.attributes.normal.array, U = g.attributes.uv ? g.attributes.uv.array : null, col = lin(hex);
-      for (let i = 0; i < P.length; i += 3) { this.p.push(P[i], P[i + 1], P[i + 2]); this.n.push(Nn[i], Nn[i + 1], Nn[i + 2]); this.c.push(col.r, col.g, col.b); }
-      const vc = P.length / 3; for (let i = 0; i < vc; i++) { if (U) { let u = U[i * 2], v = U[i * 2 + 1]; if (uvs) { const f = Math.floor(i / 6); const s2 = uvs(f); u *= s2[0]; v *= s2[1]; } this.u.push(u, v); } else this.u.push(0, 0); }
-      g.dispose(); return this;
-    }
-    box(hex, x, y, z, sx, sy, sz, ry = 0) { return this.add(GEO.box, mtx(x, y, z, sx, sy, sz, ry), hex); }
-    build(mat, shadow = true) {
-      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(this.p, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(this.n, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(this.c, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(this.u, 2)); g.computeBoundingSphere();
-      const m = new THREE.Mesh(g, mat || vcMat()); m.castShadow = shadow; m.receiveShadow = true; m.matrixAutoUpdate = false; this.p = this.n = this.c = this.u = null; return m;
-    }
-  }
-  let GEO = null;
-  function initGeo() {
-    GEO = {
-      box: new THREE.BoxGeometry(1, 1, 1), cyl: new THREE.CylinderGeometry(1, 1, 1, 10), cyl6: new THREE.CylinderGeometry(1, 1, 1, 6), sph: new THREE.SphereGeometry(1, 12, 9), sphLo: new THREE.SphereGeometry(1, 8, 6),
-      cone: new THREE.ConeGeometry(1, 1, 7), ico: new THREE.IcosahedronGeometry(1, 1), cap: new THREE.SphereGeometry(1, 12, 8, 0, TAU2, 0, Math.PI * 0.5), plane: new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2)
-    };
-  }
+  const { lin, M, vcMat, canvasTex, mtx, MB, GEO, initGeo, textTex, sprite, blob, makePerson, walkAnim, makeDog, makeCardDog } = G3;
   // Satteldach: First entlang x
   function gableGeo(w, d, h) {
     const W = w / 2 + 0.35, D = d / 2 + 0.45, v = [];
@@ -3261,46 +3576,6 @@ const City = (() => {
     quad([-W, 0, D], [W, 0, D], [W, h, 0], [-W, h, 0]); quad([W, 0, -D], [-W, 0, -D], [-W, h, 0], [W, h, 0]);
     v.push(-W, 0, -D, -W, 0, D, -W, h, 0); v.push(W, 0, D, W, 0, -D, W, h, 0);
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals(); g.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(v.length / 3 * 2).fill(0), 2)); return g;
-  }
-  function textTex(lines, o = {}) {
-    const c = document.createElement('canvas'); const w = o.w || 512, h = o.h || 128; c.width = w; c.height = h; const x = c.getContext('2d');
-    if (o.bg) { x.fillStyle = o.bg; const r = o.r ?? 26; x.beginPath(); x.moveTo(r, 0); x.arcTo(w, 0, w, h, r); x.arcTo(w, h, 0, h, r); x.arcTo(0, h, 0, 0, r); x.arcTo(0, 0, w, 0, r); x.fill(); if (o.border) { x.strokeStyle = o.border; x.lineWidth = 6; x.stroke(); } }
-    x.fillStyle = o.color || '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle'; const arr = (Array.isArray(lines) ? lines : [lines]).map(stripIc); const fs = o.fs || 52;
-    arr.forEach((ln, i) => { x.font = `${i === 0 ? 700 : 600} ${i === 0 ? fs : fs * 0.62}px Fredoka,system-ui,sans-serif`; x.fillText(ln, w / 2, h / 2 + (i - (arr.length - 1) / 2) * fs * 0.95, w - 24); });
-    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.minFilter = THREE.LinearFilter; return t;
-  }
-  function sprite(lines, o = {}) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: textTex(lines, o), transparent: true, depthTest: o.depthTest !== false, toneMapped: false, fog: o.fog !== false })); const w = o.sw || 4; sp.scale.set(w, w * (o.h || 128) / (o.w || 512), 1); sp.userData.base = [w, w * (o.h || 128) / (o.w || 512)]; return sp; }
-
-  /* ---------- Figuren (rund, „Chibi“-Stil) ---------- */
-  let blobMat = null;
-  function blob(parent, r = 0.55) { blobMat = blobMat || new THREE.MeshBasicMaterial({ map: canvasTex(64, 64, (x) => { const g = x.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(0,0,0,.45)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false }); const m = new THREE.Mesh(GEO.plane, blobMat); m.scale.set(r * 2, 1, r * 2); m.position.y = 0.03; m.renderOrder = 1; parent.add(m); return m; }
-  function makePerson(o) {
-    const g = new THREE.Group(), skin = o.skin || '#f1c9a5', shirt = o.shirt || '#4a90e2', pants = o.pants || '#334155', hair = o.hair || '#3b2a1a', shoe = '#2b2b33';
-    const head = new MB().add(GEO.sph, mtx(0, 0, 0, 0.36, 0.35, 0.34), skin).add(GEO.cap, mtx(0, 0.02, -0.01, 0.38, 0.36, 0.37, 0, -0.18), hair)
-      .add(GEO.sphLo, mtx(-0.12, 0.03, 0.31, 0.045, 0.06, 0.03), '#1b1412').add(GEO.sphLo, mtx(0.12, 0.03, 0.31, 0.045, 0.06, 0.03), '#1b1412').add(GEO.sphLo, mtx(0, -0.06, 0.34, 0.04, 0.03, 0.03), DogArt.shade(skin, -0.2))
-      .add(GEO.sphLo, mtx(-0.2, -0.08, 0.26, 0.06, 0.04, 0.02), '#f0a0a0').add(GEO.sphLo, mtx(0.2, -0.08, 0.26, 0.06, 0.04, 0.02), '#f0a0a0');
-    if (o.hat) head.add(GEO.cyl, mtx(0, 0.3, 0, 0.3, 0.16, 0.3), o.hat).add(GEO.cyl, mtx(0, 0.23, 0.06, 0.42, 0.03, 0.42), o.hat);
-    const hm = head.build(vcMat(), !mob); hm.position.set(0, 1.62, 0); hm.matrixAutoUpdate = true; g.add(hm);
-    const torso = new MB().add(GEO.cyl, mtx(0, 0, 0, 0.27, 0.62, 0.22), shirt).add(GEO.sph, mtx(0, 0.31, 0, 0.27, 0.12, 0.22), shirt).add(GEO.cyl, mtx(0, -0.27, 0, 0.28, 0.12, 0.23), pants);
-    if (o.cape) torso.add(GEO.box, mtx(0, 0.02, -0.24, 0.52, 0.72, 0.04), o.cape);
-    if (o.jacket) torso.add(GEO.cyl, mtx(0, 0.05, 0, 0.3, 0.5, 0.25), o.jacket);
-    torso.add(GEO.cyl, mtx(0, 0.4, 0, 0.1, 0.1, 0.1), skin);
-    const tm = torso.build(vcMat(), !mob); tm.position.set(0, 1.04, 0); tm.matrixAutoUpdate = true; g.add(tm);
-    const limb = (x, y, len, col, end) => { const p = new THREE.Group(); p.position.set(x, y, 0); const mb = new MB().add(GEO.cyl6, mtx(0, -len / 2, 0, 0.085, len, 0.085), col).add(GEO.sphLo, mtx(0, -len, end === shoe ? 0.05 : 0, end === shoe ? 0.11 : 0.085, end === shoe ? 0.07 : 0.085, end === shoe ? 0.15 : 0.085), end); const m = mb.build(vcMat(), !mob); m.matrixAutoUpdate = true; p.add(m); g.add(p); return p; };
-    const legs = [limb(-0.13, 0.66, 0.58, pants, shoe), limb(0.13, 0.66, 0.58, pants, shoe)];
-    const arms = [limb(-0.34, 1.38, 0.5, shirt, skin), limb(0.34, 1.38, 0.5, shirt, skin)];
-    arms[0].rotation.z = -0.12; arms[1].rotation.z = 0.12; blob(g);
-    return { g, legs, arms, head: hm };
-  }
-  function walkAnim(pr, phase, amt) { const a = Math.sin(phase) * 0.75 * amt; pr.legs[0].rotation.x = a; pr.legs[1].rotation.x = -a; pr.arms[0].rotation.x = -a * 0.9; pr.arms[1].rotation.x = a * 0.9; }
-  function makeDog(col) {
-    const g = new THREE.Group(), d = DogArt.shade(col, -0.3);
-    const body = new MB().add(GEO.sph, mtx(0, 0.45, 0, 0.22, 0.2, 0.38), col).add(GEO.sph, mtx(0, 0.68, 0.36, 0.2, 0.19, 0.2), col).add(GEO.sph, mtx(0, 0.63, 0.53, 0.1, 0.08, 0.1), DogArt.shade(col, 0.2)).add(GEO.sphLo, mtx(0, 0.66, 0.62, 0.04, 0.035, 0.035), '#111')
-      .add(GEO.sph, mtx(-0.15, 0.78, 0.33, 0.06, 0.12, 0.05, 0, 0, 0.3), d).add(GEO.sph, mtx(0.15, 0.78, 0.33, 0.06, 0.12, 0.05, 0, 0, -0.3), d).add(GEO.sphLo, mtx(-0.07, 0.72, 0.52, 0.025, 0.03, 0.02), '#111').add(GEO.sphLo, mtx(0.07, 0.72, 0.52, 0.025, 0.03, 0.02), '#111');
-    const bm = body.build(vcMat(), !mob); bm.matrixAutoUpdate = true; g.add(bm);
-    const tail = new THREE.Group(); tail.position.set(0, 0.55, -0.34); const tm = new MB().add(GEO.cyl6, mtx(0, 0.12, -0.06, 0.04, 0.26, 0.04, 0, -0.7), col).build(vcMat(), false); tm.matrixAutoUpdate = true; tail.add(tm); g.add(tail);
-    const legs = [[-0.11, 0.22], [0.11, 0.22], [-0.11, -0.2], [0.11, -0.2]].map(([x, z]) => { const l = new THREE.Group(); l.position.set(x, 0.36, z); const m = new MB().add(GEO.cyl6, mtx(0, -0.16, 0, 0.055, 0.34, 0.055), d).build(vcMat(), false); m.matrixAutoUpdate = true; l.add(m); g.add(l); return l; });
-    blob(g, 0.45); return { g, legs, tail };
   }
 
   /* ---------- Welt ---------- */
@@ -3636,7 +3911,7 @@ const City = (() => {
   const dogRun = (d, ph, amt) => { d.legs.forEach((l, k) => { l.rotation.x = Math.sin(ph + (k % 2) * Math.PI + (k > 1 ? 1.2 : 0)) * 0.75 * amt; }); if (d.tail) d.tail.rotation.y = Math.sin(ph * 1.3) * 0.5 * (0.3 + amt); };
   function refreshPet() {
     if (!built || !scene) return; if (pet) { scene.remove(pet.d.g); }
-    const t = Dogs.team(), col = t.length ? DogArt.traits(t[0]).base : '#c58b4e', d = makeDog(col); d.g.scale.setScalar(1.12); scene.add(d.g);
+    const t = Dogs.team(), d = t.length ? makeCardDog(t[0], { scale: 1.0 }) : makeDog('#c58b4e'); scene.add(d.g);
     pet = { d, x: P.x - 1.3, z: P.z - 1.3, yaw: P.yaw, ph: 0, mode: 'follow', spd: 0, t: 0 }; d.g.position.set(pet.x, 0, pet.z);
   }
   const hitAt = (x, z, m) => { for (const b of AABBS) if (x > b.x0 - m && x < b.x1 + m && z > b.z0 - m && z < b.z1 + m) return true; for (const c of CIRCLES) if (Math.hypot(x - c.x, z - c.z) < c.r + m) return true; return false; };
@@ -3688,9 +3963,9 @@ const City = (() => {
   /* Wildhunde */
   function spawnWild(near) {
     if (WILD.length >= MAXW()) return; let w = null; for (let k = 0; k < 60; k++) { const c = WAY[Math.floor(Math.random() * WAY.length)], d = Math.hypot(c[0] - P.x, c[1] - P.z), okD = !GO ? d > 20 : near ? d > 7 && d < 22 : d > 10 && d < 48; if (okD && !WILD.some(o => Math.hypot(o.x - c[0], o.z - c[1]) < 6)) { w = c; break; } } if (!w) return;
-    const card = GO ? Go.spawnCard() : Dogs.wildCard(), tr = DogArt.traits(card), d = makeDog(tr.base), rc = RAR[card.tier].color; d.g.scale.setScalar(1.0 + card.tier * 0.045);
-    const tag = sprite([card.name.split(' (')[0], RAR[card.tier].name + (GO ? ' · WP ' + Dogs.power(card) : ' · Wildhund')], { w: 512, h: 128, bg: 'rgba(70,10,20,.9)', border: rc, fs: 42, sw: 2.5 }); tag.position.y = 1.85; d.g.add(tag);
-    ringGeo = ringGeo || new THREE.RingGeometry(0.85, 1.1, 28).rotateX(-Math.PI / 2); const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ef4444').convertSRGBToLinear(), transparent: true, opacity: 0.85, depthWrite: false })); ring.position.y = 0.06; d.g.add(ring);
+    const card = GO ? Go.spawnCard() : Dogs.wildCard(), d = makeCardDog(card), rc = RAR[card.tier].color;
+    const tag = sprite([card.name.split(' (')[0], RAR[card.tier].name + (GO ? ' · WP ' + Dogs.power(card) : ' · Wildhund')], { w: 512, h: 128, bg: 'rgba(70,10,20,.9)', border: rc, fs: 42, sw: 2.5 }); tag.position.y = (d.headY || 0.9) + 0.85; d.g.add(tag);
+    ringGeo = ringGeo || new THREE.RingGeometry(0.85, 1.1, 28).rotateX(-Math.PI / 2); const ring = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color: new THREE.Color('#ef4444').convertSRGBToLinear(), transparent: true, opacity: 0.85, depthWrite: false })); ring.position.y = 0.06; ring.scale.set(1.1, 1, 1.1); d.g.add(ring);
     const e = { d, card, x: w[0], z: w[1], yaw: Math.random() * 6.28, tx: w[0], tz: w[1], state: 'idle', timer: Math.random() * 3, ph: Math.random() * 6, tag, ring, spd: 0, ttl: 200 + Math.random() * 200 };
     d.g.position.set(e.x, 0, e.z); scene.add(d.g); WILD.push(e);
   }
