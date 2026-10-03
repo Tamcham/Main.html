@@ -363,16 +363,18 @@ body[data-mode=mobile] .modal .actions .btn{flex:1}
 .po-pack.held{cursor:grabbing;filter:brightness(1.08)}
 .po-pack .pk{animation:pkIn .7s var(--ease-spring),pkFloat 4s .7s ease-in-out infinite}
 @keyframes pkIn{from{transform:translateY(40vh) scale(.6) rotate(-8deg);opacity:0}}
-.po-pack .pk-crimp.t{transform:rotate(calc(var(--tear,0) * -9deg)) translateY(calc(var(--tear,0) * -5px));transition:transform .08s}
+.po-pack .pk-lay.strip{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;transition:transform .05s linear;filter:drop-shadow(0 4px 6px rgba(0,0,0,.45))}
+.po-pack .pk-lay.strip .pk{animation:pkIn .7s var(--ease-spring),pkFloat 4s .7s ease-in-out infinite}
+.po-pack .pk-inside{position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 140% at 50% 120%,var(--tease),#150f33 60%,#090620);border-radius:14px}
+.po-pack .pk-inside::after{content:"";position:absolute;inset:0;background:linear-gradient(#fff,#fff) 10% 82%/80% 2px no-repeat,linear-gradient(#e7e7ff,#e7e7ff) 14% 92%/72% 2px no-repeat,linear-gradient(#fff5,#fff0) 0 0/100% 100%}
+.po-pack .rip-edge{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#fff,#dfe8ff);filter:drop-shadow(0 0 5px var(--tease))}
 .po-pack .tear-light{position:absolute;left:0;right:0;top:4%;height:20%;background:radial-gradient(60% 60% at 50% 60%,var(--tease),transparent 70%);opacity:calc(var(--tear,0) * .9);filter:blur(8px);pointer-events:none;mix-blend-mode:screen}
-.po-pack .tear-line{position:absolute;left:6%;right:6%;top:15.5%;height:3px;z-index:5;pointer-events:none}
-.po-pack .tear-line i{display:block;height:100%;width:calc(var(--tear,0) * 100%);border-radius:3px;background:#fff;box-shadow:0 0 6px #fff,0 0 calc(8px + 26px * var(--tear,0)) 4px var(--tease)}
+.po-pack .tear-line{position:absolute;left:0;right:0;top:16%;height:0;border-top:2px dashed rgba(255,255,255,.7);z-index:5;pointer-events:none;clip-path:inset(-4px 0 -4px calc(var(--tear,0) * 100%))}
 .po-pack .tear-grip{position:absolute;top:1%;left:8%;width:40px;height:40px;color:#fff;opacity:calc(1 - var(--tear,0) * 4);filter:drop-shadow(0 2px 6px #000);animation:grip 1.8s ease-in-out infinite;pointer-events:none;z-index:6}
 .po-pack .tear-grip svg{width:100%;height:100%}
 @keyframes grip{0%{transform:translateX(0)}60%{transform:translateX(min(150px,34vw))}100%{transform:translateX(min(150px,34vw));opacity:0}}
-.po-pack.torn .pk-crimp.t{transition:transform .65s cubic-bezier(.5,0,.8,.4),opacity .6s;transform:translate(40%,-180%) rotate(-38deg)!important;opacity:0}
-.po-pack.torn .tear-line i{animation:tlBurst .5s forwards}
-@keyframes tlBurst{to{height:40px;transform:translateY(-18px);opacity:0}}
+.po-pack.torn .pk-lay.strip{transition:transform .7s cubic-bezier(.4,0,.9,.5),opacity .6s;transform:translate(70%,-260%) rotate(80deg)!important;opacity:0}
+.po-pack.torn .rip-edge,.po-pack.torn .tear-line{opacity:0;transition:opacity .3s}
 .po-pack.drop{transition:transform .75s cubic-bezier(.6,0,.9,.5),opacity .6s .15s;transform:translateY(75vh) scale(.82) rotate(5deg);opacity:0}
 .po-stack{position:relative;width:min(330px,74vw,calc(50vh * .714));aspect-ratio:5/7;flex:none}
 .po-card{position:absolute!important;inset:0;--cw:min(330px,74vw,calc(50vh * .714))!important;touch-action:none;will-change:transform}
@@ -2959,7 +2961,7 @@ const UI = {
     $('#overlays').append(ov); City.pause(true); setTimeout(() => { const b = m.querySelector('.btn:not(.sec)') || m.querySelector('button'); b && b.focus({ preventScroll: true }); }, 30);
     return { el: m, ov, close };
   },
-  confirm(title, text, okLabel = 'Ja', cls = '') { return new Promise(res => { let done = false; const fin = v => { if (!done) { done = true; res(v); } }; UI.modal({ title, body: el('p', {}, text), onClose: () => fin(false), actions: [{ label: 'Abbrechen', cls: 'sec', onclick: () => fin(false) }, { label: okLabel, cls, onclick: () => fin(true) }] }); }); },
+  confirm(title, text, okLabel = 'Ja', cls = '') { return new Promise(res => { let done = false; const fin = v => { if (!done) { done = true; res(v); } }; UI.modal({ title, body: el('p', {}, text), onClose: () => setTimeout(() => fin(false)), actions: [{ label: 'Abbrechen', cls: 'sec', onclick: () => fin(false) }, { label: okLabel, cls, onclick: () => fin(true) }] }); }); },
   floatText(txt, color = '#ffd24a', anchorSel = '#hudCoins') {
     const a = $(anchorSel); if (!a) return; const b = a.getBoundingClientRect(); const f = el('div', { style: `position:fixed;left:${b.left + b.width / 2}px;top:${b.bottom}px;color:${color};font-weight:700;z-index:350;pointer-events:none;text-shadow:0 2px 6px #000` }, txt); document.body.append(f);
     f.animate([{ transform: 'translateY(0)', opacity: 1 }, { transform: 'translateY(40px)', opacity: 0 }], { duration: 1200, easing: 'ease-out' }).onfinish = () => f.remove();
@@ -3135,7 +3137,7 @@ const UI = {
     const ov = el('div', { id: 'packOv', style: `--tease:${tease};--pc:${pack.color}` });
     ov.innerHTML = `<div class="po-bg"></div><div class="vignette"></div><canvas id="fxCanvas"></canvas>
       <div id="packStage">
-        <div class="po-pack" id="poPack">${this.packVisual(pack, true)}<div class="tear-cap"></div><div class="tear-line"><i></i></div><div class="tear-light"></div><div class="tear-grip">{i:hand}</div></div>
+        <div class="po-pack" id="poPack"><div class="pk-inside" id="pkIn"></div><div class="pk-lay base" id="pkBase">${this.packVisual(pack, true)}</div><div class="pk-lay strip" id="pkStrip">${this.packVisual(pack, true)}</div><div class="rip-edge" id="pkEdge"></div><div class="tear-line"></div><div class="tear-light"></div><div class="tear-grip">{i:hand}</div></div>
         <div class="po-stack hidden" id="poStack"></div>
         <div id="cardCap"></div>
       </div>
@@ -3158,9 +3160,21 @@ const UI = {
     hint.innerHTML = mob ? '{i:hand} Wische mit dem Finger über die Oberkante, um das Pack aufzureißen' : '{i:hand} Ziehe mit gedrückter Maus über die Oberkante – oder klicke mehrmals';
     // ---------- Phase 1: Aufreißen ----------
     let down = null, moved = 0, lastSpark = 0;
+    const nJ = 28, JY = Array.from({ length: nJ + 1 }, (_, i) => 16 + (i % 2 ? 1 : -1) * (0.5 + Math.random() * 0.9) + Math.sin(i * 0.8) * 0.5), pBase = $('#pkBase', P), pStrip = $('#pkStrip', P), pEdge = $('#pkEdge', P), pIn = $('#pkIn', P);
+    const jag = t => { const xt = t * 100, pts = []; for (let i = 0; i <= nJ; i++) { const x = i * 100 / nJ; if (x >= xt) break; pts.push([x, JY[i]]); } const k = Math.min(nJ - 1, Math.floor(xt * nJ / 100)), f = xt * nJ / 100 - k; pts.push([xt, JY[k] + (JY[k + 1] - JY[k]) * f]); return pts; };
+    const poly = pts => 'polygon(' + pts.map(q => q[0].toFixed(2) + '% ' + q[1].toFixed(2) + '%').join(',') + ')';
+    const ripTo = t => {
+      const pts = jag(t), xt = t * 100, last = pts[pts.length - 1], rev = pts.slice().reverse();
+      pBase.style.clipPath = poly([[0, 100], ...pts, [xt, 0], [100, 0], [100, 100]]);
+      pStrip.style.clipPath = poly([[0, -30], [xt, -30], ...rev]);
+      pStrip.style.transformOrigin = xt.toFixed(1) + '% ' + last[1].toFixed(1) + '%'; pStrip.style.transform = `rotate(${(t * 34).toFixed(2)}deg) translate(${(t * 2).toFixed(2)}%,${(-t * 5).toFixed(2)}%)`;
+      pEdge.style.clipPath = poly([...pts, ...rev.map(q => [q[0], q[1] + 1.4])]);
+      pIn.style.clipPath = poly([[0, -30], [xt, -30], ...rev.map(q => [q[0], q[1] + 3.5])]);
+    };
+    ripTo(0);
     const setProg = (p, x) => {
-      prog = clamp(p, 0, 1); P.style.setProperty('--tear', prog.toFixed(3)); const j = prog * (S().settings.reduceFx ? 0.5 : 3.2); P.style.setProperty('--jx', ((Math.random() - 0.5) * j).toFixed(1) + 'px'); P.style.setProperty('--jr', ((Math.random() - 0.5) * j * 0.6).toFixed(2) + 'deg');
-      const b = P.getBoundingClientRect(), now = performance.now(); if (now - lastSpark > 45) { lastSpark = now; emit(b.left + b.width * 0.06 + b.width * 0.88 * prog, b.top + b.height * 0.155, 5, { cols: [tease, '#fff', '#ffe9a0'], v: 260, g: 700, life: 0.6, size: 2 }); Audio.tear(prog); vib(6 + prog * 14); }
+      prog = clamp(p, 0, 1); P.style.setProperty('--tear', prog.toFixed(3)); ripTo(prog); const j = prog * (S().settings.reduceFx ? 0.5 : 2.2); P.style.setProperty('--jx', ((Math.random() - 0.5) * j).toFixed(1) + 'px'); P.style.setProperty('--jr', ((Math.random() - 0.5) * j * 0.4).toFixed(2) + 'deg');
+      const b = P.getBoundingClientRect(), now = performance.now(); if (now - lastSpark > 45) { lastSpark = now; emit(b.left + b.width * prog, b.top + b.height * 0.16, 6, { cols: [tease, '#fff', '#ffe9a0'], v: 280, g: 700, life: 0.6, size: 2 }); Audio.tear(prog); vib(6 + prog * 14); }
       if (prog >= 1 && stage === 'tear') tearDone();
     };
     P.addEventListener('pointerdown', e => { if (stage !== 'tear') return; down = { x: e.clientX, lx: e.clientX, y: e.clientY }; moved = 0; try { P.setPointerCapture(e.pointerId); } catch (x) { } P.classList.add('held'); Audio.rustle(); });
