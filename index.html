@@ -3564,14 +3564,15 @@ const CityLife = (() => {
   function create(grp, o) {
     const graph = buildGraph(o.ways, o.sig), cen = o.cen, rnd = mulberry32(hashStr('life' + Math.round(cen.x) + ',' + Math.round(cen.z))), mob = Device.isMobile();
     const root = new THREE.Group(); grp.add(root);
-    let maxCars = mob ? 22 : 34, maxPeds = mob ? 11 : 18; const baseC = maxCars, baseP = maxPeds, cars = [], peds = [], tmpl = new Map(), disposables = []; let T = 0, spawnT = 0, nextId = 1;
+    let maxCars = mob ? 26 : 38, maxPeds = mob ? 16 : 24, seeded = false; const baseC = maxCars, baseP = maxPeds, cars = [], peds = [], tmpl = new Map(), disposables = []; let T = 0, spawnT = 0, nextId = 1;
     const getTemplate = (type, hex) => { const k = type + hex; let m = tmpl.get(k); if (!m) { const mb = new G3.MB(); carParts(type, hex, true).forEach(p => mb.add(p[0], p[1], p[2])); m = mb.build(G3.vcMat(), false); m.matrixAutoUpdate = true; m.userData.own = true; tmpl.set(k, m); disposables.push(m.geometry); } return m; };
     const idle = [];
-    (o.stops || []).slice(0, 8).forEach((s, i) => { for (let k = 0; k < 1 + (i % 2); k++) { const pr = npcPerson(rnd, 1.1); pr.g.position.set(s[0] + 1.2 + k * 0.7, 0.05, s[1] + 1.2 + k * 0.4); pr.g.rotation.y = rnd() * 6.28; pr.g.visible = false; root.add(pr.g); idle.push(pr); } });
-    function spawn(kind, pos) {
+    (o.stops || []).slice(0, 8).forEach((s, i) => { for (let k = 0; k < 1 + (i % 2); k++) { const pr = npcPerson(rnd, 1.45); pr.g.position.set(s[0] + 1.2 + k * 0.7, 0.05, s[1] + 1.2 + k * 0.4); pr.g.rotation.y = rnd() * 6.28; pr.g.visible = false; root.add(pr.g); idle.push(pr); } });
+    function spawn(kind, pos, dmin, dmax) {
+      dmin = dmin || 95; dmax = dmax || 260;
       const pool = kind === 'drive' ? graph.drive : graph.walk; if (!pool.length) return null;
       for (let tries = 0; tries < 40; tries++) {
-        const e = pool[Math.floor(rnd() * pool.length)], mx = (e.x0 + e.x1) / 2, mz = (e.z0 + e.z1) / 2, d = Math.hypot(mx - pos.x, mz - pos.z); if (d < 95 || d > 260) continue;
+        const e = pool[Math.floor(rnd() * pool.length)], mx = (e.x0 + e.x1) / 2, mz = (e.z0 + e.z1) / 2, d = Math.hypot(mx - pos.x, mz - pos.z); if (d < dmin || d > dmax) continue;
         const s = rnd() * e.L; if (kind === 'drive') { if (cars.some(c => c.e === e && Math.abs(c.s - s) < 12)) continue; }
         const nx = pickNext(e, kind, rnd); if (!nx) continue;
         if (kind === 'drive') {
@@ -3579,7 +3580,7 @@ const CityLife = (() => {
           const a = { id: nextId++, kind, e, next: nx, s, v: 0, off: 0, x: 0, z: 0, h: Math.atan2(e.ux, e.uz), g, type, len: SP[type].L, fac: 0.82 + rnd() * 0.22, lane: Math.floor(rnd() * 3) };
           const p = pointOn(e, s, laneOff(a, e)); a.x = p[0]; a.z = p[1]; a.off = laneOff(a, e); a.v = e.vmax * a.fac * 0.8; g.position.set(a.x, 0.07, a.z); g.rotation.y = a.h; cars.push(a); return a;
         } else {
-          const pr = npcPerson(rnd, 1.1); root.add(pr.g); const side = rnd() < 0.5 ? 1 : -1, a = { id: nextId++, kind, e, next: nx, s, v: 1.15 + rnd() * 0.45, off: 0, x: 0, z: 0, h: Math.atan2(e.ux, e.uz), g: pr.g, legs: pr.legs, side, ph: rnd() * 6, dog: null, len: 0.6 };
+          const pr = npcPerson(rnd, 1.45); root.add(pr.g); const side = rnd() < 0.5 ? 1 : -1, a = { id: nextId++, kind, e, next: nx, s, v: 1.15 + rnd() * 0.45, off: 0, x: 0, z: 0, h: Math.atan2(e.ux, e.uz), g: pr.g, legs: pr.legs, side, ph: rnd() * 6, dog: null, len: 0.6 };
           a.off = walkOff(a, e); const p = pointOn(e, s, a.off); a.x = p[0]; a.z = p[1]; pr.g.position.set(a.x, 0.05, a.z);
           if (rnd() < 0.22) { const d = G3.makeDog(['#c58b4e', '#e8d9b8', '#3b2a1a', '#9a9a9a'][Math.floor(rnd() * 4)]); d.g.scale.setScalar(1.15); d.g.position.set(a.x + 0.9, 0.05, a.z); root.add(d.g); a.dog = d; }
           peds.push(a); return a;
@@ -3621,10 +3622,11 @@ const CityLife = (() => {
     }
     function update(dt, pos) {
       T += dt; spawnT -= dt;
+      if (!seeded) { seeded = true; for (let i = 0; i < maxCars * 4 && cars.length < maxCars; i++) spawn('drive', pos, 18, 200); for (let i = 0; i < maxPeds * 4 && peds.length < maxPeds; i++) spawn('walk', pos, 10, 170); }
       while (cars.length > maxCars + 2) drop(cars, cars.length - 1); while (peds.length > maxPeds + 2) drop(peds, peds.length - 1);
       if (spawnT <= 0) { spawnT = 0.25; if (cars.length < maxCars && graph.drive.length) spawn('drive', pos); if (peds.length < maxPeds && graph.walk.length) spawn('walk', pos); }
       for (let i = cars.length - 1; i >= 0; i--) { const a = cars[i], d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d > 320) { drop(cars, i); continue; } if (!stepCar(a, dt, i)) { drop(cars, i); continue; } a.g.visible = d < 280; }
-      for (let i = peds.length - 1; i >= 0; i--) { const a = peds[i], d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d > 260) { drop(peds, i); continue; } if (d > 130) { a.g.visible = false; if (a.dog) a.dog.g.visible = false; if (!stepPed(a, dt)) drop(peds, i); continue; } a.g.visible = true; if (a.dog) a.dog.g.visible = true; if (!stepPed(a, dt)) drop(peds, i); }
+      for (let i = peds.length - 1; i >= 0; i--) { const a = peds[i], d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d > 260) { drop(peds, i); continue; } if (d > 190) { a.g.visible = false; if (a.dog) a.dog.g.visible = false; if (!stepPed(a, dt)) drop(peds, i); continue; } a.g.visible = true; if (a.dog) a.dog.g.visible = true; if (!stepPed(a, dt)) drop(peds, i); }
       for (const p of idle) p.g.visible = Math.hypot(p.g.position.x - pos.x, p.g.position.z - pos.z) < 110;
     }
     function dispose() { disposables.forEach(g => g.dispose()); }
