@@ -3818,27 +3818,35 @@ const CamScan = (() => {
   const TF_URLS = ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js', 'https://unpkg.com/@tensorflow/tfjs@4.22.0/dist/tf.min.js'];
   const COCO_URLS = ['https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js', 'https://unpkg.com/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'];
   const D2R = Math.PI / 180;
-  const KIND = { person: 'person', car: 'car', truck: 'truck', bus: 'bus', motorcycle: 'moto', bicycle: 'bike', dog: 'dog' };
-  const NAME = { person: 'Person', car: 'Auto', truck: 'Lkw/Transp.', bus: 'Bus', motorcycle: 'Motorrad', bicycle: 'Fahrrad', dog: 'Hund' };
-  const REAL_H = { person: 1.7, car: 1.5, truck: 2.6, bus: 3.1, motorcycle: 1.3, bicycle: 1.05, dog: 0.55 };
-  const GROUP = { person: 'p', car: 'v', truck: 'v', bus: 'v', motorcycle: 'b', bicycle: 'b', dog: 'd' };
+  /* alle 80 COCO-Klassen: [englisch, deutsch, echte Höhe in m, Art] */
+  const C80 = [['person', 'Person', 1.7, 'person'], ['bicycle', 'Fahrrad', 1.05, 'bike'], ['car', 'Auto', 1.5, 'car'], ['motorcycle', 'Motorrad', 1.3, 'moto'], ['airplane', 'Flugzeug', 8, 'plane'], ['bus', 'Bus', 3.1, 'bus'], ['train', 'Zug', 3.8, 'train'], ['truck', 'Lkw/Transporter', 2.6, 'truck'], ['boat', 'Boot', 2.2, 'boat'], ['traffic light', 'Ampel', 0.9, 'prop'],
+    ['fire hydrant', 'Hydrant', 0.7, 'prop'], ['stop sign', 'Stoppschild', 0.75, 'prop'], ['parking meter', 'Parkuhr', 1.3, 'prop'], ['bench', 'Bank', 0.85, 'prop'], ['bird', 'Vogel', 0.22, 'bird'], ['cat', 'Katze', 0.28, 'cat'], ['dog', 'Hund', 0.55, 'dog'], ['horse', 'Pferd', 1.6, 'quad'], ['sheep', 'Schaf', 0.9, 'quad'], ['cow', 'Kuh', 1.4, 'quad'],
+    ['elephant', 'Elefant', 3, 'quad'], ['bear', 'Bär', 1.2, 'quad'], ['zebra', 'Zebra', 1.4, 'quad'], ['giraffe', 'Giraffe', 4.5, 'quad'], ['backpack', 'Rucksack', 0.45, 'prop'], ['umbrella', 'Regenschirm', 0.85, 'prop'], ['handbag', 'Handtasche', 0.3, 'prop'], ['tie', 'Krawatte', 0.4, 'prop'], ['suitcase', 'Koffer', 0.6, 'prop'], ['frisbee', 'Frisbee', 0.25, 'prop'],
+    ['skis', 'Ski', 1.7, 'prop'], ['snowboard', 'Snowboard', 1.5, 'prop'], ['sports ball', 'Ball', 0.22, 'prop'], ['kite', 'Drachen', 1, 'prop'], ['baseball bat', 'Baseballschläger', 0.85, 'prop'], ['baseball glove', 'Baseballhandschuh', 0.25, 'prop'], ['skateboard', 'Skateboard', 0.2, 'prop'], ['surfboard', 'Surfbrett', 2, 'prop'], ['tennis racket', 'Tennisschläger', 0.68, 'prop'], ['bottle', 'Flasche', 0.25, 'prop'],
+    ['wine glass', 'Weinglas', 0.2, 'prop'], ['cup', 'Tasse', 0.1, 'prop'], ['fork', 'Gabel', 0.2, 'prop'], ['knife', 'Messer', 0.2, 'prop'], ['spoon', 'Löffel', 0.2, 'prop'], ['bowl', 'Schüssel', 0.1, 'prop'], ['banana', 'Banane', 0.2, 'prop'], ['apple', 'Apfel', 0.08, 'prop'], ['sandwich', 'Sandwich', 0.1, 'prop'], ['orange', 'Orange', 0.08, 'prop'],
+    ['broccoli', 'Brokkoli', 0.15, 'prop'], ['carrot', 'Karotte', 0.2, 'prop'], ['hot dog', 'Hotdog', 0.15, 'prop'], ['pizza', 'Pizza', 0.35, 'prop'], ['donut', 'Donut', 0.1, 'prop'], ['cake', 'Kuchen', 0.2, 'prop'], ['chair', 'Stuhl', 0.9, 'prop'], ['couch', 'Sofa', 0.9, 'prop'], ['potted plant', 'Topfpflanze', 0.5, 'prop'], ['bed', 'Bett', 0.6, 'prop'],
+    ['dining table', 'Tisch', 0.75, 'prop'], ['toilet', 'Toilette', 0.7, 'prop'], ['tv', 'Fernseher', 0.5, 'prop'], ['laptop', 'Laptop', 0.25, 'prop'], ['mouse', 'Maus', 0.04, 'prop'], ['remote', 'Fernbedienung', 0.18, 'prop'], ['keyboard', 'Tastatur', 0.15, 'prop'], ['cell phone', 'Handy', 0.15, 'prop'], ['microwave', 'Mikrowelle', 0.3, 'prop'], ['oven', 'Ofen', 0.6, 'prop'],
+    ['toaster', 'Toaster', 0.2, 'prop'], ['sink', 'Waschbecken', 0.3, 'prop'], ['refrigerator', 'Kühlschrank', 1.8, 'prop'], ['book', 'Buch', 0.25, 'prop'], ['clock', 'Uhr', 0.3, 'prop'], ['vase', 'Vase', 0.3, 'prop'], ['scissors', 'Schere', 0.18, 'prop'], ['teddy bear', 'Teddybär', 0.4, 'prop'], ['hair drier', 'Föhn', 0.25, 'prop'], ['toothbrush', 'Zahnbürste', 0.18, 'prop']];
+  const KIND = {}, NAME = {}, REAL_H = {}, GROUP = {}, YOLO_CLS = {};
+  C80.forEach((c, i) => { YOLO_CLS[i] = c[0]; NAME[c[0]] = c[1]; REAL_H[c[0]] = c[2]; KIND[c[0]] = c[3]; GROUP[c[0]] = c[3] === 'person' ? 'p' : (c[3] === 'car' || c[3] === 'truck' || c[3] === 'bus') ? 'v' : (c[3] === 'bike' || c[3] === 'moto') ? 'b' : c[3] === 'dog' ? 'd' : c[0]; });
+  const CORE = new Set(['person', 'car', 'truck', 'bus', 'bike', 'moto']);
+  const smallClass = c => REAL_H[c] < 0.5;
   const loadScript = url => new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('load')); }; document.head.append(s); });
   async function loadFirst(urls) { let err; for (const u of urls) { try { await loadScript(u); return; } catch (e) { err = e; } } throw err || new Error('net'); }
   /* ---------- Detektoren: YOLOv8n (genau) mit Rückfall auf COCO-SSD (schnell) ---------- */
   const ORT_BASE = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/';
-  const YOLO_URLS = ['yolov8n.onnx', 'https://raw.githubusercontent.com/Hyuto/yolov8-onnxruntime-web/master/public/model/yolov8n.onnx', 'https://cdn.jsdelivr.net/gh/Hyuto/yolov8-onnxruntime-web@master/public/model/yolov8n.onnx'];
-  const YOLO_CLS = { 0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck', 16: 'dog' };
-  const CONF = { person: 0.4, car: 0.35, truck: 0.4, bus: 0.4, motorcycle: 0.4, bicycle: 0.4, dog: 0.4 };
+  const YOLO_URLS = ['yolo26n.onnx', 'https://raw.githubusercontent.com/Tamcham/Main.html/08dd37e5c7257949dd3a50a7f997cabc195fb2e2/models/yolo26n.onnx', 'https://cdn.jsdelivr.net/gh/Tamcham/Main.html@08dd37e5c7257949dd3a50a7f997cabc195fb2e2/models/yolo26n.onnx', 'yolov8n.onnx', 'https://raw.githubusercontent.com/Hyuto/yolov8-onnxruntime-web/master/public/model/yolov8n.onnx'];
+  const CONF = new Proxy({}, { get: (t, c) => c === 'car' ? 0.35 : (c === 'person' || c === 'dog' || c === 'cat' || c === 'truck' || c === 'bus' || c === 'bicycle' || c === 'motorcycle') ? 0.4 : (REAL_H[c] < 0.5 ? 0.55 : 0.48) });
   let det = null;
   async function fetchModel(urls, step) {
-    let err; for (const u of urls) { try { const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); const len = +r.headers.get('content-length') || 0; if (!r.body || !len) return new Uint8Array(await r.arrayBuffer()); const rd = r.body.getReader(), out = new Uint8Array(len); let got = 0; for (;;) { const { done, value } = await rd.read(); if (done) break; if (got + value.length > out.length) throw new Error('size'); out.set(value, got); got += value.length; step('Genaue Erkennung wird geladen … ' + Math.round(got / len * 100) + ' %'); } return out; } catch (e) { err = e; } }
+    let err; for (const u of urls) { try { const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); const len = +r.headers.get('content-length') || 0; if (!r.body || !len) return { bytes: new Uint8Array(await r.arrayBuffer()), url: u }; const rd = r.body.getReader(), out = new Uint8Array(len); let got = 0; for (;;) { const { done, value } = await rd.read(); if (done) break; if (got + value.length > out.length) throw new Error('size'); out.set(value, got); got += value.length; step('Genaue Erkennung wird geladen … ' + Math.round(got / len * 100) + ' %'); } return { bytes: out, url: u }; } catch (e) { err = e; } }
     throw err || new Error('model');
   }
   async function loadYolo(step) {
     step('Erkennungs-Laufzeit wird geladen …');
     if (!window.ort) { await loadFirst([ORT_BASE + 'ort.wasm.min.js', 'https://unpkg.com/onnxruntime-web@1.17.3/dist/ort.wasm.min.js']); }
     ort.env.wasm.wasmPaths = ORT_BASE; ort.env.wasm.numThreads = 1; ort.env.wasm.simd = true; ort.env.logLevel = 'error';
-    const bytes = await fetchModel(YOLO_URLS, step); step('Erkennung wird vorbereitet …');
+    const got = await fetchModel(YOLO_URLS, step), bytes = got.bytes, yname = /yolo26/.test(got.url) ? 'YOLO26' : 'YOLOv8'; step('Erkennung wird vorbereitet …');
     const sess = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' }), SZ = 640, cv = document.createElement('canvas'); cv.width = cv.height = SZ; const cx = cv.getContext('2d', { willReadFrequently: true }), buf = new Float32Array(3 * SZ * SZ);
     async function detect(video) {
       const W = video.videoWidth, H = video.videoHeight, sc = SZ / Math.max(W, H), nw = Math.round(W * sc), nh = Math.round(H * sc), px = (SZ - nw) / 2, py = (SZ - nh) / 2;
@@ -3851,7 +3859,7 @@ const CamScan = (() => {
       }
       return nms(cand);
     }
-    return { name: 'YOLOv8', detect, interval: 250 };
+    return { name: yname, detect, interval: 250 };
   }
   const iou = (a, b) => { const x1 = Math.max(a[0], b[0]), y1 = Math.max(a[1], b[1]), x2 = Math.min(a[0] + a[2], b[0] + b[2]), y2 = Math.min(a[1] + a[3], b[1] + b[3]), iw = Math.max(0, x2 - x1), ih = Math.max(0, y2 - y1), inter = iw * ih; return inter / (a[2] * a[3] + b[2] * b[3] - inter + 1e-6); };
   function nms(c) {
@@ -3899,8 +3907,64 @@ const CamScan = (() => {
   }
   /* unplausible Boxen aussortieren (riesige Boxen, falsche Seitenverhältnisse, Winzlinge) */
   function plausible(dets, W, H) {
-    return dets.filter(d => { const [x, y, w, h] = d.bbox, ar = w / Math.max(1, h), area = w * h / (W * H), c = d.class; if (h < 14 || w < 8) return false; if (c === 'person') return ar < 1.1 && area < 0.8; if (c === 'car') return ar > 0.7 && ar < 4.2 && area < 0.65; if (c === 'truck' || c === 'bus') return ar > 0.6 && ar < 5 && area < 0.8; if (c === 'motorcycle' || c === 'bicycle') return ar > 0.4 && ar < 2.6 && area < 0.4; if (c === 'dog') return area < 0.5; return true; });
+    return dets.filter(d => { const [x, y, w, h] = d.bbox, ar = w / Math.max(1, h), area = w * h / (W * H), c = d.class; if (h < 14 || w < 8) return false; if (c === 'person') return ar < 1.1 && area < 0.8; if (c === 'car') return ar > 0.7 && ar < 4.2 && area < 0.65; if (c === 'truck' || c === 'bus') return ar > 0.6 && ar < 5 && area < 0.8; if (c === 'motorcycle' || c === 'bicycle') return ar > 0.4 && ar < 2.6 && area < 0.4; if (c === 'dog' || c === 'cat') return area < 0.6; return area < 0.7 && ar > 0.12 && ar < 8; });
   }
+  /* ---------- 3D-Formen für alles, was erkannt werden kann ---------- */
+  const fin = (mb, scale) => { const m = mb.build(G3.vcMat(), false); m.matrixAutoUpdate = true; m.userData.own = true; const g = new THREE.Group(); g.add(m); if (scale && scale !== 1) g.scale.setScalar(scale); return g; };
+  const shade = (h, a) => DogArt.shade(h, a);
+  function catMesh(col) {
+    const B = G3.GEO, mt = G3.mtx, d = shade(col, -0.25), mb = new G3.MB();
+    mb.add(B.sph, mt(0, 0.2, 0, 0.11, 0.1, 0.22), col).add(B.sph, mt(0, 0.3, 0.22, 0.09, 0.085, 0.085), col).add(B.cone, mt(-0.05, 0.4, 0.22, 0.03, 0.07, 0.03), d).add(B.cone, mt(0.05, 0.4, 0.22, 0.03, 0.07, 0.03), d).add(B.sphLo, mt(-0.035, 0.32, 0.3, 0.014, 0.014, 0.01), '#9be37a').add(B.sphLo, mt(0.035, 0.32, 0.3, 0.014, 0.014, 0.01), '#9be37a').add(B.sphLo, mt(0, 0.295, 0.31, 0.012, 0.01, 0.01), '#f4a5a5');
+    mb.add(B.cyl6, mt(0, 0.34, -0.3, 0.025, 0.34, 0.025, 0, 0.7), col);
+    [[-0.07, 0.14], [0.07, 0.14], [-0.07, -0.14], [0.07, -0.14]].forEach(([x, z]) => mb.add(B.cyl6, mt(x, 0.07, z, 0.03, 0.14, 0.03), d));
+    return fin(mb, 1.7);
+  }
+  function birdMesh(col) {
+    const B = G3.GEO, mt = G3.mtx, mb = new G3.MB();
+    mb.add(B.sph, mt(0, 0.12, 0, 0.07, 0.06, 0.1), col).add(B.sph, mt(0, 0.18, 0.08, 0.04, 0.04, 0.04), shade(col, 0.1)).add(B.cone, mt(0, 0.18, 0.13, 0.015, 0.04, 0.015, 0, Math.PI / 2), '#f59e0b').add(B.box, mt(0, 0.12, -0.12, 0.05, 0.015, 0.1), shade(col, -0.2)).add(B.box, mt(-0.08, 0.13, 0, 0.04, 0.015, 0.12), shade(col, -0.1)).add(B.box, mt(0.08, 0.13, 0, 0.04, 0.015, 0.12), shade(col, -0.1)).add(B.cyl6, mt(-0.02, 0.04, 0, 0.008, 0.08, 0.008), '#f59e0b').add(B.cyl6, mt(0.02, 0.04, 0, 0.008, 0.08, 0.008), '#f59e0b');
+    return fin(mb, 2.4);
+  }
+  const QUAD = { horse: { L: 2.1, H: 1.45, wid: 0.5, neck: 0.7, head: 0.5, leg: 0.75, col: '#8a5a33', tail: 1 }, cow: { L: 2, H: 1.3, wid: 0.65, neck: 0.3, head: 0.45, leg: 0.6, col: '#e8e4dc', patch: '#2b2b2b', tail: 1, horns: 1 }, sheep: { L: 1.15, H: 0.85, wid: 0.45, neck: 0.15, head: 0.3, leg: 0.4, col: '#f1efe8', wool: 1, face: '#3b3b3b' }, elephant: { L: 3.6, H: 2.9, wid: 1.1, neck: 0.3, head: 1, leg: 1.4, col: '#8c919c', trunk: 1, ears: 1 }, bear: { L: 1.5, H: 1.0, wid: 0.6, neck: 0.15, head: 0.4, leg: 0.4, col: '#6b4a2f' }, zebra: { L: 2.1, H: 1.45, wid: 0.5, neck: 0.65, head: 0.5, leg: 0.72, col: '#f3f4f6', stripes: 1, tail: 1 }, giraffe: { L: 2.3, H: 2.6, wid: 0.55, neck: 2.1, head: 0.5, leg: 1.6, col: '#e1b04a', spots: 1, tail: 1 } };
+  function quadMesh(cls, hex) {
+    const B = G3.GEO, mt = G3.mtx, q = QUAD[cls] || QUAD.horse, mb = new G3.MB(), col = (cls === 'sheep' || cls === 'zebra' || cls === 'giraffe' || cls === 'cow') ? q.col : (hex || q.col), d = shade(col, -0.3), by = q.leg + q.H * 0.28;
+    if (q.wool) { for (let i = 0; i < 7; i++) mb.add(B.sph, mt((i % 2 - 0.5) * 0.3, by + (i % 3) * 0.06, (i / 6 - 0.5) * q.L * 0.8, 0.28, 0.26, 0.26), col); } else mb.add(B.sph, mt(0, by, 0, q.wid, q.H * 0.3, q.L / 2), col);
+    const hy = by + q.neck * 0.6 + 0.1, hz = q.L / 2 + 0.1; mb.add(B.cyl6, mt(0, by + q.neck * 0.45, q.L / 2 - 0.1, q.wid * 0.45, q.neck + 0.2, q.wid * 0.45, 0, 0.5), col).add(B.sph, mt(0, hy + q.neck * 0.5, hz + 0.1 + (q.neck > 1 ? 0.15 : 0), q.head * 0.35, q.head * 0.3, q.head * 0.5), q.face || col);
+    if (q.trunk) mb.add(B.cyl6, mt(0, 1.2, hz + 0.7, 0.18, 1.6, 0.18, 0, 0.2), col); if (q.ears) { mb.add(B.box, mt(-0.7, hy + 0.7, hz - 0.2, 0.08, 0.9, 0.7), d).add(B.box, mt(0.7, hy + 0.7, hz - 0.2, 0.08, 0.9, 0.7), d); }
+    if (q.horns) mb.add(B.cone, mt(-0.18, hy + q.neck * 0.5 + 0.25, hz, 0.04, 0.2, 0.04), '#e5e1d0').add(B.cone, mt(0.18, hy + q.neck * 0.5 + 0.25, hz, 0.04, 0.2, 0.04), '#e5e1d0');
+    if (q.patch) [[0.3, 0.1], [-0.3, -0.3], [0.2, -0.6]].forEach(([x, z]) => mb.add(B.sph, mt(x * q.wid, by + 0.1, z, 0.25, 0.22, 0.3), q.patch));
+    if (q.stripes) for (let i = -3; i <= 3; i++) mb.add(B.box, mt(0, by, i * q.L / 8, q.wid * 2.02, q.H * 0.55, 0.07), '#1f2937');
+    if (q.spots) for (let i = 0; i < 6; i++) mb.add(B.sph, mt((i % 2 ? 1 : -1) * q.wid * 0.9, by + (i % 3 - 1) * 0.1, (i - 2.5) * 0.3, 0.07, 0.1, 0.1), '#8a5a2b');
+    if (q.tail) mb.add(B.cyl6, mt(0, by - 0.1, -q.L / 2 - 0.05, 0.04, q.H * 0.5, 0.04, 0, -0.3), d);
+    [[-1, 1], [1, 1], [-1, -1], [1, -1]].forEach(([x, z]) => mb.add(B.cyl6, mt(x * q.wid * 0.7, q.leg / 2, z * (q.L / 2 - 0.3), q.wid * 0.17, q.leg, q.wid * 0.17), d));
+    return fin(mb, 1);
+  }
+  const DIMS = { tv: [0.9, 0.55, 0.08], laptop: [0.34, 0.03, 0.24], suitcase: [0.45, 0.65, 0.2], backpack: [0.32, 0.45, 0.2], handbag: [0.3, 0.25, 0.12], refrigerator: [0.7, 1.8, 0.7], microwave: [0.5, 0.3, 0.4], oven: [0.6, 0.6, 0.6], toaster: [0.28, 0.2, 0.18], bed: [1.6, 0.5, 2], toilet: [0.4, 0.4, 0.6], sink: [0.5, 0.2, 0.4], book: [0.15, 0.22, 0.03], clock: [0.3, 0.3, 0.05], keyboard: [0.44, 0.03, 0.14], skis: [0.1, 0.03, 1.7], snowboard: [0.3, 0.04, 1.5], surfboard: [0.5, 0.06, 2.0], 'cell phone': [0.07, 0.15, 0.01], 'remote': [0.05, 0.18, 0.02], skateboard: [0.2, 0.1, 0.8], pizza: [0.35, 0.03, 0.35], cake: [0.25, 0.18, 0.25] };
+  function propMesh(cls, hex) {
+    const B = G3.GEO, mt = G3.mtx, mb = new G3.MB(), col = hex || '#9aa3b2', h = REAL_H[cls] || 0.4;
+    switch (cls) {
+      case 'traffic light': mb.add(B.cyl6, mt(0, 1.9, 0, 0.07, 3.8, 0.07), '#3b4048').add(B.box, mt(0, 3.6, 0, 0.32, 0.95, 0.28), '#22262c').add(B.sphLo, mt(0, 3.9, 0.15, 0.09, 0.09, 0.05), '#ef4444').add(B.sphLo, mt(0, 3.6, 0.15, 0.09, 0.09, 0.05), '#fbbf24').add(B.sphLo, mt(0, 3.3, 0.15, 0.09, 0.09, 0.05), '#22c55e'); break;
+      case 'stop sign': mb.add(B.cyl6, mt(0, 1.1, 0, 0.04, 2.2, 0.04), '#9aa1ab').add(B.cyl, mt(0, 2.2, 0.03, 0.38, 0.04, 0.38, 0, Math.PI / 2), '#c81e1e'); break;
+      case 'fire hydrant': mb.add(B.cyl, mt(0, 0.35, 0, 0.12, 0.7, 0.12), '#d02020').add(B.sph, mt(0, 0.72, 0, 0.14, 0.1, 0.14), '#d02020'); break;
+      case 'parking meter': mb.add(B.cyl6, mt(0, 0.6, 0, 0.04, 1.2, 0.04), '#6b7280').add(B.box, mt(0, 1.3, 0, 0.2, 0.3, 0.12), '#374151'); break;
+      case 'bench': mb.add(B.box, mt(0, 0.45, 0, 1.6, 0.08, 0.5), '#8a5a33').add(B.box, mt(0, 0.8, -0.22, 1.6, 0.4, 0.06), '#8a5a33').add(B.box, mt(-0.7, 0.22, 0, 0.06, 0.44, 0.45), '#3a3f4a').add(B.box, mt(0.7, 0.22, 0, 0.06, 0.44, 0.45), '#3a3f4a'); break;
+      case 'potted plant': mb.add(B.cyl, mt(0, 0.12, 0, 0.14, 0.24, 0.14), '#b45309').add(B.ico, mt(0, 0.4, 0, 0.22, 0.2, 0.22), '#3f9a47'); break;
+      case 'umbrella': mb.add(B.cyl6, mt(0, 0.45, 0, 0.015, 0.9, 0.015), '#374151').add(B.cone, mt(0, 0.85, 0, 0.55, 0.22, 0.55), col); break;
+      case 'chair': mb.add(B.box, mt(0, 0.45, 0, 0.45, 0.06, 0.45), col).add(B.box, mt(0, 0.75, -0.2, 0.45, 0.5, 0.05), col); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => mb.add(B.cyl6, mt(x * 0.2, 0.22, z * 0.2, 0.025, 0.44, 0.025), '#4b5563')); break;
+      case 'couch': mb.add(B.box, mt(0, 0.28, 0, 1.9, 0.4, 0.85), col).add(B.box, mt(0, 0.65, -0.35, 1.9, 0.5, 0.2), col).add(B.box, mt(-0.9, 0.45, 0, 0.18, 0.4, 0.85), shade(col, -0.15)).add(B.box, mt(0.9, 0.45, 0, 0.18, 0.4, 0.85), shade(col, -0.15)); break;
+      case 'dining table': mb.add(B.box, mt(0, 0.74, 0, 1.4, 0.06, 0.8), col); [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => mb.add(B.cyl6, mt(x * 0.62, 0.37, z * 0.34, 0.035, 0.74, 0.035), '#4b5563')); break;
+      case 'sports ball': mb.add(B.sph, mt(0, 0.11, 0, 0.11, 0.11, 0.11), '#f8fafc').add(B.sph, mt(0, 0.11, 0.0, 0.112, 0.03, 0.112), '#1f2937'); break;
+      case 'bottle': mb.add(B.cyl6, mt(0, 0.12, 0, 0.04, 0.24, 0.04), '#60a5fa').add(B.cyl6, mt(0, 0.28, 0, 0.018, 0.1, 0.018), '#60a5fa'); break;
+      case 'cup': case 'wine glass': case 'vase': mb.add(B.cyl, mt(0, h / 2, 0, h * 0.4, h, h * 0.4), col); break;
+      case 'bowl': mb.add(B.cap, mt(0, 0.1, 0, 0.12, 0.1, 0.12, 0, Math.PI), col); break;
+      case 'teddy bear': mb.add(B.sph, mt(0, 0.18, 0, 0.14, 0.17, 0.12), col).add(B.sph, mt(0, 0.38, 0, 0.1, 0.1, 0.1), col).add(B.sph, mt(-0.08, 0.46, 0, 0.04, 0.04, 0.03), shade(col, -0.2)).add(B.sph, mt(0.08, 0.46, 0, 0.04, 0.04, 0.03), shade(col, -0.2)); break;
+      default: { const d = DIMS[cls] || [h * 0.7, h, h * 0.6]; mb.add(B.box, mt(0, d[1] / 2, 0, d[0], d[1], d[2]), col); if (cls === 'tv') mb.add(B.box, mt(0, d[1] / 2, d[2] / 2 + 0.01, d[0] - 0.06, d[1] - 0.06, 0.01), '#111827'); }
+    }
+    return fin(mb, 1);
+  }
+  function trainMesh(hex) { const g = new THREE.Group(), a = CityLife.makeCar('bus', hex || '#c8ccd3'), b = CityLife.makeCar('bus', hex || '#c8ccd3'); a.position.z = 6; b.position.z = -6.2; g.add(a, b); return g; }
+  function boatMesh(hex) { const B = G3.GEO, mt = G3.mtx, mb = new G3.MB(); mb.add(B.box, mt(0, 0.5, 0, 1.6, 0.9, 5), hex || '#e5e7eb').add(B.cone, mt(0, 0.5, 3.1, 0.8, 1.2, 0.8, 0, Math.PI / 2), hex || '#e5e7eb').add(B.box, mt(0, 1.4, -0.4, 1.2, 0.9, 1.6), '#1d4ed8').add(B.box, mt(0, 1.45, 0.45, 1.1, 0.5, 0.05), '#22364b'); return fin(mb, 1); }
+  function planeMesh(hex) { const B = G3.GEO, mt = G3.mtx, mb = new G3.MB(); mb.add(B.cyl, mt(0, 3, 0, 1.6, 22, 1.6, 0, Math.PI / 2), hex || '#e5e7eb').add(B.box, mt(0, 2.9, -1, 24, 0.3, 3.5), shade(hex || '#e5e7eb', -0.1)).add(B.box, mt(0, 5, -10, 0.2, 3.2, 3), shade(hex || '#e5e7eb', -0.1)).add(B.box, mt(0, 3.2, -10, 8, 0.2, 2), shade(hex || '#e5e7eb', -0.1)); return fin(mb, 0.7); }
+  function labelSprite(txt, h) { const sp = G3.sprite(txt, { w: 320, h: 80, bg: 'rgba(12,60,110,.92)', border: '#38bdf8', fs: 40, sw: 2.6 }); sp.position.y = h; return sp; }
   const WHITE = '#e6e8ee';
 
   /* ---------- Steuerung ---------- */
@@ -3950,11 +4014,11 @@ const CamScan = (() => {
         const kind = KIND[d.class]; if (!kind) continue; const [bx, by, bw, bh] = d.bbox, cx = bx + bw / 2, real = REAL_H[d.class];
         g.strokeStyle = '#38bdf8'; g.strokeRect(bx / W * cw, by / H * chh, bw / W * cw, bh / H * chh); g.fillStyle = '#38bdf8'; g.fillText(NAME[d.class], bx / W * cw + 2, Math.max(10, by / H * chh - 2));
         let dist, off; if (eq) { const a = Math.max(0.02, bh / H * Math.PI); dist = real / (2 * Math.tan(a / 2)); off = (cx / W - 0.5) * 2 * Math.PI; } else { dist = real * f / Math.max(8, bh); off = Math.atan((cx - W / 2) / f); }
-        const cut = !eq && (by < 3 || by + bh > H - 3); if (cut && (d.class === 'person' || d.class === 'car')) dist = Math.max(dist, 3.5); dist = clamp(dist, 1.5, 55);
+        const cut = !eq && (by < 3 || by + bh > H - 3); if (cut && (d.class === 'person' || d.class === 'car')) dist = Math.max(dist, 3.5); dist = clamp(dist, smallClass(d.class) ? 0.8 : 1.5, smallClass(d.class) ? 9 : d.class === 'airplane' || d.class === 'train' ? 120 : 55);
         const brg = hd + off, nx = pos.x + Math.sin(brg) * dist, nz = pos.z - Math.cos(brg) * dist, grp = GROUP[d.class];
         let best = null, bd = Math.max(2.6, dist * 0.22); for (const o of tracked) { if (o.grp !== grp) continue; const dd = Math.hypot(o.x - nx, o.z - nz); if (dd < bd) { bd = dd; best = o; } }
         if (best) { best.x += (nx - best.x) * 0.45; best.z += (nz - best.z) * 0.45; best.t = now; best.n++; best.score = Math.max(best.score, d.score); if (best.cls !== d.class && d.score > best.score - 0.05) best.cls = d.class; }
-        else if (tracked.length < 44) { const o = { cls: d.class, kind, grp, x: nx, z: nz, t: now, born: now, n: 1, score: d.score, hex: kind === 'car' || kind === 'truck' || kind === 'bus' ? sampleColor(video, bx, by, bw, bh) : null, aspect: bw / bh, mesh: null, vx: 0, vz: 0, lastx: nx, lastz: nz, ph: rnd() * 6 }; tracked.push(o); }
+        else if (tracked.length < 44) { const o = { cls: d.class, kind, grp, x: nx, z: nz, t: now, born: now, n: 1, score: d.score, hex: (kind === 'person' || kind === 'bike' || kind === 'moto') ? null : sampleColor(video, bx, by, bw, bh), aspect: bw / bh, mesh: null, vx: 0, vz: 0, lastx: nx, lastz: nz, ph: rnd() * 6 }; tracked.push(o); }
       }
       drawRing(hd); const cnt = {}; tracked.forEach(o => { if (now - o.t < 4000) cnt[NAME[o.cls]] = (cnt[NAME[o.cls]] || 0) + 1; });
       info.textContent = Object.keys(cnt).length ? Object.entries(cnt).map(([k, v]) => v + '× ' + k).join(' · ') : (Ori.seen ? 'Nichts erkannt – langsam drehen' : 'Kein Kompass: Kamera in Laufrichtung halten');
@@ -3966,19 +4030,27 @@ const CamScan = (() => {
     }
     /* 3D-Objekte */
     function buildMesh(o) {
-      const k = o.kind; let g, legs = null, dog = null;
-      if (k === 'person') { const p = CityLife.npcPerson(rnd, 1.45); g = p.g; legs = p.legs; }
-      else if (k === 'dog') { dog = G3.makeDog(['#c58b4e', '#e8d9b8', '#3b2a1a', '#9a9a9a'][Math.floor(rnd() * 4)]); g = dog.g; g.scale.setScalar(1.25); }
-      else if (k === 'bike' || k === 'moto') g = bikeMesh(k === 'moto').g;
-      else { const type = k === 'bus' ? 'bus' : k === 'truck' ? (o.aspect > 2.3 ? 'truck' : 'van') : (o.aspect > 2.1 ? 'sedan' : o.aspect > 1.6 ? 'hatch' : 'suv'); g = CityLife.makeCar(type, o.hex || '#8e9aa5'); }
-      const ring = new THREE.Mesh(G3.GEO.ring, new THREE.MeshBasicMaterial({ color: G3.lin('#38bdf8'), transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false, side: THREE.DoubleSide })); ring.scale.setScalar(k === 'person' ? 1.0 : k === 'dog' ? 0.8 : k === 'bus' || k === 'truck' ? 3.6 : 2.4); ring.position.y = 0.12; g.add(ring);
+      const k = o.kind, hex = o.hex || '#9aa3b2'; let g, legs = null, dog = null, rad = 1.2, top = (REAL_H[o.cls] || 1) + 0.6;
+      if (k === 'person') { const p = CityLife.npcPerson(rnd, 1.45); g = p.g; legs = p.legs; rad = 1.0; top = 3.4; }
+      else if (k === 'dog') { dog = G3.makeDog(hex && rnd() < 0.5 ? hex : ['#c58b4e', '#e8d9b8', '#3b2a1a', '#9a9a9a'][Math.floor(rnd() * 4)]); g = dog.g; g.scale.setScalar(1.25); rad = 0.8; top = 1.8; }
+      else if (k === 'cat') { g = catMesh(hex); rad = 0.6; top = 1.1; }
+      else if (k === 'bird') { g = birdMesh(hex); rad = 0.5; top = 0.8; }
+      else if (k === 'quad') { g = quadMesh(o.cls, hex); rad = o.cls === 'elephant' ? 3.2 : o.cls === 'sheep' || o.cls === 'bear' ? 1.2 : 2; top = (QUAD[o.cls] ? QUAD[o.cls].H + QUAD[o.cls].neck : 2) + 0.7; }
+      else if (k === 'bike' || k === 'moto') { g = bikeMesh(k === 'moto').g; rad = 1.4; top = 2.2; }
+      else if (k === 'train') { g = trainMesh(hex); rad = 6; top = 5; }
+      else if (k === 'boat') { g = boatMesh(hex); rad = 2.6; top = 3.2; }
+      else if (k === 'plane') { g = planeMesh(hex); rad = 8; top = 9; }
+      else if (k === 'prop') { g = propMesh(o.cls, hex); rad = Math.max(0.35, REAL_H[o.cls] * 0.5); top = (o.cls === 'traffic light' ? 4.2 : o.cls === 'stop sign' ? 2.6 : (REAL_H[o.cls] || 0.5) + 0.35); }
+      else { const type = k === 'bus' ? 'bus' : k === 'truck' ? (o.aspect > 2.3 ? 'truck' : 'van') : (o.aspect > 2.1 ? 'sedan' : o.aspect > 1.6 ? 'hatch' : 'suv'); g = CityLife.makeCar(type, hex); rad = k === 'bus' || k === 'truck' ? 3.6 : 2.4; top = 0; }
+      const ring = new THREE.Mesh(G3.GEO.ring, new THREE.MeshBasicMaterial({ color: G3.lin('#38bdf8'), transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false, side: THREE.DoubleSide })); ring.scale.setScalar(rad); ring.position.y = 0.12; g.add(ring);
+      if (!CORE.has(k === 'bike' || k === 'moto' ? 'bike' : o.cls) && top > 0) { const lb = labelSprite(NAME[o.cls] || o.cls, top / (g.scale.y || 1)); g.add(lb); o.label = lb; }
       o.ring = ring; o.legs = legs; o.dog = dog; o.mesh = g; g.position.set(o.x, 0.07, o.z); g.rotation.y = o.yaw = orient(o); root.add(g);
     }
     function orient(o) {
       const gph = env.getGraph(); if (o.grp === 'v' && gph) { let best = null, bd = 12; for (const e of gph.drive) { const t = clamp(((o.x - e.x0) * e.ux + (o.z - e.z0) * e.uz) / e.L, 0, 1) * e.L, px = e.x0 + e.ux * t, pz = e.z0 + e.uz * t, d = Math.hypot(px - o.x, pz - o.z); if (d < bd) { bd = d; best = e; } } if (best) return Math.atan2(best.ux, best.uz); }
       const p = env.getPos(); return Math.atan2(o.x - p.x, o.z - p.z) + Math.PI / 2 + (rnd() < 0.5 ? 0 : Math.PI);
     }
-    function dropMesh(o) { if (o.mesh) { root.remove(o.mesh); o.mesh.traverse(m => { if (m.userData && m.userData.own && m.geometry) m.geometry.dispose(); if (m === o.ring) m.material.dispose(); }); o.mesh = null; } }
+    function dropMesh(o) { if (o.mesh) { root.remove(o.mesh); o.mesh.traverse(m => { if (m.userData && m.userData.own && m.geometry) m.geometry.dispose(); if (m === o.ring) m.material.dispose(); if (m.isSprite && m.material) { if (m.material.map) m.material.map.dispose(); m.material.dispose(); } }); o.mesh = null; } }
     function update(dt, t) {
       if (stopped) return; const now = Date.now();
       for (let i = tracked.length - 1; i >= 0; i--) {
@@ -3993,7 +4065,7 @@ const CamScan = (() => {
     tick();
     return { stop, update, get on() { return !stopped; }, get tracked() { return tracked; }, get cameraHeading() { return cameraHeading(); }, get stats() { return { det: model && model.name, ms: lastMs }; } };
   }
-  return { start, Ori };
+  return { start, Ori, _b: { catMesh, birdMesh, quadMesh, propMesh, trainMesh, boatMesh, planeMesh, C80, QUAD } };
 })();
 
 /* ------------------------------ CITY GO · STANDORT (3D-Karte mit echtem Standort) ------------------------------ */
@@ -4492,9 +4564,9 @@ const GoMap = (() => {
   function scanModal() {
     if (scan) { scan.stop(); return; } if (scanBusy) return;
     UI.modal({ title: '{i:cam} Echtwelt-Scan', body: el('div', { class: 'col' },
-      el('p', { style: 'margin:0' }, 'Die Kamera deines Handys erkennt echte Autos, Menschen, Hunde und Fahrräder und zeigt sie an der geschätzten Stelle in der Karte. Solange der Scan läuft, sind die simulierten Autos und Leute aus.'),
+      el('p', { style: 'margin:0' }, 'Die Kamera deines Handys erkennt echte Autos, Menschen, Hunde, Katzen und viele andere Tiere, Fahrzeuge und Gegenstände (80 Arten, von Ampel bis Sofa) und zeigt sie an der geschätzten Stelle in der Karte. Solange der Scan läuft, sind die simulierten Autos und Leute aus.'),
       el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'So geht’s: Handy aufrecht halten, Rückkamera nach vorn. Dreh dich langsam im Kreis – der Ring links unten füllt sich. Erkanntes bleibt etwa 30 Sekunden stehen.'),
-      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Ehrlich: Ein Handy hat keine 360°-Kamera, es sieht nur nach vorn (etwa 65°). Entfernung und Richtung sind Schätzungen. Die Bilder bleiben auf dem Gerät; die Erkennung (KI, YOLOv8) wird einmalig aus dem Internet geladen (ca. 25 MB, am besten im WLAN).')),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Ehrlich: Ein Handy hat keine 360°-Kamera, es sieht nur nach vorn (etwa 65°). Entfernung und Richtung sind Schätzungen. Die Bilder bleiben auf dem Gerät; die Erkennung (KI, YOLO26) wird einmalig aus dem Internet geladen (ca. 22 MB, am besten im WLAN).')),
       actions: [{ label: 'Abbrechen', cls: 'sec' }, { label: '360°-Kamera (testweise)', cls: 'sec', onclick: () => setTimeout(() => startScan(true)) }, { label: '{i:cam} Scan starten', cls: 'gold', onclick: () => setTimeout(() => startScan(false)) }] });
   }
   async function startScan(eq) {
