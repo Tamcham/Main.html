@@ -816,6 +816,22 @@ body[data-mode=mobile] #cityLayer.go #cityDex{display:none!important}
 .card.sz-xs{--cw:104px}
 body[data-mode=mobile] .tinv .card.sz-xs,body[data-mode=mobile] .tslots .card.sz-xs{--cw:98px}
 .map-step{position:absolute;right:14px;bottom:calc(132px + var(--sai-b));background:rgba(12,10,40,.88);color:#fff;border:2px solid #ffffff40}.map-step.on{background:linear-gradient(180deg,#34d399,#059669);border-color:#fff}
+#mapLoad{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(80% 60% at 50% 30%,#2a2370,#0b0a24 75%);transition:opacity .5s}
+#mapLoad.out{opacity:0;pointer-events:none}
+.ml-in{width:min(380px,100%);text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.ml-logo{width:72px;height:72px;color:#ffd24a;animation:mlSpin 2.2s ease-in-out infinite}.ml-logo svg{width:100%;height:100%}
+#mapLoad.err .ml-logo{animation:none;color:#fb7185}
+@keyframes mlSpin{50%{transform:scale(1.15) rotate(8deg)}}
+.ml-in h2{margin:0;font:700 1.9rem var(--font-d);color:#fff}
+.ml-bar{width:100%;height:8px;border-radius:99px;background:#ffffff1f;overflow:hidden}.ml-bar i{display:block;height:100%;width:5%;border-radius:99px;background:linear-gradient(90deg,#38bdf8,#4ade80);transition:width .5s}
+.ml-steps{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;width:100%;text-align:left}
+.ml-steps li{display:flex;align-items:center;gap:10px;color:#8e8ab8;font-weight:700}.ml-steps li i{width:18px;height:18px;border-radius:50%;border:2px solid #ffffff40;flex:none}
+.ml-steps li.cur{color:#fff}.ml-steps li.cur i{border-color:#38bdf8;border-top-color:transparent;animation:mlRot .9s linear infinite}
+.ml-steps li.done{color:#86efac}.ml-steps li.done i{background:#4ade80;border-color:#4ade80}
+@keyframes mlRot{to{transform:rotate(360deg)}}
+.ml-sub{margin:4px 0 0;color:#d4d1f5;font-size:.95rem;line-height:1.35;min-height:2.6em}.ml-sub small{color:#b9b5e0;font-size:.82rem}
+.ml-acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.ml-tip{color:#8e8ab8;font-size:.75rem;margin-top:6px}
 </style>
 </head>
 <body data-mode="desktop">
@@ -3412,10 +3428,9 @@ const Go = (() => {
 
 /* ------------------------------ CITY GO · STANDORT (3D-Karte mit echtem Standort) ------------------------------ */
 const GoMap = (() => {
-  const CELL = 120, DOG_RANGE = 75, STOP_RANGE = 45, ARENA_RANGE = 60, BLK = 60, OSM_R = 300;
-  const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];
-  const DEMO = { lat: 52.5163, lon: 13.3777 };
-  let stepOn = false, stepOff = { x: 0, z: 0 }, stepN = 0, stepLast = 0, accMean = 9.8, compass = null, fixN = 0, fixT = 0, keysDown = {}, frameN = 0, thr = 0, ov = null, st = null, running = false, geo = null, watch = null, mode = 'intro', lureUntil = 0;
+  const CELL = 120, DOG_RANGE = 75, STOP_RANGE = 45, ARENA_RANGE = 60, BLK = 60, R_FIRST = 240, R_FULL = 420;
+  const OVERPASS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+    let ph = 'loc', phT = 0, geoErr = '', mapRound = 0, lastLoad = 0, firstBuilt = false, fixN = 0, fixT = 0, frameN = 0, thr = 0, ov = null, st = null, running = false, geo = null, watch = null, mode = 'intro', lureUntil = 0;
   let pos = { x: 0, z: 0 }, tgt = null, heading = 0, acc = 0, walkAcc = 0, camYaw = 0, camDist = 58, geoOff = { x: 0, z: 0 }, speedNow = 0;
   let world = null, osmBusy = false, osmFails = 0, osmOn = true, lastFetch = null, osmOkN = 0, avatar = null, pet = null, rangeRing = null, groundFallback = null, hudT = 0, loader = null;
   const objs = new Map(), blocks = new Map(); let groundPlain = null, skipIds = new Set();
@@ -3614,18 +3629,27 @@ const GoMap = (() => {
     const vm = G3.vcMat(), vm2 = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }); grp.add(flat.build(vm, false), roadsMB.build(vm2, false), tMB.build(vm, false));
     return { grp, bld, roadPts, cen, labs };
   }
-  async function loadWorld(force) {
-    if (osmBusy || !osmOn || !geo || !st) return; osmBusy = true; const c = { x: pos.x, z: pos.z };
-    const sw = toLL(c.x - OSM_R, c.z + OSM_R), ne = toLL(c.x + OSM_R, c.z - OSM_R), bb = `${sw.lat.toFixed(5)},${sw.lon.toFixed(5)},${ne.lat.toFixed(5)},${ne.lon.toFixed(5)}`;
-    const q = `[out:json][timeout:30];(way["building"](${bb});way["building:part"](${bb});way["highway"](${bb});way["natural"~"water|wood|grassland|scrub"](${bb});way["waterway"](${bb});way["leisure"~"park|garden|playground|pitch|common"](${bb});way["landuse"~"grass|forest|meadow|recreation_ground|village_green|cemetery|reservoir|basin|residential|commercial|retail|industrial"](${bb});way["amenity"~"parking"](${bb});way["railway"~"rail|tram|light_rail|subway"](${bb});way["barrier"~"wall|fence|hedge|retaining_wall"](${bb});node["natural"="tree"](${bb});node["highway"="street_lamp"](${bb});node["amenity"~"bench|fountain"](${bb});node["name"]["shop"](${bb});node["name"]["amenity"](${bb});node["name"]["tourism"](${bb});node["name"]["leisure"](${bb}););out geom;`;
-    let json = null;
-    for (const url of OVERPASS) { try { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 28000); const res = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ac.signal }); clearTimeout(tm); if (!res.ok) throw new Error('HTTP ' + res.status); json = await res.json(); break; } catch (e) { json = null; } }
+  async function fetchOverpass(q, onTry) {
+    for (let i = 0; i < OVERPASS.length; i += 2) {
+      const urls = OVERPASS.slice(i, i + 2); onTry && onTry(i / 2 + 1, Math.ceil(OVERPASS.length / 2));
+      try {
+        return await Promise.any(urls.map(async u => { const ac = new AbortController(), tm = setTimeout(() => ac.abort(), 22000); try { const res = await fetch(u, { method: 'POST', body: 'data=' + encodeURIComponent(q), headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ac.signal }); if (!res.ok) throw new Error('HTTP ' + res.status); const j = await res.json(); if (!j || !j.elements) throw new Error('leer'); return j; } finally { clearTimeout(tm); } }));
+      } catch (e) { /* nächstes Paar */ }
+    }
+    return null;
+  }
+  async function loadWorld(R, first) {
+    if (osmBusy || !osmOn || !geo || !st) return; osmBusy = true; const c = { x: pos.x, z: pos.z }; lastLoad = Date.now();
+    const sw = toLL(c.x - R, c.z + R), ne = toLL(c.x + R, c.z - R), bb = `${sw.lat.toFixed(5)},${sw.lon.toFixed(5)},${ne.lat.toFixed(5)},${ne.lon.toFixed(5)}`;
+    const q = `[out:json][timeout:25];(way["building"](${bb});way["building:part"](${bb});way["highway"](${bb});way["natural"~"water|wood|grassland|scrub"](${bb});way["waterway"](${bb});way["leisure"~"park|garden|playground|pitch|common"](${bb});way["landuse"~"grass|forest|meadow|recreation_ground|village_green|cemetery|reservoir|basin|residential|commercial|retail|industrial"](${bb});way["amenity"~"parking"](${bb});way["railway"~"rail|tram|light_rail|subway"](${bb});way["barrier"~"wall|fence|hedge|retaining_wall"](${bb});node["natural"="tree"](${bb});node["highway"="street_lamp"](${bb});node["amenity"~"bench|fountain"](${bb});node["name"]["shop"](${bb});node["name"]["amenity"](${bb});node["name"]["tourism"](${bb});node["name"]["leisure"](${bb}););out geom;`;
+    const json = await fetchOverpass(q, (n, tot) => { if (first) loadSub(`Kartendaten werden geladen … (Server ${n}/${tot})`); });
     osmBusy = false; if (!running || !st) return;
-    if (!json || !json.elements) { osmFails++; if (osmFails >= 2 && !world) { osmOn = false; UI.toast('Keine Kartendaten erreichbar – du siehst eine generierte Stadt. Hunde und Stops funktionieren trotzdem.', ''); } else setTimeout(() => { lastFetch = null; }, 15000); return; }
-    osmFails = 0; lastFetch = c;
-    await new Promise(res => setTimeout(res, 30)); let nw; try { nw = buildOsm(json, c); } catch (e) { console.warn('OSM-Aufbau fehlgeschlagen', e); osmOn = false; UI.toast('Kartendaten konnten nicht gebaut werden – generierte Stadt aktiv.', ''); return; }
+    if (!json) { osmFails++; if (first && !world) { geoErr = 'map'; loadStep('err'); } else { lastFetch = { x: c.x + 1e5, z: c.z }; setTimeout(() => { lastFetch = null; }, 30000); } return; }
+    osmFails = 0; lastFetch = c; if (first) loadStep('build');
+    await new Promise(res => setTimeout(res, 60)); let nw; try { nw = buildOsm(json, c); } catch (e) { console.warn('OSM-Aufbau fehlgeschlagen', e); if (first) { geoErr = 'map'; loadStep('err'); } return; }
     if (world) { st.remove(world.grp); world.grp.traverse(ob => { if (ob.userData && ob.userData.own && ob.geometry) ob.geometry.dispose(); if (ob.isSprite && ob.material.map) { ob.material.map.dispose(); ob.material.dispose(); } }); }
     st.add(nw.grp); world = nw; osmOkN++; if (groundFallback) groundFallback.visible = false; blocks.forEach(m => { st.remove(m); m.geometry.dispose(); }); blocks.clear(); relocateObjs();
+    if (first) setTimeout(finishLoad, 80);
   }
   const nearBuilding = (x, z) => { if (!world) return false; for (const b of world.bld) { if (x < b.minx - 1 || x > b.maxx + 1 || z < b.minz - 1 || z > b.maxz + 1) continue; if (inPoly(x, z, b.pts)) return true; } return false; };
   function snapFree(o) {
@@ -3649,42 +3673,20 @@ const GoMap = (() => {
   }
 
   /* ---------- Hauptschleife ---------- */
-  /* ---------- Schrittzähler (laufen auch ohne GPS-Bewegung, z. B. drinnen) ---------- */
-  function stepMove() {
-    if (!geo) return;
-    const dir = compass != null ? [Math.sin(compass), Math.cos(compass)] : [-Math.sin(camYaw), -Math.cos(camYaw)];
-    const L = 0.85, base = tgt || pos; const nx = { x: base.x + dir[0] * L, z: base.z + dir[1] * L }; stepOff.x += dir[0] * L; stepOff.z += dir[1] * L; tgt = nx; heading = Math.atan2(dir[0], dir[1]); stepN++;
-  }
-  const onMotion = e => {
-    const a = e.accelerationIncludingGravity; if (!a || a.x == null) return; const m = Math.hypot(a.x, a.y, a.z); accMean += (m - accMean) * 0.02; const now = performance.now();
-    if (m - accMean > 2.1 && now - stepLast > 320) { stepLast = now; stepMove(); }
-  };
-  const onOri = e => { if (e.webkitCompassHeading != null) compass = (e.webkitCompassHeading) / R2D * -1 + Math.PI; else if (e.absolute && e.alpha != null) compass = Math.PI - (360 - e.alpha) / R2D; };
-  async function toggleSteps() {
-    if (stepOn) { stepOn = false; window.removeEventListener('devicemotion', onMotion); window.removeEventListener('deviceorientationabsolute', onOri, true); window.removeEventListener('deviceorientation', onOri, true); UI.toast('Schrittzähler aus', ''); return; }
-    try { if (typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) { const r = await DeviceMotionEvent.requestPermission(); if (r !== 'granted') { UI.toast('Bewegungssensor nicht erlaubt.', 'bad'); return; } } if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) { try { await DeviceOrientationEvent.requestPermission(); } catch (e) { } } } catch (e) { UI.toast('Bewegungssensor nicht verfügbar.', 'bad'); return; }
-    if (typeof DeviceMotionEvent === 'undefined') { UI.toast('Dieses Gerät hat keinen Bewegungssensor.', 'bad'); return; }
-    stepOn = true; window.addEventListener('devicemotion', onMotion); window.addEventListener('deviceorientationabsolute', onOri, true); window.addEventListener('deviceorientation', onOri, true);
-    UI.toast('{i:run} Schrittzähler an: Jeder Schritt bewegt dich ~85 cm vorwärts. Ohne Kompass läufst du in Blickrichtung der Kamera.', 'good');
-  }
-  const kd = e => { if (!running || UI.modalOpen()) return; const k = e.key.toLowerCase(); if ('wasd'.includes(k) || k.startsWith('arrow')) { keysDown[k] = true; e.preventDefault(); } };
-  const ku = e => { delete keysDown[e.key.toLowerCase()]; };
-  function keyMove(dt) { const f = (keysDown['w'] || keysDown['arrowup'] ? 1 : 0) - (keysDown['s'] || keysDown['arrowdown'] ? 1 : 0), r = (keysDown['d'] || keysDown['arrowright'] ? 1 : 0) - (keysDown['a'] || keysDown['arrowleft'] ? 1 : 0); if (!f && !r) return false; const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), rx = Math.cos(camYaw), rz = -Math.sin(camYaw), l = Math.hypot(f, r), sp = 9 * dt; const dx = (fx * f + rx * r) / l * sp, dz = (fz * f + rz * r) / l * sp; pos.x += dx; pos.z += dz; heading = Math.atan2(dx, dz); speedNow = sp / dt; moved(sp); tgt = null; return true; }
   function tickMove(dt) {
-    if (keyMove(dt)) return;
     if (!tgt) return; const dx = tgt.x - pos.x, dz = tgt.z - pos.z, d = Math.hypot(dx, dz);
-    if (d > 0.25) { const sp = mode === 'demo' ? 10 : Math.max(2.5, d * 1.8), stp = Math.min(d, sp * dt); pos.x += dx / d * stp; pos.z += dz / d * stp; heading = Math.atan2(dx, dz); speedNow = stp / dt; if (stp > 0) moved(stp); } else { speedNow = 0; if (mode === 'demo') tgt = null; }
+    if (d > 0.25) { if (d > 150) { pos.x = tgt.x; pos.z = tgt.z; speedNow = 0; return; } const sp = Math.max(3, d * 2.6), stp = Math.min(d, sp * dt); pos.x += dx / d * stp; pos.z += dz / d * stp; heading = Math.atan2(dx, dz); speedNow = stp / dt; if (stp > 0) moved(stp); } else { speedNow = 0; }
   }
   function moved(stp) { const go = Go.g(); if (stp < 30) { go.meters = (go.meters || 0) + stp; walkAcc += stp; if (walkAcc >= 150) { walkAcc -= 150; if (Go.walkBonus()) UI.floatText('+1 Leckerli', '#c98a4b', '#mapInfo'); } } }
   let syncT = 0;
   function onFrame(dt, t) {
-    if (!running) return; speedNow *= 0.9; if (mode === 'gps' || mode === 'demo') tickMove(dt);
+    if (!running) return; speedNow *= 0.9; if (mode === 'gps') tickMove(dt);
     const pitch = 0.92, cy = Math.sin(pitch) * camDist, cr = Math.cos(pitch) * camDist;
     st.camera.position.set(pos.x + Math.sin(camYaw) * cr, cy, pos.z + Math.cos(camYaw) * cr); st.camera.lookAt(pos.x - Math.sin(camYaw) * 6, 0, pos.z - Math.cos(camYaw) * 6);
     if (avatar) { const moving = speedNow > 0.8; G3.walkAnim(avatar, t * 9, moving ? 1 : 0); avatar.g.position.set(pos.x, Math.abs(Math.sin(t * 9)) * (moving ? 0.12 : 0), pos.z); let dy = heading - avatar.g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); avatar.g.rotation.y += dy * Math.min(1, dt * 8); }
     if (pet) { const bx = pos.x - Math.sin(heading) * 3.4 + Math.cos(heading) * 2.4, bz = pos.z - Math.cos(heading) * 3.4 - Math.sin(heading) * 2.4, dx = bx - pet.g.position.x, dz = bz - pet.g.position.z, d = Math.hypot(dx, dz); const sp = d > 14 ? 40 : Math.min(14, d * 3.5); if (d > 0.3) { pet.g.position.x += dx / d * Math.min(d, sp * dt); pet.g.position.z += dz / d * Math.min(d, sp * dt); let dy = Math.atan2(dx, dz) - pet.g.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); pet.g.rotation.y += dy * Math.min(1, dt * 10); } pet.update(t, d > 0.6 ? 'run' : 'idle', clamp(d / 3, 0, 1)); }
     if (rangeRing) rangeRing.position.set(pos.x, 0.25, pos.z);
-    if ((syncT -= dt) <= 0) { syncT = 0.8; syncObjects(); syncBlocks(); if (geo && osmOn && !osmBusy && (!lastFetch || Math.hypot(pos.x - lastFetch.x, pos.z - lastFetch.z) > 120)) loadWorld(); }
+    if ((syncT -= dt) <= 0) { syncT = 0.8; if (ph === 'ready') { syncObjects(); syncBlocks(); if (geo && osmOn && !osmBusy && world && Date.now() - lastLoad > 25000 && (!lastFetch || Math.hypot(pos.x - lastFetch.x, pos.z - lastFetch.z) > R_FULL * 0.4)) loadWorld(R_FULL, false); } }
     updateObjects(dt, t); if (world && world.labs && frameN++ % 10 === 0) world.labs.forEach(sp => { const d = Math.hypot(sp.position.x - pos.x, sp.position.z - pos.z); sp.visible = d < 120; });
     const hr = new Date().getHours() + new Date().getMinutes() / 60, day = hr > 7 && hr < 19 ? 1 : hr > 5.5 && hr < 21 ? 0.55 : 0.2;
     st.hemi.intensity = 0.4 + 0.6 * day; st.sun.intensity = 0.2 + 0.95 * day; st.scene.background.setRGB(0.62, 0.83, 1).multiplyScalar(0.2 + 0.8 * day);
@@ -3696,10 +3698,9 @@ const GoMap = (() => {
     if (!ov) return; const s = S(), info = $('#mapInfo', ov), xpP = clamp(s.xp / Economy.xpNeed(s.level) * 100, 0, 100);
     info.innerHTML = `<span class="c-coin">{i:coin}${fmtShort(s.coins)}</span><span>{i:star} Lv ${s.level}</span><span class="bar xb"><i style="width:${xpP}%"></i></span><span>{i:run} ${fmt(Math.round(Go.g().meters || 0))} m</span>`;
     $('#mapBag b', ov).textContent = Go.count('ball') + Go.count('great') + Go.count('ultra');
-    const stt = $('#mapStatus', ov); stt.className = 'map-status ' + (mode === 'gps' ? 'ok' : mode === 'demo' ? 'demo' : ''); stt.innerHTML = mode === 'gps' ? `{i:pin} GPS${acc ? ' · ±' + Math.round(acc) + ' m' : ''} · ${fixT ? 'Signal vor ' + Math.max(0, Math.round((Date.now() - fixT) / 1000)) + ' s' : 'warte …'}${stepOn ? ' · Schritte ' + stepN : ''}` : mode === 'demo' ? '{i:pin} Demo · tippe zum Laufen' : '{i:pin} Standort wird gesucht …';
-    const sb = $('#mapStep', ov); if (sb) sb.classList.toggle('on', stepOn);
+    const stt = $('#mapStatus', ov); const age = fixT ? Math.max(0, Math.round((Date.now() - fixT) / 1000)) : 0; stt.className = 'map-status ' + (mode === 'gps' ? (age > 20 ? 'demo' : 'ok') : ''); stt.innerHTML = mode === 'gps' ? `{i:pin} GPS${acc ? ' · ±' + Math.round(acc) + ' m' : ''} · ${age > 20 ? 'Signal verloren (' + age + ' s)' : 'Signal vor ' + age + ' s'}` : '{i:pin} Standort wird gesucht …';
     const lure = $('#mapLure', ov); lure.classList.toggle('hidden', !(Go.count('lure') > 0 || Date.now() < lureUntil)); lure.innerHTML = Date.now() < lureUntil ? `{i:sparkle} ${fmtDur(lureUntil - Date.now())}` : `{i:sparkle} Köder ×${Go.count('lure')}`;
-    $('#mapAttr', ov).style.display = world ? 'block' : 'none'; if (osmBusy && !world) stt.innerHTML += ' · Karte lädt …';
+    $('#mapAttr', ov).style.display = world ? 'block' : 'none'; if (osmBusy && world) stt.innerHTML += ' · Karte aktualisiert …';
   }
 
   /* ---------- Eingabe ---------- */
@@ -3712,7 +3713,7 @@ const GoMap = (() => {
   }
   async function tapAt(px, py) {
     if (UI.modalOpen() || !st) return; const p = pickAt(px, py); if (!p) return;
-    if (p.ground) { if (mode === 'demo') tgt = { x: p.ground.x, z: p.ground.z }; return; }
+    if (p.ground) return;
     const best = p.obj, d = Math.hypot(best.x - pos.x, best.z - pos.z), range = best.t === 'dog' ? DOG_RANGE : best.t === 'stop' ? STOP_RANGE : ARENA_RANGE;
     if (d > range) { Audio.error(); UI.toast(`Noch ${Math.round(d - range)} m zu weit weg – geh näher heran!`, 'bad'); return; }
     Audio.click();
@@ -3728,64 +3729,87 @@ const GoMap = (() => {
   function setGeo(lat, lon) { geo = { lat, lon }; geoOff = { x: lon * 111320 * Math.cos(lat / R2D), z: -lat * 111320 }; }
   function onFix(p) {
     const c = p.coords; acc = c.accuracy || 0; fixN++; fixT = Date.now(); if (acc > 200) return;
-    if (!geo) { setGeo(c.latitude, c.longitude); pos = { x: 0, z: 0 }; mode = 'gps'; tgt = null; return; }
-    if (c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 0.6) heading = Math.PI - c.heading / R2D; const n0 = toXY(c.latitude, c.longitude), n = { x: n0.x + stepOff.x, z: n0.z + stepOff.z }; if (mode !== 'gps') mode = 'gps'; const d = Math.hypot(n.x - (tgt ? tgt.x : pos.x), n.z - (tgt ? tgt.z : pos.z)); if (d < Math.max(0.8, Math.min(4, acc * 0.12))) return; if (d > 400) { pos = { x: n.x, z: n.z }; tgt = null; return; } tgt = n;
+    if (!geo) { setGeo(c.latitude, c.longitude); pos = { x: 0, z: 0 }; mode = 'gps'; tgt = null; if (ph === 'loc') { loadStep('map'); loadWorld(R_FIRST, true); } return; }
+    if (c.heading != null && !isNaN(c.heading) && (c.speed || 0) > 0.6) heading = Math.PI - c.heading / R2D; const n = toXY(c.latitude, c.longitude); if (mode !== 'gps') mode = 'gps'; const d = Math.hypot(n.x - (tgt ? tgt.x : pos.x), n.z - (tgt ? tgt.z : pos.z)); if (d < Math.max(0.8, Math.min(4, acc * 0.12))) return; tgt = n;
   }
   function onErr(e) {
-    if (e && e.code === 1) goDemo('Standortzugriff wurde nicht erlaubt (oder von der App blockiert). Du spielst im Demo-Modus – tippe auf den Boden, um zu laufen.');
-    else if (!geo) setTimeout(() => { if (!geo && running && mode === 'intro') goDemo('Kein GPS-Signal gefunden – Demo-Modus aktiv.'); }, 8000);
+    if (!running) return;
+    if (e && e.code === 1) { geoErr = 'denied'; loadStep('err'); }
+    else if (e && e.code === 3 && !geo) { /* Timeout: weiter warten */ }
+    else if (e && e.code === 2 && !geo) { geoErr = 'unavailable'; if (ph === 'loc') loadSub('Kein Signal – geh ggf. ins Freie oder schalte „Standort“ am Handy ein …'); }
   }
   function startGps() {
-    mode = 'intro'; if (!navigator.geolocation) return goDemo('Dieses Gerät/diese App bietet keinen Standort. Demo-Modus aktiv.');
-    try { watch = navigator.geolocation.watchPosition(onFix, onErr, { enableHighAccuracy: true, maximumAge: 1000, timeout: 20000 }); } catch (e) { goDemo('Standort nicht verfügbar. Demo-Modus aktiv.'); }
-    setTimeout(() => { if (running && mode === 'intro' && !geo) goDemo('Der Standort antwortet nicht. Demo-Modus aktiv.'); }, 15000);
+    mode = 'intro'; geoErr = ''; if (watch != null && navigator.geolocation) { navigator.geolocation.clearWatch(watch); watch = null; }
+    if (!navigator.geolocation) { geoErr = 'unsupported'; loadStep('err'); return; }
+    try { watch = navigator.geolocation.watchPosition(onFix, onErr, { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 }); } catch (e) { geoErr = 'unsupported'; loadStep('err'); }
   }
-  function goDemo(msg) { if (watch != null && navigator.geolocation) { navigator.geolocation.clearWatch(watch); watch = null; } setGeo(DEMO.lat, DEMO.lon); pos = { x: 0, z: 0 }; tgt = null; mode = 'demo'; if (msg) UI.toast(msg, ''); }
+
+  /* ---------- Ladebildschirm ---------- */
+  const STEPS = [['loc', 'Standort finden'], ['map', 'Gebäude & Straßen laden'], ['build', 'Stadt aufbauen'], ['dogs', 'Hunde suchen']];
+  function loadStep(p, msg) {
+    ph = p; phT = Date.now(); if (!ov) return; const L = $('#mapLoad', ov); if (!L) return;
+    if (p === 'ready') { L.classList.add('out'); setTimeout(() => L.remove(), 600); return; }
+    L.classList.remove('err'); const list = $('.ml-steps', L), idx = STEPS.findIndex(x => x[0] === p);
+    list.innerHTML = STEPS.map((x, i) => `<li class="${p === 'err' ? '' : i < idx ? 'done' : i === idx ? 'cur' : ''}"><i></i>${x[1]}</li>`).join(''); $('.ml-bar i', L).style.width = (p === 'err' ? 100 : (idx + 0.5) / STEPS.length * 100) + '%';
+    const sub = $('.ml-sub', L), acts = $('.ml-acts', L); acts.innerHTML = '';
+    if (p === 'err') { L.classList.add('err'); showErr(sub, acts); return; }
+    sub.textContent = msg || ({ loc: 'Standort wird gesucht … (bitte „Standort erlauben“ antippen, falls gefragt)', map: 'Kartendaten werden geladen …', build: 'Häuser, Straßen und Parks werden gebaut …', dogs: 'Hunde, Stops und Arenen werden platziert …' })[p];
+    acts.append(el('button', { class: 'btn sec sm', onclick: () => leave() }, 'Abbrechen'));
+  }
+  function loadSub(t) { if (!ov) return; const sub = $('#mapLoad .ml-sub', ov); if (sub) sub.textContent = t; }
+  function showErr(sub, acts) {
+    const inFrame = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+    if (geoErr === 'denied') { sub.innerHTML = 'Der Standort ist blockiert.<br><small>' + (inFrame ? 'Diese Seite läuft in einer Vorschau, die den Standort nicht freigibt. Öffne die Datei direkt im Handy-Browser (zum Beispiel Chrome) und erlaube den Standort.' : 'Tippe in der Adressleiste auf das Schloss- oder Einstellungs-Symbol → Berechtigungen → Standort → Zulassen. Danach „Nochmal versuchen“.') + '</small>'; }
+    else if (geoErr === 'unsupported') sub.innerHTML = 'Dieses Gerät oder diese Vorschau bietet keinen Standort.<br><small>Öffne die Datei direkt im Handy-Browser.</small>';
+    else if (geoErr === 'map') sub.innerHTML = 'Die Kartendaten konnten nicht geladen werden.<br><small>Die Kartenserver sind gerade nicht erreichbar oder deine Verbindung ist zu schwach. Probiere es noch einmal.</small>';
+    else sub.textContent = 'Etwas ist schiefgelaufen.';
+    acts.append(el('button', { class: 'btn gold', onclick: () => { if (geoErr === 'map') { geoErr = ''; osmFails = 0; loadStep('map'); loadWorld(R_FIRST, true); } else { startGps(); loadStep('loc'); } } }, 'Nochmal versuchen'));
+    if (geoErr === 'map') acts.append(el('button', { class: 'btn sec', onclick: () => { osmOn = false; loadStep('build'); setTimeout(() => { syncBlocks(); syncObjects(); finishLoad(); }, 50); } }, 'Ohne echte Gebäude starten'));
+    acts.append(el('button', { class: 'btn sec', onclick: () => leave() }, 'Zurück'));
+  }
+  function finishLoad() { if (ph === 'ready') return; loadStep('dogs'); setTimeout(() => { if (!running) return; syncObjects(); loadStep('ready'); if (osmOn) setTimeout(() => loadWorld(R_FULL, false), 4000); }, 350); }
 
   /* ---------- Start / Ende ---------- */
-  function begin(useGps, online) {
-    osmOn = online; world = null; osmBusy = false; osmFails = 0; lastFetch = null; osmOkN = 0; skipIds = new Set(); objs.clear(); blocks.clear();
+  function begin() {
+    osmOn = true; ph = 'loc'; firstBuilt = false; mapRound = 0; lastLoad = 0; fixN = 0; fixT = 0; world = null; osmBusy = false; osmFails = 0; lastFetch = null; osmOkN = 0; skipIds = new Set(); objs.clear(); blocks.clear();
     ov = el('div', { id: 'mapOv' }); ov.innerHTML = `<canvas id="mapCv"></canvas>
       <div class="map-top"><div class="row" style="gap:8px"><button class="icon-btn" id="mapBack" aria-label="Zurück">{i:back}</button><button class="icon-btn" id="mapTeam" aria-label="Team">{i:dog}</button><button class="icon-btn" id="mapBag" aria-label="Beutel">{i:bag}<b>0</b></button><button class="icon-btn" id="mapDex" aria-label="Album">{i:book}</button></div><div class="cglass" id="mapInfo"></div></div>
       <div class="map-status" id="mapStatus"></div>
       <button class="btn sm map-lure hidden" id="mapLure"></button>
-      <button class="btn sm map-step" id="mapStep" aria-label="Schrittzähler-Modus">{i:run} Schritte</button>
       <button class="icon-btn map-center" id="mapCenter" aria-label="Kamera zurücksetzen">{i:target}</button>
-      <div id="mapAttr">© OpenStreetMap-Mitwirkende (ODbL)</div>`;
+      <div id="mapAttr">© OpenStreetMap-Mitwirkende (ODbL)</div>
+      <div id="mapLoad"><div class="ml-in"><div class="ml-logo">{i:paw}</div><h2>City Go</h2><div class="ml-bar"><i></i></div><ul class="ml-steps"></ul><p class="ml-sub"></p><div class="ml-acts"></div><small class="ml-tip">Tipp: Geh draußen los – Hunde, Stops und Arenen erscheinen um dich herum.</small></div></div>`;
     document.body.append(ov);
     try {
       st = G3.makeStage($('#mapCv', ov), { fov: 52, bg: '#9fd4ff', fog: '#bfe3ff', fogNear: 90, fogFar: 330, exposure: 1.0 }); st.size(); setupGround();
       avatar = G3.makePerson({ shirt: S().settings.color || '#ff7a45', pants: '#334155' }); avatar.g.scale.setScalar(2.1); st.add(avatar.g);
       const t = Dogs.team(); if (t.length) pet = G3.makeCardDog(t[0], { scale: 2.0 }); else { const old = G3.makeDog('#c58b4e'); pet = { g: old.g, update: (tt, md, a) => { old.legs.forEach((l, k) => { l.rotation.x = Math.sin(tt * 12 + k) * 0.7 * a; }); } }; } pet.g.position.set(-3, 0, 3); st.add(pet.g);
-      st.onFrame(onFrame); st.start(); window.addEventListener('resize', onResize); window.addEventListener('keydown', kd); window.addEventListener('keyup', ku); thr = setInterval(() => { if (st) st.throttle = UI.modalOpen() ? 0.14 : 0; }, 250);
+      st.onFrame(onFrame); st.start(); window.addEventListener('resize', onResize); thr = setInterval(() => { if (st) st.throttle = UI.modalOpen() ? 0.14 : 0; }, 250);
     } catch (e) { console.warn('Karte konnte nicht gestartet werden', e); if (st) { st.dispose(); st = null; } ov.remove(); ov = null; UI.toast('Die 3D-Karte braucht WebGL.', 'bad'); return; }
     UI.inCity = true; running = true; Audio.setScene('city');
     $('#mapBack', ov).onclick = () => leave(); $('#mapTeam', ov).onclick = () => Dogs.teamModal(); $('#mapBag', ov).onclick = () => Go.bagModal({ inCity: true, onLure: useLure }); $('#mapDex', ov).onclick = () => UI.cityAlbum();
-    $('#mapLure', ov).onclick = () => { if (Date.now() < lureUntil) return; Go.bagModal({ inCity: true, onLure: useLure }); }; $('#mapCenter', ov).onclick = () => { camYaw = 0; camDist = 58; }; $('#mapStep', ov).onclick = () => toggleSteps();
+    $('#mapLure', ov).onclick = () => { if (Date.now() < lureUntil) return; Go.bagModal({ inCity: true, onLure: useLure }); }; $('#mapCenter', ov).onclick = () => { camYaw = 0; camDist = 58; };
     const cv = $('#mapCv', ov), ptrs = new Map(); let dn = null, pinch0 = 0, dist0 = 0;
     cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 1) dn = { x: e.clientX, y: e.clientY, t: e.timeStamp, moved: 0 }; else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = camDist; dn = null; } });
     cv.addEventListener('pointermove', e => { const p = ptrs.get(e.pointerId); if (!p) return; const dx = e.clientX - p.x; p.x = e.clientX; p.y = e.clientY; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; camDist = clamp(dist0 * pinch0 / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), 22, 100); return; } if (dn) { dn.moved += Math.abs(dx) + Math.abs(e.movementY || 0); if (dn.moved > 12) camYaw -= dx * 0.008; } });
     cv.addEventListener('pointerup', e => { const had = ptrs.delete(e.pointerId); if (had && dn && dn.moved <= 12 && e.timeStamp - dn.t < 600) tapAt(e.clientX, e.clientY); if (!ptrs.size) dn = null; });
     cv.addEventListener('pointercancel', e => { ptrs.delete(e.pointerId); dn = null; });
     cv.addEventListener('wheel', e => { e.preventDefault(); camDist = clamp(camDist + e.deltaY * 0.04, 22, 100); }, { passive: false });
-    if (useGps) startGps(); else goDemo('Demo-Modus: Tippe auf den Boden, um dorthin zu laufen.');
+    loadStep('loc'); startGps();
   }
   function onResize() { if (st) st.size(); }
   function useLure() { if (!Go.use('lure')) return; lureUntil = Date.now() + 5 * 60 * 1000; Audio.sparkle(); UI.toast('{i:sparkle} Glücksköder aktiv! 5 Minuten lang mehr Hunde in deiner Nähe.', 'good'); syncT = 0; }
   function leave() {
-    running = false; clearInterval(thr); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); if (stepOn) toggleSteps(); stepOff = { x: 0, z: 0 }; stepN = 0; fixN = 0; fixT = 0; if (watch != null && navigator.geolocation) navigator.geolocation.clearWatch(watch); watch = null; window.removeEventListener('resize', onResize);
+    running = false; clearInterval(thr); fixN = 0; fixT = 0; ph = 'loc'; if (watch != null && navigator.geolocation) navigator.geolocation.clearWatch(watch); watch = null; window.removeEventListener('resize', onResize);
     objs.forEach(e => { if (e.m) e.m.dispose(); }); objs.clear(); blocks.clear(); world = null; if (st) { st.dispose(); st = null; }
     avatar = pet = rangeRing = groundFallback = groundPlain = null; if (ov) ov.remove(); ov = null; geo = null; mode = 'intro'; tgt = null; UI.inCity = false; Audio.setScene('menu'); UI.rerender(); Store.save(true);
   }
   function enter() {
-    let online = true;
-    const chk = el('input', { type: 'checkbox', checked: true, id: 'mapOnline', onchange: e => { online = e.target.checked; } });
-    UI.modal({ title: '{i:pin} City Go · Standort', body: el('div', { class: 'col' },
-      el('p', { style: 'margin:0' }, 'Hier läufst du durch deine echte Umgebung in 3D – mit den echten Häusern und Straßen um dich herum. Hunde, Knochen-Stops und Arenen erscheinen in deiner Nähe, und du musst hingehen, um sie zu erreichen.'),
-      el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'Dein Standort wird nirgends gespeichert. Für die echten Gebäude, Straßen und Parks fragt das Spiel den Kartendienst OpenStreetMap (Overpass) nach einem Rechteck von etwa 600 m um dich – der Dienst sieht dadurch grob, wo du bist. Ohne diese Option siehst du eine erzeugte Stadt.'),
-      el('label', { class: 'row', style: 'gap:8px;font-size:.9rem' }, chk, 'Echte Gebäude & Straßen laden (OpenStreetMap)'),
-      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Hier gibt es keinen Joystick: Du bewegst dich nur, indem du wirklich läufst. Ein Finger wischt = Kamera drehen, zwei Finger = zoomen, antippen = Objekt wählen. Ohne Standort: Demo-Modus, dort tippst du auf den Boden zum Laufen.')),
-      actions: [{ label: 'Demo-Modus', cls: 'sec', onclick: () => setTimeout(() => begin(false, online)) }, { label: '{i:pin} Standort nutzen', cls: 'gold', onclick: () => setTimeout(() => begin(true, online)) }] });
+    UI.modal({ title: '{i:pin} City Go', body: el('div', { class: 'col' },
+      el('p', { style: 'margin:0' }, 'Wie Pokémon Go: Du läufst durch deine echte Umgebung in 3D – mit den echten Häusern und Straßen um dich herum. Hunde, Knochen-Stops und Arenen erscheinen in deiner Nähe, und du musst wirklich hingehen, um sie zu erreichen. Es gibt keinen Joystick: Deine Figur bewegt sich nur mit deinem Standort.'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'Dein Standort wird nirgends gespeichert. Für die Gebäude, Straßen und Parks fragt das Spiel den Kartendienst OpenStreetMap (Overpass) nach einem Bereich von etwa 500 m um dich – der Dienst sieht dadurch grob, wo du bist.'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Steuerung: ein Finger wischt = Kamera drehen, zwei Finger = zoomen, Antippen = Hund, Stop oder Arena wählen. Beim Autofahren: bitte nicht selbst spielen – lass jemanden mitspielen.')),
+      actions: [{ label: 'Abbrechen', cls: 'sec' }, { label: '{i:pin} Los geht’s', cls: 'gold', onclick: () => setTimeout(() => begin()) }] });
   }
   return { enter, leave, get running() { return running; } };
 })();
