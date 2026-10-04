@@ -2647,6 +2647,12 @@ const Offers = {
     return Ed.spare(o.card) > 0;
   },
   clean() { const s = S(), n = s.offers.length; s.offers = s.offers.filter(o => { o.kind = o.kind || 'buy'; if (o.kind === 'sell') return o.exp > Date.now() && NPC_BY_ID[o.npc]; return this.valid(o) || (o.exp > Date.now() && o.kind === 'sell'); }); if (s.offers.length !== n) Bus.emit('offers'); },
+  arr(o) {
+    if (o.kind === 'sell') return { give: { cards: [], coins: o.coins }, get: { cards: [{ id: o.card, n: 1 }], coins: 0 } };
+    if (o.kind === 'swap') return { give: { cards: [{ id: o.want, n: 1 }], coins: 0 }, get: { cards: [{ id: o.card, n: 1 }], coins: 0 } };
+    return { give: { cards: [{ id: o.card, n: 1 }], coins: 0 }, get: { cards: [], coins: o.coins } };
+  },
+  same(o, a) { const b = this.arr(o), k = x => JSON.stringify([x.give.cards.map(c => [c.id, c.n]).sort(), x.give.coins, x.get.cards.map(c => [c.id, c.n]).sort(), x.get.coins]); return k(a) === k(b); },
   describe(o) {
     const n = NPC_BY_ID[o.npc], c = CardDB.get(o.card), kind = o.kind || 'buy';
     if (kind === 'sell') return { npc: n, kind, text: `verkauft dir „${c.name}“ für ${fmt(o.coins)} Coins (Wert ca. ${fmt(c.value)})`, short: `${n.name} verkauft dir „${c.name}“ für ${fmt(o.coins)} Coins`, line: 'Ich hab da was Feines für dich – günstig!' };
@@ -4865,10 +4871,20 @@ Object.assign(UI, {
     s.offers.forEach(o => off.append(this.offerRow(o, refresh)));
     return off;
   },
+  npcProfile(npc) {
+    const st = TradeAI.state(npc), BIO = { 'Sammler': 'Sammelt aus Leidenschaft und zahlt gern mehr für Karten, die in seine Lieblingsliste passen.', 'Händler': 'Ein routinierter Marktschreier: fairer Preis, aber er will immer etwas verdienen.', 'Anfänger': 'Noch neu in der Stadt. Sucht einfache Karten und handelt eher ungeschickt.', 'Profi': 'Erfahrener Tauscher. Interessiert sich nur für seltene Karten und verhandelt hart.', 'Geizhals': 'Gibt ungern etwas her. Wer hier gut abschneiden will, braucht Geduld.', 'Großzügiger': 'Macht gern gute Angebote und gibt auch mal Geschenke dazu.', 'Schlaumeier': 'Rechnet jedes Angebot nach und merkt schnell, wenn etwas nicht passt.', 'Hundebesitzer-Veteran': 'Hat schon alles gesehen und hortet seltene Schätze.' };
+    const mood = st.mood > 0.7 ? 'gut gelaunt' : st.mood > 0.4 ? 'neutral' : 'schlecht gelaunt', top = Array.from(new Set(st.stock)).map(id => CardDB.get(id)).sort((a, b) => b.value - a.value).slice(0, 6);
+    const body = el('div', { class: 'col' }, el('div', { class: 'npc-head' }, Avatar.el(npc, 72), el('div', { class: 'grow' }, el('b', { style: 'font-size:1.2rem' }, npc.name), el('div', { class: 'dim' }, npc.type + ' · ' + mood), el('div', { class: 'bar', style: 'margin:6px 0;max-width:260px' }, el('i', { style: `width:${st.rep}%;background:${npc.color}` })), el('small', { class: 'dim' }, `Ruf ${Math.round(st.rep)}/100 · ${st.cnt || 0} Trades mit dir · Kasse ${fmt(st.coins)} Coins`))),
+      el('p', { style: 'margin:0' }, BIO[npc.type] || ''),
+      el('div', {}, el('b', {}, 'Sucht: '), `${npc.wish.breeds.join(', ')} · ${npc.wish.countries.join(', ')} · ${npc.wish.tiers.map(t => RAR[t].name).join(', ')}`), el('div', { class: 'dim' }, `Mag nichts aus: ${npc.dislike.countries.join(', ')}`),
+      el('div', {}, el('b', {}, 'Schatz: '), el('span', { class: 'tc' + CardDB.get(npc.treasure).tier }, CardDB.get(npc.treasure).name), ' (gibt er nur für ein sehr hohes Angebot her)'),
+      el('div', {}, el('b', {}, 'Im Lager (wertvollste Karten):')), el('div', { class: 'row wrap', style: 'gap:8px' }, ...top.map(c => renderCard(c, { size: 'xs', owned: true, odds: false }))));
+    this.modal({ title: 'Profil', body, wide: true, actions: [{ label: 'Schließen', cls: 'sec' }] });
+  },
   offerPopup(o) {
-    const d = Offers.describe(o), n = d.npc; let handled = false;
-    const m = this.modal({ title: `${n.name} hat ein Angebot`, body: el('div', { class: 'col' }, el('div', { class: 'npc-head' }, Avatar.el(n, 56), el('div', { class: 'grow' }, el('b', {}, n.name), el('div', { class: 'dim' }, n.type))), el('div', { class: 'speech' }, `„${d.line}“`), el('p', { style: 'margin:0' }, d.text + '.'), el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, `Gilt noch ${fmtDur(o.exp - Date.now())}. Du findest alle Angebote auch oben im Postfach-Knopf.`)),
-      actions: [{ label: 'Später', cls: 'sec' }, { label: 'Ablehnen', cls: 'sec', onclick: () => { handled = true; Offers.decline(o.id); } }, { label: 'Annehmen', cls: 'good', onclick: () => { handled = true; UI.offerResult(Offers.accept(o.id), o); } }] });
+    const d = Offers.describe(o), n = d.npc, st = TradeAI.state(n);
+    const m = this.modal({ title: `${n.name} hat ein Angebot`, body: el('div', { class: 'col' }, el('div', { class: 'npc-head' }, Avatar.el(n, 56), el('div', { class: 'grow' }, el('b', {}, n.name), el('div', { class: 'dim' }, `${n.type} · Ruf ${Math.round(st.rep)}/100`)), el('button', { class: 'btn sec sm', onclick: () => UI.npcProfile(n) }, '{i:person} Profil')), el('div', { class: 'speech' }, `„${d.line}“`), el('p', { style: 'margin:0' }, d.text + '.'), el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, `Gilt noch ${fmtDur(o.exp - Date.now())}. „Verhandeln“ öffnet das Trade-Fenster mit diesem Angebot – dort kannst du es ändern.`)),
+      actions: [{ label: 'Später', cls: 'sec' }, { label: 'Ablehnen', cls: 'sec', onclick: () => { Offers.decline(o.id); Audio.soft(); } }, { label: '{i:trade} Verhandeln', cls: 'gold', onclick: () => setTimeout(() => UI.openTrade(n, { offer: o })) }, { label: 'Annehmen', cls: 'good', onclick: () => UI.offerResult(Offers.accept(o.id), o) }] });
     return m;
   },
   offersModal() { const box = el('div', { class: 'offers-modal' }, this.offersBox(false)); this.modal({ wide: true, title: '{i:mail} NPC-Angebote', body: box }); },
@@ -4985,7 +5001,7 @@ Object.assign(UI, {
     const m = this.modal({ title: `${npc.name}: Auftrag`, body: [el('p', {}, `„Bring mir eine Karte der Rasse `, el('b', {}, q.breed), ` – eine beliebige Variante. Ich zahle ${fmt(q.coins)} Coins!“`), cards.length ? list : el('p', { class: 'dim' }, 'Du besitzt keine passende Karte. Ziehe Packs oder trade mit anderen!')], actions: [{ label: 'Später', cls: 'sec' }] });
     cards.slice(0, 12).forEach(c => list.append(renderCard(c, { size: 'sm', count: S().cards[c.id], odds: false, onclick: () => { if (NPCQuests.complete(npc.id, c.id)) { m.close(); closeDlg && closeDlg(); Audio.coins(5); UI.toast(`{i:excl} Auftrag erledigt! +${fmt(q.coins)} Coins`, 'gold'); City.npcSay(npc.id, 'Perfekt! Danke!'); Ach.check(); UI.refreshHud(); } } })));
   },
-  openTrade(npc) {
+  openTrade(npc, opts = {}) {
     this.talkingTo = npc.id; const s = S(), st = TradeAI.state(npc), sess = TradeAI.sess(npc); const mob = Device.isMobile();
     const offer = { give: { cards: {}, coins: 0 }, get: { cards: {}, coins: 0 } }; let counter = null, locked = false, filter = { q: '', tier: 0 };
     const root = el('div', { class: 'ov', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Trade-Fenster' }); const win = el('div', { class: 'glass tradeWin', style: 'position:relative;background:linear-gradient(160deg,#1b1a4a,#0f1030);overflow:auto' }); root.append(win);
@@ -4996,8 +5012,9 @@ Object.assign(UI, {
     const btnSend = el('button', { class: 'btn gold', onclick: send }, '{i:trade} Angebot machen'), btnReset = el('button', { class: 'btn sec', onclick: () => { reset(); say(TradeAI.say(npc, 'greet')); } }, 'Zurücksetzen'), btnClose = el('button', { class: 'btn sec', onclick: close }, 'Schließen');
     const ctrBox = el('div', { class: 'glass pad hidden', style: 'border-color:var(--gold)' });
     const q = el('input', { class: 'inp', placeholder: '{i:search} Meine Karten filtern …', 'aria-label': 'Karten filtern', style: 'min-height:36px', oninput: () => { filter.q = q.value.toLowerCase(); drawInv(); } });
-    const header = el('div', { class: 'npc-head' }, Avatar.el(npc, 56), el('div', { class: 'grow' }, el('b', { style: 'font-size:1.15rem' }, `${npc.name} `, el('span', { class: 'chip' }, npc.type)), el('div', { class: 'bar', style: 'margin:4px 0;max-width:260px' }, repBar), el('div', { class: 'dim', style: 'font-size:.78rem' }, `Sucht: {i:dog} ${npc.wish.breeds.join(', ')} · {i:globe} ${npc.wish.countries.join(', ')} · {i:star} ${npc.wish.tiers.map(t => RAR[t].name).join(', ')} · Schatz: {i:diamond} ${CardDB.get(npc.treasure).name}`), pat), el('button', { class: 'icon-btn', 'aria-label': 'Trade schließen', onclick: close }, '{i:close}'));
-    win.append(header, speech, el('div', { class: 'col', style: 'gap:6px' }, vlabel, verdict));
+    const header = el('div', { class: 'npc-head' }, Avatar.el(npc, 56), el('div', { class: 'grow' }, el('b', { style: 'font-size:1.15rem' }, `${npc.name} `, el('span', { class: 'chip' }, npc.type)), el('div', { class: 'bar', style: 'margin:4px 0;max-width:260px' }, repBar), el('div', { class: 'dim', style: 'font-size:.78rem' }, `Sucht: {i:dog} ${npc.wish.breeds.join(', ')} · {i:globe} ${npc.wish.countries.join(', ')} · {i:star} ${npc.wish.tiers.map(t => RAR[t].name).join(', ')} · Schatz: {i:diamond} ${CardDB.get(npc.treasure).name}`), pat), el('button', { class: 'icon-btn', 'aria-label': 'Profil ansehen', onclick: () => UI.npcProfile(npc) }, '{i:person}'), el('button', { class: 'icon-btn', 'aria-label': 'Trade schließen', onclick: close }, '{i:close}'));
+    const offBanner = opts.offer ? el('div', { class: 'glass pad col', style: 'border-color:var(--gold);gap:6px' }, el('b', {}, '{i:mail} Eingegangenes Angebot'), el('div', {}, Offers.describe(opts.offer).text + '.'), el('div', { class: 'row wrap' }, el('button', { class: 'btn good sm', onclick: () => { const r = Offers.accept(opts.offer.id); UI.offerResult(r, opts.offer); if (r.ok) close(); } }, 'So annehmen'), el('small', { class: 'dim' }, 'Oder ändere unten Karten/Coins und mache ein Gegenangebot.'))) : null;
+    win.append(header, speech, ...(offBanner ? [offBanner] : []), el('div', { class: 'col', style: 'gap:6px' }, vlabel, verdict));
     const colG = el('div', { class: 'tcol', 'data-side': 'give' }, el('b', {}, '{i:person} Dein Angebot'), slotsG, el('label', { class: 'coinbox' }, '{i:coin}', coinG, el('small', { class: 'dim' }, `von ${fmt(s.coins)} · {i:lock} Specials nicht tauschbar`), el('button', { class: 'btn sec sm', onclick: () => { coinG.value = offer.give.coins = Math.min(s.coins, offer.give.coins + Math.max(10, Math.ceil(s.coins / 10))); onChange(); } }, '+')), q, invG);
     const colN = el('div', { class: 'tcol', 'data-side': 'get' }, el('b', {}, `Angebot von ${npc.name.split(' ')[0]}`), slotsN, el('label', { class: 'coinbox' }, '{i:coin}', coinN, el('small', { class: 'dim' }, `Kasse: ${fmt(st.coins)}`), el('button', { class: 'btn sec sm', onclick: () => { coinN.value = offer.get.coins = Math.min(st.coins, offer.get.coins + Math.max(10, Math.ceil(st.coins / 10))); onChange(); } }, '+')), el('small', { class: 'dim' }, 'Bestand (wechselt alle 30 Min.):'), invN);
     win.append(el('div', { class: 'trade-cols' }, colG, colN), ctrBox, el('div', { class: 'row wrap', style: 'justify-content:flex-end' }, btnReset, btnSend));
@@ -5039,12 +5056,13 @@ Object.assign(UI, {
     function onChange() {
       s.coins = S().coins; drawSlots(); drawInv(); updPat(); const arr = toArr(); const ev = TradeAI.evaluate(npc, arr); verdict.className = 'verdict';
       $$('i', verdict).forEach((x, i) => { x.className = ''; if (!ev.error && i <= ev.verdict) x.classList.add('on' + ev.verdict); });
-      if (ev.error) { vlabel.textContent = ev.error; vlabel.className = 'vlabel dim'; } else { vlabel.textContent = ['Zu niedrig', 'Unter Verhandlung', 'Fast – da geht was', (ev.r > 1.3 ? 'Deal – aber du zahlst drauf!' : 'Deal! {i:trade}')][ev.verdict] + (ev.locked && !ev.ok ? ' · Seltenheits-Sperre aktiv' : '') + (ev.treasureAsk ? ' · {i:diamond} Schatz!' : ''); vlabel.className = 'vlabel'; vlabel.style.color = ['#ef4444', '#f59e0b', '#a3e635', '#22c55e'][ev.verdict]; }
+      if (ev.error) { vlabel.textContent = ev.error; vlabel.className = 'vlabel dim'; } else { vlabel.textContent = opts.offer && Offers.same(opts.offer, arr) ? 'Das ist das Angebot des Händlers – annehmen oder ändern' : ['Zu niedrig', 'Unter Verhandlung', 'Fast – da geht was', (ev.r > 1.3 ? 'Deal – aber du zahlst drauf!' : 'Deal! {i:trade}')][ev.verdict] + (ev.locked && !ev.ok ? ' · Seltenheits-Sperre aktiv' : '') + (ev.treasureAsk ? ' · {i:diamond} Schatz!' : ''); vlabel.className = 'vlabel'; vlabel.style.color = ['#ef4444', '#f59e0b', '#a3e635', '#22c55e'][ev.verdict]; }
       lockUi();
     }
     async function send() {
       if (locked) { Audio.error(); UI.toast(TradeAI.closedMsg(npc) || 'Gerade nicht möglich.', 'bad'); return; }
       const arr = toArr(); const ev = TradeAI.evaluate(npc, arr); if (ev.error) { Audio.error(); UI.toast(ev.error, 'bad'); return; }
+      if (opts.offer && Offers.same(opts.offer, arr)) { const r = Offers.accept(opts.offer.id); UI.offerResult(r, opts.offer); if (r.ok) { opts.offer = null; close(); } return; }
       if (ev.ok) { if (ev.r > 1.3 && ev.offerValue - ev.need > Math.max(25, ev.need * 0.25)) { const mc = arr.give.coins > 0 ? TradeAI.minCoins(npc, arr) : null; const chg = mc != null && mc < arr.give.coins ? { lower: Math.ceil(mc * 1.01) } : TradeAI.fairChange(npc, arr, ev); if (chg) return askFair(arr, ev, chg); } return doTrade(arr); }
       sess.pat--; sess.rounds++; counter = TradeAI.counter(npc, arr, ev); ctrBox.innerHTML = ''; ctrBox.classList.add('hidden'); Audio.error();
       let line = (ev.r < 0.5 ? pick(npc.lines.low) : pick(['Da fehlt nicht mehr viel.', 'Das kommt der Sache näher.', 'Fast – aber noch nicht ganz.'])) + (ev.locked ? ' Diese Karte spielt in einer anderen Liga als dein Angebot.' : '');
@@ -5075,7 +5093,7 @@ Object.assign(UI, {
       speech.textContent = `„${TradeAI.say(npc, 'ok')}“`; City.npcSay(npc.id, 'Abgemacht!');
       if (r.gift) Audio.sparkle(8); UI.toast(`{i:trade} Trade abgeschlossen! Bonus +${fmt(r.bonus)} {i:coin} · Ruf +${r.repGain} · Handels-XP +${r.xpGain}${r.streak > 1 ? ' · Streak ×' + r.streak : ''}${gift}`, 'gold'); UI.floatText('+' + fmt(r.bonus), '#4ade80');
       await sleep(900); offer.give = { cards: {}, coins: 0 }; offer.get = { cards: {}, coins: 0 }; coinG.value = coinN.value = 0; repBar.style.width = st.rep + '%'; Object.assign(s, { coins: S().coins }); onChange(); UI.refreshHud(); $('.handshake', win)?.remove();
-      sess.pat = npc.T.pat; updPat(); receipt(arr, before, S().coins, r);
+      sess.pat = npc.T.pat; updPat(); if (opts.offer) { Offers.decline(opts.offer.id); opts.offer = null; offBanner && offBanner.remove(); } receipt(arr, before, S().coins, r);
     }
     function receipt(arr, before, after, r) {
       const list = (side, ttl) => { const L = arr[side].cards.map(x => `${x.n}× ${CardDB.get(x.id).name}`).concat(arr[side].coins ? [`${fmt(arr[side].coins)} Coins`] : []); if (side === 'get' && r.gift) L.push(r.gift.card ? `Geschenk: ${r.gift.card.name}` : `Geschenk: ${fmt(r.gift.coins)} Coins`); return el('div', {}, el('b', {}, ttl), ...L.map(t => el('div', { class: 'dim' }, '• ' + t))); };
@@ -5084,7 +5102,9 @@ Object.assign(UI, {
     function close() { root.remove(); document.removeEventListener('keydown', onKey, true); UI.talkingTo = null; if (!UI.modalOpen()) City.pause(false); UI.refreshHud(); }
     function onKey(e) { if (e.key === 'Escape' && root === $('#overlays').lastElementChild) { e.stopPropagation(); close(); } } document.addEventListener('keydown', onKey, true);
     $('#overlays').append(root); City.pause(true);
-    speech.textContent = '„' + TradeAI.say(npc, 'greet') + '“'; onChange(); lockUi();
+    speech.textContent = '„' + TradeAI.say(npc, 'greet') + '“';
+    if (opts.offer) { const o = opts.offer; try { if (o.kind === 'sell') { offer.get.cards[o.card] = 1; offer.give.coins = o.coins; coinG.value = o.coins; } else if (o.kind === 'swap') { offer.get.cards[o.card] = 1; offer.give.cards[o.want] = 1; } else { offer.give.cards[o.card] = 1; offer.get.coins = o.coins; coinN.value = o.coins; } speech.textContent = '„' + Offers.describe(o).line + '“'; } catch (e) { } }
+    onChange(); lockUi();
     const msg = TradeAI.closedMsg(npc); if (msg) speech.textContent = '„' + msg + '“';
   },
   /* ---------- City-Gebäude ---------- */
