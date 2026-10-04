@@ -3824,13 +3824,50 @@ const CamScan = (() => {
   const GROUP = { person: 'p', car: 'v', truck: 'v', bus: 'v', motorcycle: 'b', bicycle: 'b', dog: 'd' };
   const loadScript = url => new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('load')); }; document.head.append(s); });
   async function loadFirst(urls) { let err; for (const u of urls) { try { await loadScript(u); return; } catch (e) { err = e; } } throw err || new Error('net'); }
-  let model = null;
-  async function loadModel(step) {
-    if (model) return model;
-    if (!window.tf) { step('KI-Bibliothek wird geladen …'); await loadFirst(TF_URLS); }
-    if (!window.cocoSsd) await loadFirst(COCO_URLS);
-    step('Erkennungsmodell wird geladen (einmalig, ca. 6 MB) …'); try { await tf.setBackend(window.TF_BACKEND || 'webgl'); } catch (e) { } await tf.ready();
-    model = await cocoSsd.load({ base: 'lite_mobilenet_v2' }); return model;
+  /* ---------- Detektoren: YOLOv8n (genau) mit Rückfall auf COCO-SSD (schnell) ---------- */
+  const ORT_BASE = 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/';
+  const YOLO_URLS = ['yolov8n.onnx', 'https://raw.githubusercontent.com/Hyuto/yolov8-onnxruntime-web/master/public/model/yolov8n.onnx', 'https://cdn.jsdelivr.net/gh/Hyuto/yolov8-onnxruntime-web@master/public/model/yolov8n.onnx'];
+  const YOLO_CLS = { 0: 'person', 1: 'bicycle', 2: 'car', 3: 'motorcycle', 5: 'bus', 7: 'truck', 16: 'dog' };
+  const CONF = { person: 0.4, car: 0.35, truck: 0.4, bus: 0.4, motorcycle: 0.4, bicycle: 0.4, dog: 0.4 };
+  let det = null;
+  async function fetchModel(urls, step) {
+    let err; for (const u of urls) { try { const r = await fetch(u); if (!r.ok) throw new Error('HTTP ' + r.status); const len = +r.headers.get('content-length') || 0; if (!r.body || !len) return new Uint8Array(await r.arrayBuffer()); const rd = r.body.getReader(), out = new Uint8Array(len); let got = 0; for (;;) { const { done, value } = await rd.read(); if (done) break; if (got + value.length > out.length) throw new Error('size'); out.set(value, got); got += value.length; step('Genaue Erkennung wird geladen … ' + Math.round(got / len * 100) + ' %'); } return out; } catch (e) { err = e; } }
+    throw err || new Error('model');
+  }
+  async function loadYolo(step) {
+    step('Erkennungs-Laufzeit wird geladen …');
+    if (!window.ort) { await loadFirst([ORT_BASE + 'ort.wasm.min.js', 'https://unpkg.com/onnxruntime-web@1.17.3/dist/ort.wasm.min.js']); }
+    ort.env.wasm.wasmPaths = ORT_BASE; ort.env.wasm.numThreads = 1; ort.env.wasm.simd = true; ort.env.logLevel = 'error';
+    const bytes = await fetchModel(YOLO_URLS, step); step('Erkennung wird vorbereitet …');
+    const sess = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'], graphOptimizationLevel: 'all' }), SZ = 640, cv = document.createElement('canvas'); cv.width = cv.height = SZ; const cx = cv.getContext('2d', { willReadFrequently: true }), buf = new Float32Array(3 * SZ * SZ);
+    async function detect(video) {
+      const W = video.videoWidth, H = video.videoHeight, sc = SZ / Math.max(W, H), nw = Math.round(W * sc), nh = Math.round(H * sc), px = (SZ - nw) / 2, py = (SZ - nh) / 2;
+      cx.fillStyle = '#727272'; cx.fillRect(0, 0, SZ, SZ); cx.drawImage(video, px, py, nw, nh); const d = cx.getImageData(0, 0, SZ, SZ).data, n = SZ * SZ;
+      for (let i = 0, j = 0; i < n; i++, j += 4) { buf[i] = d[j] / 255; buf[n + i] = d[j + 1] / 255; buf[2 * n + i] = d[j + 2] / 255; }
+      const out = await sess.run({ images: new ort.Tensor('float32', buf, [1, 3, SZ, SZ]) }), o = out[Object.keys(out)[0]], A = o.dims[2], data = o.data, cand = [];
+      for (let i = 0; i < A; i++) {
+        let bs = 0, bc = -1; for (const c in YOLO_CLS) { const v = data[(4 + +c) * A + i]; if (v > bs) { bs = v; bc = +c; } } if (bc < 0) continue; const cn = YOLO_CLS[bc]; if (bs < CONF[cn]) continue;
+        const cxx = data[i], cyy = data[A + i], w = data[2 * A + i], h = data[3 * A + i], x = (cxx - w / 2 - px) / sc, y = (cyy - h / 2 - py) / sc, bw = w / sc, bh = h / sc; cand.push({ class: cn, score: bs, bbox: [clamp(x, 0, W), clamp(y, 0, H), Math.min(bw, W - x), Math.min(bh, H - y)] });
+      }
+      return nms(cand);
+    }
+    return { name: 'YOLOv8', detect, interval: 250 };
+  }
+  const iou = (a, b) => { const x1 = Math.max(a[0], b[0]), y1 = Math.max(a[1], b[1]), x2 = Math.min(a[0] + a[2], b[0] + b[2]), y2 = Math.min(a[1] + a[3], b[1] + b[3]), iw = Math.max(0, x2 - x1), ih = Math.max(0, y2 - y1), inter = iw * ih; return inter / (a[2] * a[3] + b[2] * b[3] - inter + 1e-6); };
+  function nms(c) {
+    c.sort((a, b) => b.score - a.score); const keep = [];
+    for (const d of c) { let ok = true; for (const k of keep) { const same = k.class === d.class, veh = GROUP[k.class] === 'v' && GROUP[d.class] === 'v'; if ((same && iou(k.bbox, d.bbox) > 0.5) || (veh && iou(k.bbox, d.bbox) > 0.65)) { ok = false; break; } } if (ok) keep.push(d); if (keep.length >= 40) break; }
+    return keep;
+  }
+  async function loadCoco(step) {
+    if (!window.tf) { step('KI-Bibliothek wird geladen …'); await loadFirst(TF_URLS); } if (!window.cocoSsd) await loadFirst(COCO_URLS);
+    step('Schnelle Erkennung wird geladen (ca. 6 MB) …'); try { await tf.setBackend(window.TF_BACKEND || 'webgl'); } catch (e) { } await tf.ready();
+    const m = await cocoSsd.load({ base: 'mobilenet_v2' }); return { name: 'COCO-SSD', detect: v => m.detect(v, 18, 0.5), interval: 450 };
+  }
+  async function loadModel(step, prefer) {
+    if (det) return det;
+    if (prefer !== 'fast') { try { det = await loadYolo(step); return det; } catch (e) { console.warn('YOLO nicht verfügbar, nehme COCO-SSD', e); } }
+    det = await loadCoco(step); return det;
   }
 
   /* ---------- Kompass / Blickrichtung der Rückkamera ---------- */
@@ -3860,6 +3897,10 @@ const CamScan = (() => {
     if (moto) mb.add(B.box, mt(0, 0.65, 0, 0.35, 0.3, 0.9), '#1f2937').add(B.box, mt(0, 0.9, 0.42, 0.3, 0.25, 0.1), '#e5e7eb');
     const m = mb.build(G3.vcMat(), false); m.matrixAutoUpdate = true; m.userData.own = true; const g = new THREE.Group(); g.add(m); g.scale.setScalar(1.3); return { g };
   }
+  /* unplausible Boxen aussortieren (riesige Boxen, falsche Seitenverhältnisse, Winzlinge) */
+  function plausible(dets, W, H) {
+    return dets.filter(d => { const [x, y, w, h] = d.bbox, ar = w / Math.max(1, h), area = w * h / (W * H), c = d.class; if (h < 14 || w < 8) return false; if (c === 'person') return ar < 1.1 && area < 0.8; if (c === 'car') return ar > 0.7 && ar < 4.2 && area < 0.65; if (c === 'truck' || c === 'bus') return ar > 0.6 && ar < 5 && area < 0.8; if (c === 'motorcycle' || c === 'bicycle') return ar > 0.4 && ar < 2.6 && area < 0.4; if (c === 'dog') return area < 0.5; return true; });
+  }
   const WHITE = '#e6e8ee';
 
   /* ---------- Steuerung ---------- */
@@ -3867,14 +3908,14 @@ const CamScan = (() => {
     const eq = !!opts.eq, ov = env.parent, st = env.st, rnd = mulberry32(hashStr('scan' + Date.now()));
     const box = el('div', { id: 'scanBox' }); box.innerHTML = '<div class="sb-v"><video muted playsinline></video><canvas class="sb-ov"></canvas><canvas class="sb-ring" width="88" height="88"></canvas></div><div class="sb-info">Kamera startet …</div><button class="sb-x" aria-label="Scan beenden">×</button>';
     ov.append(box); const video = box.querySelector('video'), cvOv = box.querySelector('.sb-ov'), cvRing = box.querySelector('.sb-ring'), info = box.querySelector('.sb-info');
-    let stream = null, stopped = false, loopT = 0, busy = false; const tracked = [], sect = new Array(12).fill(0), root = new THREE.Group(); st.add(root);
+    let stream = null, stopped = false, loopT = 0, busy = false, model = null, lastMs = 0; const tracked = [], sect = new Array(12).fill(0), root = new THREE.Group(); st.add(root);
     const fail = msg => { env.toast(msg, 'bad'); stop(); };
     function stop() { if (stopped) return; stopped = true; clearTimeout(loopT); try { stream && stream.getTracks().forEach(t => t.stop()); } catch (e) { } video.srcObject = null; box.remove(); oriStop(); tracked.forEach(o => dropMesh(o)); st.remove(root); env.setSim(true); env.onStop && env.onStop(); }
     box.querySelector('.sb-x').onclick = () => stop();
     await oriPermission(); oriStart();
     try {
       let model2; info.textContent = 'KI wird geladen …';
-      model2 = await loadModel(m => { info.textContent = m; }); if (stopped) return null;
+      model2 = await loadModel(m => { info.textContent = m; }, opts.prefer); if (stopped) return null;
       let cons = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
       if (eq) cons = { video: { width: { ideal: 1920 }, height: { ideal: 960 } }, audio: false };
       info.textContent = 'Kamera wird gestartet …';
@@ -3883,7 +3924,7 @@ const CamScan = (() => {
       if (stopped) { stream.getTracks().forEach(t => t.stop()); return null; }
       video.srcObject = stream; video.setAttribute('playsinline', ''); await video.play().catch(() => { }); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); });
       env.setSim(false); env.toast('{i:cam} Echtwelt-Scan läuft: Das Spiel zeigt jetzt nur noch, was die Kamera wirklich sieht.', 'good');
-      model = model2;
+      model = model2; info.textContent = 'Erkennung: ' + model.name;
     } catch (e) {
       console.warn('CamScan', e); const n = e && e.name;
       if (n === 'NotAllowedError' || n === 'SecurityError') fail('Kamera nicht erlaubt. Erlaube die Kamera für diese Seite in den Browser-Einstellungen.');
@@ -3897,9 +3938,9 @@ const CamScan = (() => {
     async function tick() {
       if (stopped) return; if (busy || document.hidden || !video.videoWidth) { loopT = setTimeout(tick, 400); return; } busy = true; const t0 = performance.now();
       try {
-        const dets = await model.detect(video, 18, 0.45); if (stopped) return; handle(dets);
+        const dets = plausible(await model.detect(video), video.videoWidth, video.videoHeight); if (stopped) return; handle(dets);
       } catch (e) { console.warn('detect', e); }
-      busy = false; loopT = setTimeout(tick, Math.max(120, 520 - (performance.now() - t0)));
+      busy = false; lastMs = Math.round(performance.now() - t0); loopT = setTimeout(tick, Math.max(60, (model.interval || 450) - (performance.now() - t0)));
     }
     function handle(dets) {
       const W = video.videoWidth, H = video.videoHeight, hd = cameraHeading(), pos = env.getPos(), now = Date.now(), f = Math.max(W, H) / 2 / Math.tan(33 * D2R);
@@ -3950,7 +3991,7 @@ const CamScan = (() => {
       }
     }
     tick();
-    return { stop, update, get on() { return !stopped; }, get tracked() { return tracked; }, get cameraHeading() { return cameraHeading(); } };
+    return { stop, update, get on() { return !stopped; }, get tracked() { return tracked; }, get cameraHeading() { return cameraHeading(); }, get stats() { return { det: model && model.name, ms: lastMs }; } };
   }
   return { start, Ori };
 })();
@@ -4453,7 +4494,7 @@ const GoMap = (() => {
     UI.modal({ title: '{i:cam} Echtwelt-Scan', body: el('div', { class: 'col' },
       el('p', { style: 'margin:0' }, 'Die Kamera deines Handys erkennt echte Autos, Menschen, Hunde und Fahrräder und zeigt sie an der geschätzten Stelle in der Karte. Solange der Scan läuft, sind die simulierten Autos und Leute aus.'),
       el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'So geht’s: Handy aufrecht halten, Rückkamera nach vorn. Dreh dich langsam im Kreis – der Ring links unten füllt sich. Erkanntes bleibt etwa 30 Sekunden stehen.'),
-      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Ehrlich: Ein Handy hat keine 360°-Kamera, es sieht nur nach vorn (etwa 65°). Entfernung und Richtung sind Schätzungen. Die Bilder bleiben auf dem Gerät; die Erkennung (KI) wird einmalig aus dem Internet geladen (ca. 6 MB).')),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Ehrlich: Ein Handy hat keine 360°-Kamera, es sieht nur nach vorn (etwa 65°). Entfernung und Richtung sind Schätzungen. Die Bilder bleiben auf dem Gerät; die Erkennung (KI, YOLOv8) wird einmalig aus dem Internet geladen (ca. 25 MB, am besten im WLAN).')),
       actions: [{ label: 'Abbrechen', cls: 'sec' }, { label: '360°-Kamera (testweise)', cls: 'sec', onclick: () => setTimeout(() => startScan(true)) }, { label: '{i:cam} Scan starten', cls: 'gold', onclick: () => setTimeout(() => startScan(false)) }] });
   }
   async function startScan(eq) {
