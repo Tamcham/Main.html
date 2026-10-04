@@ -816,6 +816,9 @@ body[data-mode=mobile] #cityLayer.go #cityDex{display:none!important}
 .card.sz-xs{--cw:104px}
 body[data-mode=mobile] .tinv .card.sz-xs,body[data-mode=mobile] .tslots .card.sz-xs{--cw:98px}
 .map-step{position:absolute;right:14px;bottom:calc(132px + var(--sai-b));background:rgba(12,10,40,.88);color:#fff;border:2px solid #ffffff40}.map-step.on{background:linear-gradient(180deg,#34d399,#059669);border-color:#fff}
+#scanBox{position:absolute;left:12px;bottom:calc(86px + var(--sai-b));z-index:15;width:136px;border-radius:14px;overflow:hidden;background:#0b1530;border:1px solid #38bdf8aa;box-shadow:0 4px 14px #0007}
+#scanBox .sb-v{position:relative;min-height:60px;background:#000}#scanBox video{display:block;width:100%;height:auto}#scanBox .sb-ov{position:absolute;left:0;top:0;width:100%;height:100%}#scanBox .sb-ring{position:absolute;right:3px;bottom:3px;width:46px;height:46px;opacity:.95}
+#scanBox .sb-info{font-size:.68rem;line-height:1.25;padding:5px 7px;color:#e2e8f0}#scanBox .sb-x{position:absolute;right:4px;top:4px;width:22px;height:22px;border-radius:50%;background:#0009;color:#fff;font-size:15px;line-height:20px;border:1px solid #ffffff55}
 #mapLoad{position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(80% 60% at 50% 30%,#2a2370,#0b0a24 75%);transition:opacity .5s}
 #mapLoad.out{opacity:0;pointer-events:none}
 .ml-in{width:min(380px,100%);text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
@@ -1270,6 +1273,7 @@ const ICONS = {
   luck: '<circle cx="8.8" cy="8.8" r="3.2"/><circle cx="15.2" cy="8.8" r="3.2"/><circle cx="8.8" cy="15.2" r="3.2"/><circle cx="15.2" cy="15.2" r="3.2"/><path d="M15.5 15.5L21 21"/>',
   star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
   starf: '<path fill="currentColor" d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+  cam: '<path d="M4 8.5h3L8.5 6h7L17 8.5h3V19H4z"/><circle cx="12" cy="13.5" r="3.6"/>',
   book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5V5.5M20 18v3H6.5M8.5 7.5h7"/>',
   alert: '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5v.01"/>',
   sound: '<path d="M4 9.5h3.5L13 5v14l-5.5-4.5H4z"/><path d="M16.5 9a4.5 4.5 0 0 1 0 6M19 6.5a8 8 0 0 1 0 11"/>',
@@ -3512,7 +3516,7 @@ const CityLife = (() => {
           for (let t = (i === 0 ? 10 : 4) + c.rnd() * 2; t < L - (i === w.pts.length - 2 ? 10 : 4); t += 5.6 + c.rnd() * 2.2) {
             if (c.rnd() > dens || n >= cap) continue; const off = (w.w / 2 + 1.1) * sd, px = x0 + ux * t + nx * off, pz = z0 + uz * t + nz * off;
             if (avoid.some(a => Math.hypot(a[0] - px, a[1] - pz) < 6)) continue; if (c.bld.some(b => px > b.minx && px < b.maxx && pz > b.minz && pz < b.maxz && c.inPoly(px, pz, b.pts))) continue;
-            const type = typeOf(c.rnd, false), hex = colorOf(type, c.rnd), ry = Math.atan2(ux, uz) + (sd < 0 ? Math.PI : 0) + (c.rnd() - 0.5) * 0.06; staticCar(c.det, px + (c.rnd() - 0.5) * 0.3, pz + (c.rnd() - 0.5) * 0.3, ry, type, hex); n++;
+            const type = typeOf(c.rnd, false), hex = colorOf(type, c.rnd), ry = Math.atan2(ux, uz) + (sd < 0 ? Math.PI : 0) + (c.rnd() - 0.5) * 0.06; staticCar(c.park || c.det, px + (c.rnd() - 0.5) * 0.3, pz + (c.rnd() - 0.5) * 0.3, ry, type, hex); n++;
           }
         });
       }
@@ -3633,7 +3637,8 @@ const CityLife = (() => {
     function setLoad(k) { maxCars = Math.max(6, Math.round(baseC * k)); maxPeds = Math.max(4, Math.round(baseP * k)); }
     return { root, update, dispose, setLoad, graph, get agents() { return { cars, peds }; }, get counts() { return { cars: cars.length, peds: peds.length, edges: graph.edges.length, idle: idle.length }; } };
   }
-  return { carParts, typeOf, colorOf, staticCar, parked, create, buildGraph, VMAX, SP };
+  function makeCar(type, hex) { const mb = new G3.MB(); carParts(type, hex, true).forEach(p => mb.add(p[0], p[1], p[2])); const m = mb.build(G3.vcMat(), false); m.matrixAutoUpdate = true; m.userData.own = true; const g = new THREE.Group(); g.add(m); return g; }
+  return { carParts, typeOf, colorOf, staticCar, parked, create, buildGraph, makeCar, npcPerson, VMAX, SP };
 })();
 
 /* ------------------------------ OSM-Details: Straßenmöbel, Überwege, Türen, Gleise, Autos, Spielplätze, Namen ------------------------------ */
@@ -3649,7 +3654,7 @@ const OsmDetail = (() => {
   const cen = pts => [pts.reduce((a, q) => a + q[0], 0) / pts.length, pts.reduce((a, q) => a + q[1], 0) / pts.length];
 
   /* ---------- Fahrzeuge ---------- */
-  function carAt(c, x, z, ry, hex) { const type = CityLife.typeOf(c.rnd, false); CityLife.staticCar(c.det, x, z, ry, type, CityLife.colorOf(type, c.rnd)); }
+  function carAt(c, x, z, ry, hex) { const type = CityLife.typeOf(c.rnd, false); CityLife.staticCar(c.park || c.det, x, z, ry, type, CityLife.colorOf(type, c.rnd)); }
   function parkedFill(c, pts) {
     const ar = Math.abs(c.polyArea(pts)); if (ar < 70 || c.carN.n > 150) return; const o = c.obb(pts); if (!o) return; const cs = Math.cos(o.t), sn = Math.sin(o.t); let k = 0;
     const W = (u, v) => [u * cs - v * sn, u * sn + v * cs], long = (o.u1 - o.u0) >= (o.v1 - o.v0);
@@ -3808,6 +3813,148 @@ const OsmDetail = (() => {
   return { area, pitch, parked, prop, entrance, way, rail, zebra, carAt, traffic, updateCars, streetLabels, ext, lineQ, AREA, NAT, LEIS, AMEN };
 })();
 
+/* ------------------------------ CamScan: Kamera-Erkennung (Autos, Menschen, Hunde, Räder) → 3D in der Karte ------------------------------ */
+const CamScan = (() => {
+  const TF_URLS = ['https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0/dist/tf.min.js', 'https://unpkg.com/@tensorflow/tfjs@4.22.0/dist/tf.min.js'];
+  const COCO_URLS = ['https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js', 'https://unpkg.com/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js'];
+  const D2R = Math.PI / 180;
+  const KIND = { person: 'person', car: 'car', truck: 'truck', bus: 'bus', motorcycle: 'moto', bicycle: 'bike', dog: 'dog' };
+  const NAME = { person: 'Person', car: 'Auto', truck: 'Lkw/Transp.', bus: 'Bus', motorcycle: 'Motorrad', bicycle: 'Fahrrad', dog: 'Hund' };
+  const REAL_H = { person: 1.7, car: 1.5, truck: 2.6, bus: 3.1, motorcycle: 1.3, bicycle: 1.05, dog: 0.55 };
+  const GROUP = { person: 'p', car: 'v', truck: 'v', bus: 'v', motorcycle: 'b', bicycle: 'b', dog: 'd' };
+  const loadScript = url => new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => { s.remove(); rej(new Error('load')); }; document.head.append(s); });
+  async function loadFirst(urls) { let err; for (const u of urls) { try { await loadScript(u); return; } catch (e) { err = e; } } throw err || new Error('net'); }
+  let model = null;
+  async function loadModel(step) {
+    if (model) return model;
+    if (!window.tf) { step('KI-Bibliothek wird geladen …'); await loadFirst(TF_URLS); }
+    if (!window.cocoSsd) await loadFirst(COCO_URLS);
+    step('Erkennungsmodell wird geladen (einmalig, ca. 6 MB) …'); try { await tf.setBackend(window.TF_BACKEND || 'webgl'); } catch (e) { } await tf.ready();
+    model = await cocoSsd.load({ base: 'lite_mobilenet_v2' }); return model;
+  }
+
+  /* ---------- Kompass / Blickrichtung der Rückkamera ---------- */
+  const Ori = { on: false, sin: 0, cos: 1, seen: 0, handler: null };
+  function oriStart() {
+    if (Ori.handler) return; Ori.on = true; Ori.seen = 0;
+    Ori.handler = e => {
+      let h = null;
+      if (e.webkitCompassHeading != null && !isNaN(e.webkitCompassHeading)) h = e.webkitCompassHeading * D2R;
+      else if (e.alpha != null && (e.absolute || e.type === 'deviceorientationabsolute')) { const a = e.alpha * D2R, b = (e.beta || 0) * D2R, g = (e.gamma || 0) * D2R, sA = Math.sin(a), cA = Math.cos(a), sB = Math.sin(b), cB = Math.cos(b), sG = Math.sin(g), cG = Math.cos(g), E = -(cG * sA * sB + cA * sG), N = -(sA * sG - cA * cG * sB); if (Math.hypot(E, N) > 0.25) h = Math.atan2(E, N); }
+      if (h == null) return; const k = Ori.seen ? 0.18 : 1; Ori.sin += (Math.sin(h) - Ori.sin) * k; Ori.cos += (Math.cos(h) - Ori.cos) * k; Ori.seen = Date.now();
+    };
+    window.addEventListener('deviceorientationabsolute', Ori.handler, true); window.addEventListener('deviceorientation', Ori.handler, true);
+  }
+  function oriStop() { if (!Ori.handler) return; window.removeEventListener('deviceorientationabsolute', Ori.handler, true); window.removeEventListener('deviceorientation', Ori.handler, true); Ori.handler = null; Ori.on = false; }
+  const oriHeading = () => (Ori.seen && Date.now() - Ori.seen < 2500) ? Math.atan2(Ori.sin, Ori.cos) : null;
+  async function oriPermission() { try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') await DeviceOrientationEvent.requestPermission(); } catch (e) { } }
+
+  /* ---------- Hilfen ---------- */
+  function sampleColor(video, x, y, w, h) {
+    try { const cv = sampleColor.cv || (sampleColor.cv = document.createElement('canvas')); cv.width = cv.height = 12; const c = cv.getContext('2d', { willReadFrequently: true }); c.drawImage(video, x + w * 0.3, y + h * 0.35, Math.max(2, w * 0.4), Math.max(2, h * 0.35), 0, 0, 12, 12); const d = c.getImageData(0, 0, 12, 12).data; let r = 0, g = 0, b = 0, n = 0; for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; } r /= n; g /= n; b /= n; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; if (l < 28) { r = g = b = 30; } const k = x => Math.round(clamp(x, 0, 255)).toString(16).padStart(2, '0'); return '#' + k(r) + k(g) + k(b); } catch (e) { return '#8e9aa5'; }
+  }
+  function bikeMesh(moto) {
+    const B = G3.GEO, mt = G3.mtx, mb = new G3.MB(), c = moto ? '#1f2937' : '#334155';
+    [[0.62], [-0.62]].forEach(([z]) => mb.add(B.torus, mt(0, 0.34, z, moto ? 0.36 : 0.34, 0.34, 0.34, Math.PI / 2), '#15171c'));
+    mb.add(B.box, mt(0, 0.62, 0, 0.07, 0.07, 1.05, 0, -0.15), moto ? '#dc2626' : '#3b82f6').add(B.box, mt(0, 0.88, 0.5, 0.5, 0.05, 0.05), c).add(B.box, mt(0, 0.82, -0.25, 0.12, 0.06, 0.3), '#111827');
+    if (moto) mb.add(B.box, mt(0, 0.65, 0, 0.35, 0.3, 0.9), '#1f2937').add(B.box, mt(0, 0.9, 0.42, 0.3, 0.25, 0.1), '#e5e7eb');
+    const m = mb.build(G3.vcMat(), false); m.matrixAutoUpdate = true; m.userData.own = true; const g = new THREE.Group(); g.add(m); g.scale.setScalar(1.3); return { g };
+  }
+  const WHITE = '#e6e8ee';
+
+  /* ---------- Steuerung ---------- */
+  async function start(env, opts) {
+    const eq = !!opts.eq, ov = env.parent, st = env.st, rnd = mulberry32(hashStr('scan' + Date.now()));
+    const box = el('div', { id: 'scanBox' }); box.innerHTML = '<div class="sb-v"><video muted playsinline></video><canvas class="sb-ov"></canvas><canvas class="sb-ring" width="88" height="88"></canvas></div><div class="sb-info">Kamera startet …</div><button class="sb-x" aria-label="Scan beenden">×</button>';
+    ov.append(box); const video = box.querySelector('video'), cvOv = box.querySelector('.sb-ov'), cvRing = box.querySelector('.sb-ring'), info = box.querySelector('.sb-info');
+    let stream = null, stopped = false, loopT = 0, busy = false; const tracked = [], sect = new Array(12).fill(0), root = new THREE.Group(); st.add(root);
+    const fail = msg => { env.toast(msg, 'bad'); stop(); };
+    function stop() { if (stopped) return; stopped = true; clearTimeout(loopT); try { stream && stream.getTracks().forEach(t => t.stop()); } catch (e) { } video.srcObject = null; box.remove(); oriStop(); tracked.forEach(o => dropMesh(o)); st.remove(root); env.setSim(true); env.onStop && env.onStop(); }
+    box.querySelector('.sb-x').onclick = () => stop();
+    await oriPermission(); oriStart();
+    try {
+      let model2; info.textContent = 'KI wird geladen …';
+      model2 = await loadModel(m => { info.textContent = m; }); if (stopped) return null;
+      let cons = { video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
+      if (eq) cons = { video: { width: { ideal: 1920 }, height: { ideal: 960 } }, audio: false };
+      info.textContent = 'Kamera wird gestartet …';
+      stream = await navigator.mediaDevices.getUserMedia(cons);
+      if (eq) { try { const devs = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'), pick = devs.find(d => /360|insta|theta|ricoh|gopro|uvc|usb|external|webcam/i.test(d.label)); if (pick) { stream.getTracks().forEach(t => t.stop()); stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: pick.deviceId }, width: { ideal: 1920 } }, audio: false }); } } catch (e) { } }
+      if (stopped) { stream.getTracks().forEach(t => t.stop()); return null; }
+      video.srcObject = stream; video.setAttribute('playsinline', ''); await video.play().catch(() => { }); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); });
+      env.setSim(false); env.toast('{i:cam} Echtwelt-Scan läuft: Das Spiel zeigt jetzt nur noch, was die Kamera wirklich sieht.', 'good');
+      model = model2;
+    } catch (e) {
+      console.warn('CamScan', e); const n = e && e.name;
+      if (n === 'NotAllowedError' || n === 'SecurityError') fail('Kamera nicht erlaubt. Erlaube die Kamera für diese Seite in den Browser-Einstellungen.');
+      else if (n === 'NotFoundError' || n === 'OverconstrainedError') fail('Keine passende Kamera gefunden.');
+      else fail('Die Erkennung konnte nicht geladen werden (Internet nötig, einmalig ~6 MB).');
+      return null;
+    }
+
+    function cameraHeading() { const h = oriHeading(); return h != null ? h : env.fallbackHeading(); }
+    /* Erkennungs-Schleife */
+    async function tick() {
+      if (stopped) return; if (busy || document.hidden || !video.videoWidth) { loopT = setTimeout(tick, 400); return; } busy = true; const t0 = performance.now();
+      try {
+        const dets = await model.detect(video, 18, 0.45); if (stopped) return; handle(dets);
+      } catch (e) { console.warn('detect', e); }
+      busy = false; loopT = setTimeout(tick, Math.max(120, 520 - (performance.now() - t0)));
+    }
+    function handle(dets) {
+      const W = video.videoWidth, H = video.videoHeight, hd = cameraHeading(), pos = env.getPos(), now = Date.now(), f = Math.max(W, H) / 2 / Math.tan(33 * D2R);
+      const cw = cvOv.clientWidth || 128, chh = cvOv.clientHeight || 96; if (cvOv.width !== cw) { cvOv.width = cw; cvOv.height = chh; } const g = cvOv.getContext('2d'); g.clearRect(0, 0, cw, chh); g.lineWidth = 2; g.font = '600 10px system-ui';
+      let seenSect = Math.floor(((hd / D2R) % 360 + 360) % 360 / 30); if (!eq) sect[seenSect] = now; else sect.fill(now);
+      for (const d of dets) {
+        const kind = KIND[d.class]; if (!kind) continue; const [bx, by, bw, bh] = d.bbox, cx = bx + bw / 2, real = REAL_H[d.class];
+        g.strokeStyle = '#38bdf8'; g.strokeRect(bx / W * cw, by / H * chh, bw / W * cw, bh / H * chh); g.fillStyle = '#38bdf8'; g.fillText(NAME[d.class], bx / W * cw + 2, Math.max(10, by / H * chh - 2));
+        let dist, off; if (eq) { const a = Math.max(0.02, bh / H * Math.PI); dist = real / (2 * Math.tan(a / 2)); off = (cx / W - 0.5) * 2 * Math.PI; } else { dist = real * f / Math.max(8, bh); off = Math.atan((cx - W / 2) / f); }
+        const cut = !eq && (by < 3 || by + bh > H - 3); if (cut && (d.class === 'person' || d.class === 'car')) dist = Math.max(dist, 3.5); dist = clamp(dist, 1.5, 55);
+        const brg = hd + off, nx = pos.x + Math.sin(brg) * dist, nz = pos.z - Math.cos(brg) * dist, grp = GROUP[d.class];
+        let best = null, bd = Math.max(2.6, dist * 0.22); for (const o of tracked) { if (o.grp !== grp) continue; const dd = Math.hypot(o.x - nx, o.z - nz); if (dd < bd) { bd = dd; best = o; } }
+        if (best) { best.x += (nx - best.x) * 0.45; best.z += (nz - best.z) * 0.45; best.t = now; best.n++; best.score = Math.max(best.score, d.score); if (best.cls !== d.class && d.score > best.score - 0.05) best.cls = d.class; }
+        else if (tracked.length < 44) { const o = { cls: d.class, kind, grp, x: nx, z: nz, t: now, born: now, n: 1, score: d.score, hex: kind === 'car' || kind === 'truck' || kind === 'bus' ? sampleColor(video, bx, by, bw, bh) : null, aspect: bw / bh, mesh: null, vx: 0, vz: 0, lastx: nx, lastz: nz, ph: rnd() * 6 }; tracked.push(o); }
+      }
+      drawRing(hd); const cnt = {}; tracked.forEach(o => { if (now - o.t < 4000) cnt[NAME[o.cls]] = (cnt[NAME[o.cls]] || 0) + 1; });
+      info.textContent = Object.keys(cnt).length ? Object.entries(cnt).map(([k, v]) => v + '× ' + k).join(' · ') : (Ori.seen ? 'Nichts erkannt – langsam drehen' : 'Kein Kompass: Kamera in Laufrichtung halten');
+    }
+    function drawRing(hd) {
+      const c = cvRing.getContext('2d'), now = Date.now(); c.clearRect(0, 0, 88, 88); c.lineWidth = 8;
+      for (let i = 0; i < 12; i++) { const a0 = (i * 30 - 90 + 1) * D2R, a1 = ((i + 1) * 30 - 90 - 1) * D2R, age = now - sect[i]; c.strokeStyle = !sect[i] ? 'rgba(255,255,255,.18)' : age < 25000 ? '#38bdf8' : age < 60000 ? '#38bdf877' : 'rgba(255,255,255,.18)'; c.beginPath(); c.arc(44, 44, 34, a0, a1); c.stroke(); }
+      c.strokeStyle = '#fff'; c.lineWidth = 3; c.beginPath(); const a = hd - Math.PI / 2; c.moveTo(44 + Math.cos(a) * 14, 44 + Math.sin(a) * 14); c.lineTo(44 + Math.cos(a) * 30, 44 + Math.sin(a) * 30); c.stroke();
+    }
+    /* 3D-Objekte */
+    function buildMesh(o) {
+      const k = o.kind; let g, legs = null, dog = null;
+      if (k === 'person') { const p = CityLife.npcPerson(rnd, 1.45); g = p.g; legs = p.legs; }
+      else if (k === 'dog') { dog = G3.makeDog(['#c58b4e', '#e8d9b8', '#3b2a1a', '#9a9a9a'][Math.floor(rnd() * 4)]); g = dog.g; g.scale.setScalar(1.25); }
+      else if (k === 'bike' || k === 'moto') g = bikeMesh(k === 'moto').g;
+      else { const type = k === 'bus' ? 'bus' : k === 'truck' ? (o.aspect > 2.3 ? 'truck' : 'van') : (o.aspect > 2.1 ? 'sedan' : o.aspect > 1.6 ? 'hatch' : 'suv'); g = CityLife.makeCar(type, o.hex || '#8e9aa5'); }
+      const ring = new THREE.Mesh(G3.GEO.ring, new THREE.MeshBasicMaterial({ color: G3.lin('#38bdf8'), transparent: true, opacity: 0.7, depthWrite: false, toneMapped: false, side: THREE.DoubleSide })); ring.scale.setScalar(k === 'person' ? 1.0 : k === 'dog' ? 0.8 : k === 'bus' || k === 'truck' ? 3.6 : 2.4); ring.position.y = 0.12; g.add(ring);
+      o.ring = ring; o.legs = legs; o.dog = dog; o.mesh = g; g.position.set(o.x, 0.07, o.z); g.rotation.y = o.yaw = orient(o); root.add(g);
+    }
+    function orient(o) {
+      const gph = env.getGraph(); if (o.grp === 'v' && gph) { let best = null, bd = 12; for (const e of gph.drive) { const t = clamp(((o.x - e.x0) * e.ux + (o.z - e.z0) * e.uz) / e.L, 0, 1) * e.L, px = e.x0 + e.ux * t, pz = e.z0 + e.uz * t, d = Math.hypot(px - o.x, pz - o.z); if (d < bd) { bd = d; best = e; } } if (best) return Math.atan2(best.ux, best.uz); }
+      const p = env.getPos(); return Math.atan2(o.x - p.x, o.z - p.z) + Math.PI / 2 + (rnd() < 0.5 ? 0 : Math.PI);
+    }
+    function dropMesh(o) { if (o.mesh) { root.remove(o.mesh); o.mesh.traverse(m => { if (m.userData && m.userData.own && m.geometry) m.geometry.dispose(); if (m === o.ring) m.material.dispose(); }); o.mesh = null; } }
+    function update(dt, t) {
+      if (stopped) return; const now = Date.now();
+      for (let i = tracked.length - 1; i >= 0; i--) {
+        const o = tracked[i], age = now - o.t; if (age > 30000 || (o.n < 2 && age > 4000)) { dropMesh(o); tracked.splice(i, 1); continue; }
+        if (o.n >= 2 && !o.mesh) buildMesh(o); if (!o.mesh) continue; const m = o.mesh, k = 1 - Math.exp(-dt * 6), px = m.position.x, pz = m.position.z; m.position.x += (o.x - px) * k; m.position.z += (o.z - pz) * k;
+        const sp = Math.hypot(m.position.x - px, m.position.z - pz) / Math.max(dt, 0.001); if (o.grp !== 'v' && sp > 0.3) { const hy = Math.atan2(m.position.x - px, m.position.z - pz); let dy = hy - m.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); m.rotation.y += dy * Math.min(1, dt * 6); }
+        else if (o.grp === 'v') { let dy = o.yaw - m.rotation.y; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); m.rotation.y += dy * Math.min(1, dt * 4); }
+        o.ph += sp * dt * 3.4; if (o.legs) { const sw = Math.sin(o.ph) * 0.7 * Math.min(1, sp / 1); o.legs[0].rotation.x = sw; o.legs[1].rotation.x = -sw; } if (o.dog) { const q = Math.sin(o.ph * 3) * 0.7 * Math.min(1, sp / 0.8); o.dog.legs[0].rotation.x = q; o.dog.legs[3].rotation.x = q; o.dog.legs[1].rotation.x = -q; o.dog.legs[2].rotation.x = -q; }
+        o.ring.material.opacity = age < 6000 ? 0.75 : Math.max(0.12, 0.75 - (age - 6000) / 24000 * 0.6); o.ring.rotation.y += dt;
+      }
+    }
+    tick();
+    return { stop, update, get on() { return !stopped; }, get tracked() { return tracked; }, get cameraHeading() { return cameraHeading(); } };
+  }
+  return { start, Ori };
+})();
+
 /* ------------------------------ CITY GO · STANDORT (3D-Karte mit echtem Standort) ------------------------------ */
 const GoMap = (() => {
   const CELL = 120, DOG_RANGE = 75, STOP_RANGE = 45, ARENA_RANGE = 60, BLK = 60, R_FIRST = 240, R_FULL = 420;
@@ -3921,11 +4068,11 @@ const GoMap = (() => {
   let _ly = 0; const my = () => performance.now() - _ly > 8 ? yieldUI().then(() => { _ly = performance.now(); }) : null;
   async function buildOsm(json, cen) {
     _ly = performance.now(); const els = (json.elements || []).filter(e => e.type === 'way' && e.geometry && e.geometry.length > 1), grp = new THREE.Group(), bld = [], roadPts = [];
-    const flat = new G3.CMB(120), detMB = new G3.CMB(100), swMB = new G3.CMB(120), shMB = new G3.CMB(120), roadsMB = new G3.CMB(120), bMB = new G3.CMB(90), tMB = new G3.CMB(120), rnd = mulberry32(hashStr('osm' + Math.round(cen.x) + Math.round(cen.z)));
+    const flat = new G3.CMB(120), detMB = new G3.CMB(100), parkMB = new G3.CMB(100), swMB = new G3.CMB(120), shMB = new G3.CMB(120), roadsMB = new G3.CMB(120), bMB = new G3.CMB(90), tMB = new G3.CMB(120), rnd = mulberry32(hashStr('osm' + Math.round(cen.x) + Math.round(cen.z)));
     const toLoc = g => g.map(q => { const v = toXY(q.lat, q.lon); return [v.x, v.z]; });
     const flatPoly = (pts, hex, y) => { try { if (pts.length < 3) return; const cx = pts.reduce((a, q) => a + q[0], 0) / pts.length, cz = pts.reduce((a, q) => a + q[1], 0) / pts.length, sh = new THREE.Shape(pts.map(q => new THREE.Vector2(q[0] - cx, -(q[1] - cz)))), geo = new THREE.ShapeGeometry(sh); flat.add(geo, G3.mtx(cx, y, cz, 1, 1, 1, 0, -Math.PI / 2, 0), hex); geo.dispose(); } catch (e) { } };
     const trees = [], conif = [], streetT = []; const addTrees = (pts, dens) => { const ar = Math.abs(polyArea(pts)); if (ar < 300) return; let minx = 1e9, maxx = -1e9, minz = 1e9, maxz = -1e9; pts.forEach(q => { minx = Math.min(minx, q[0]); maxx = Math.max(maxx, q[0]); minz = Math.min(minz, q[1]); maxz = Math.max(maxz, q[1]); }); const n = Math.min(26, Math.floor(ar / dens)); for (let t = 0, tries = 0; t < n && tries < n * 8; tries++) { const x = minx + rnd() * (maxx - minx), z = minz + rnd() * (maxz - minz); if (inPoly(x, z, pts) && trees.length < 260) { trees.push([x, z, 0.8 + rnd() * 0.8]); t++; } } };
-    const sigKeys = new Set(), stopPts = [], avoid = [], segs = [], carRoads = [], stNames = [], crossWays = [], C = { flat, sw: swMB, road: roadsMB, det: detMB, flatPoly, trees, addTrees, obb: pts => obb(pts), inPoly, polyArea, pushQuad, rnd, bld, segs, carN: { n: 0 }, railN: { n: 0 } };
+    const sigKeys = new Set(), stopPts = [], avoid = [], segs = [], carRoads = [], stNames = [], crossWays = [], C = { park: parkMB, flat, sw: swMB, road: roadsMB, det: detMB, flatPoly, trees, addTrees, obb: pts => obb(pts), inPoly, polyArea, pushQuad, rnd, bld, segs, carN: { n: 0 }, railN: { n: 0 } };
     for (const e of els) {
       const tg = e.tags || {}, g = e.geometry, closed = g.length > 3 && g[0].lat === g[g.length - 1].lat && g[0].lon === g[g.length - 1].lon;
       if ((tg.building || tg['building:part']) && closed) continue; if (tg.barrier || (tg.railway && tg.railway !== 'platform') || (tg.waterway && tg.waterway !== 'riverbank')) continue;                                  // Gebäude später (nach Flächen)
@@ -4088,7 +4235,7 @@ const GoMap = (() => {
     /* Hausnummern (nahe) und Straßennamen auf dem Boden */
     nums.sort((a, b) => Math.hypot(a.x - cen.x, a.z - cen.z) - Math.hypot(b.x - cen.x, b.z - cen.z)).slice(0, 70).forEach(N => { const sp = G3.sprite(N.txt, { w: 160, h: 80, bg: '#f8fafc', border: '#334155', color: '#111827', fs: 52, sw: 1.7, r: 16 }); sp.position.set(N.x, N.h + 1.4, N.z); sp.userData.label = true; sp.userData.vis = 48; grp.add(sp); labs.push(sp); });
     const stLab = []; stNames.sort((a, b) => Math.hypot(a.x - cen.x, a.z - cen.z) - Math.hypot(b.x - cen.x, b.z - cen.z)).forEach(L => { if (stLab.length < 26 && !stLab.some(o => o.name === L.name && Math.hypot(o.x - L.x, o.z - L.z) < 110)) stLab.push(L); }); OsmDetail.streetLabels(grp, stLab, labs);
-    await yieldUI(); const pkN = CityLife.parked(C, ways, avoid, cen); const life = CityLife.create(grp, { ways, sig: sigKeys, cen, stops: stopPts }); grp.add(await buildC(detMB, G3.vcMat()));
+    await yieldUI(); const pkN = CityLife.parked(C, ways, avoid, cen); const life = CityLife.create(grp, { ways, sig: sigKeys, cen, stops: stopPts }); grp.add(await buildC(detMB, G3.vcMat())); const parkG = await buildC(parkMB, G3.vcMat()); parkG.children.forEach(m => { m.userData.parked = true; }); grp.add(parkG);
     const vm = G3.vcMat(), vm2 = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }); grp.add(await buildC(flat, vm)); grp.add(await buildC(swMB, vm2)); grp.add(await buildC(roadsMB, vm2)); grp.add(await buildC(tMB, vm), shG);
     return { grp, bld, roadPts, cen, labs, shMat, life, pkN, nWays: ways.length, nPk: ways.filter(w => w.pkL || w.pkR).length };
   }
@@ -4118,6 +4265,7 @@ const GoMap = (() => {
     for (let i = 0; i < kids.length; i++) { holder.add(kids[i]); if (i % per === per - 1) { await new Promise(r => requestAnimationFrame(r)); if (!running || !st) return; } }
     nw.grp = holder; const old = world;
     if (old) { st.remove(old.grp); if (old.life) old.life.dispose(); old.grp.traverse(ob => { if (ob.userData && ob.userData.own && ob.geometry) ob.geometry.dispose(); if (ob.isSprite && ob.material.map) { ob.material.map.dispose(); ob.material.dispose(); } }); }
+    if (nw.life) nw.life.root.visible = simOn; nw.grp.children.forEach(m => { if (m.userData.parked && !simOn) m.visible = false; });
     world = nw; osmOkN++; if (groundFallback) groundFallback.visible = false; blocks.forEach(m => { st.remove(m); m.geometry.dispose(); }); blocks.clear(); relocateObjs();
     if (first) setTimeout(finishLoad, 80);
   }
@@ -4143,7 +4291,7 @@ const GoMap = (() => {
   }
 
   /* ---------- Hauptschleife ---------- */
-  const V = { x: 0, z: 0 }; let track = [], walking = false, walkHoldT = 0, tgtT = 0, vel = { x: 0, z: 0 }, walkPh = 0, camYawT = 0, camDistT = 58, fpsAcc = 0, fpsN = 0, dprNow = 0, dprMax = 1;
+  const V = { x: 0, z: 0 }; let track = [], walking = false, walkHoldT = 0, tgtT = 0, vel = { x: 0, z: 0 }, walkPh = 0, camYawT = 0, camDistT = 58, fpsAcc = 0, fpsN = 0, dprNow = 0, dprMax = 1, scan = null, scanBusy = false, simOn = true;
   function tickMove(dt) {
     if (!tgt) return; const now = Date.now(), vm = Math.hypot(vel.x, vel.z), since = Math.min(vm > 0.5 ? 2.6 : 1.2, (now - tgtT) / 1000);
     if (since > 2.5 && now < walkHoldT) { const f = Math.exp(-dt * 0.35); vel.x *= f; vel.z *= f; }
@@ -4166,8 +4314,8 @@ const GoMap = (() => {
     fpsAcc += dt; fpsN++; if (fpsAcc > 2.5) { const avg = fpsAcc / fpsN; fpsAcc = fpsN = 0; if (!UI.modalOpen() && st) { if (avg > 0.026 && dprNow > 0.7) { dprNow = Math.max(0.7, dprNow - 0.15); st.renderer.setPixelRatio(dprNow); st.size(); } else if (avg > 0.034 && world && world.life) world.life.setLoad(0.5); else if (avg < 0.0185 && dprNow < dprMax) { dprNow = Math.min(dprMax, dprNow + 0.1); st.renderer.setPixelRatio(dprNow); st.size(); } } }
     if (rangeRing) rangeRing.position.set(pos.x, 0.25, pos.z);
     if ((syncT -= dt) <= 0) { syncT = 0.8; if (ph === 'ready') { syncObjects(); syncBlocks(); if (geo && osmOn && !osmBusy && world && Date.now() - lastLoad > 25000 && (!lastFetch || Math.hypot(pos.x - lastFetch.x, pos.z - lastFetch.z) > R_FULL * 0.4)) loadWorld(R_FULL, false); } }
-    if (world && world.life) world.life.update(dt, pos);
-    if (world && frameN % 8 === 3) world.grp.children.forEach(m => { if (m.isMesh && m.geometry && m.geometry.boundingSphere) { const bs = m.geometry.boundingSphere; m.visible = Math.hypot(bs.center.x - pos.x, bs.center.z - pos.z) - bs.radius < 360; } });
+    if (world && world.life && simOn) world.life.update(dt, pos); if (scan) scan.update(dt, t);
+    if (world && frameN % 8 === 3) world.grp.children.forEach(m => { if (m.isMesh && m.geometry && m.geometry.boundingSphere) { const bs = m.geometry.boundingSphere; m.visible = Math.hypot(bs.center.x - pos.x, bs.center.z - pos.z) - bs.radius < 360 && (simOn || !m.userData.parked); } });
     updateObjects(dt, t); frameN++; if (world && world.labs && frameN % 10 === 0) world.labs.forEach(sp => { const d = Math.hypot(sp.position.x - pos.x, sp.position.z - pos.z); sp.visible = d < (sp.userData.vis || 120); });
     const hr = new Date().getHours() + new Date().getMinutes() / 60, day = hr > 7 && hr < 19 ? 1 : hr > 5.5 && hr < 21 ? 0.55 : 0.2;
     st.hemi.intensity = 0.4 + 0.5 * day; st.sun.intensity = 0.2 + 1.05 * day; if (world && world.shMat) world.shMat.opacity = 0.08 + 0.15 * day; st.scene.background.setRGB(0.62, 0.83, 1).multiplyScalar(0.2 + 0.8 * day);
@@ -4271,7 +4419,7 @@ const GoMap = (() => {
   function begin() {
     osmOn = true; ph = 'loc'; firstBuilt = false; mapRound = 0; lastLoad = 0; fixN = 0; fixT = 0; world = null; osmBusy = false; osmFails = 0; lastFetch = null; osmOkN = 0; skipIds = new Set(); objs.clear(); blocks.clear(); camYaw = camYawT = 0; camDist = camDistT = 58; tgt = null; tgtT = 0; vel = { x: 0, z: 0 }; V.x = V.z = 0; walkPh = 0; fpsAcc = fpsN = 0; track = []; walking = false; walkHoldT = 0; frameN = 0;
     ov = el('div', { id: 'mapOv' }); ov.innerHTML = `<canvas id="mapCv"></canvas>
-      <div class="map-top"><div class="row" style="gap:8px"><button class="icon-btn" id="mapBack" aria-label="Zurück">{i:back}</button><button class="icon-btn" id="mapTeam" aria-label="Team">{i:dog}</button><button class="icon-btn" id="mapBag" aria-label="Beutel">{i:bag}<b>0</b></button><button class="icon-btn" id="mapDex" aria-label="Album">{i:book}</button></div><div class="cglass" id="mapInfo"></div></div>
+      <div class="map-top"><div class="row" style="gap:8px"><button class="icon-btn" id="mapBack" aria-label="Zurück">{i:back}</button><button class="icon-btn" id="mapTeam" aria-label="Team">{i:dog}</button><button class="icon-btn" id="mapBag" aria-label="Beutel">{i:bag}<b>0</b></button><button class="icon-btn" id="mapDex" aria-label="Album">{i:book}</button><button class="icon-btn" id="mapCam" aria-label="Echtwelt-Scan mit Kamera">{i:cam}</button></div><div class="cglass" id="mapInfo"></div></div>
       <div class="map-status" id="mapStatus"></div>
       <button class="btn sm map-lure hidden" id="mapLure"></button>
       <button class="icon-btn map-center" id="mapCenter" aria-label="Kamera zurücksetzen">{i:target}</button>
@@ -4285,7 +4433,7 @@ const GoMap = (() => {
       st.onFrame(onFrame); st.start(); window.addEventListener('resize', onResize); thr = setInterval(() => { if (st) st.throttle = UI.modalOpen() ? 0.14 : 0; }, 250);
     } catch (e) { console.warn('Karte konnte nicht gestartet werden', e); if (st) { st.dispose(); st = null; } ov.remove(); ov = null; UI.toast('Die 3D-Karte braucht WebGL.', 'bad'); return; }
     UI.inCity = true; running = true; Audio.setScene('city');
-    $('#mapBack', ov).onclick = () => leave(); $('#mapTeam', ov).onclick = () => Dogs.teamModal(); $('#mapBag', ov).onclick = () => Go.bagModal({ inCity: true, onLure: useLure }); $('#mapDex', ov).onclick = () => UI.cityAlbum();
+    $('#mapBack', ov).onclick = () => leave(); $('#mapTeam', ov).onclick = () => Dogs.teamModal(); $('#mapBag', ov).onclick = () => Go.bagModal({ inCity: true, onLure: useLure }); $('#mapDex', ov).onclick = () => UI.cityAlbum(); $('#mapCam', ov).onclick = () => scanModal();
     $('#mapLure', ov).onclick = () => { if (Date.now() < lureUntil) return; Go.bagModal({ inCity: true, onLure: useLure }); }; $('#mapCenter', ov).onclick = () => { camYawT = 0; camDistT = 58; };
     const cv = $('#mapCv', ov), ptrs = new Map(); let dn = null, pinch0 = 0, dist0 = 0;
     cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); if (ptrs.size === 1) dn = { x: e.clientX, y: e.clientY, t: e.timeStamp, moved: 0 }; else if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = camDistT; dn = null; } });
@@ -4295,10 +4443,25 @@ const GoMap = (() => {
     cv.addEventListener('wheel', e => { e.preventDefault(); camDistT = clamp(camDistT + e.deltaY * 0.04, 22, 100); }, { passive: false });
     loadStep('loc'); startGps();
   }
+  function setSim(v) { simOn = v; if (world && world.life) world.life.root.visible = v; if (world) world.grp.children.forEach(m => { if (m.userData && m.userData.parked) m.visible = v; }); }
+  function scanModal() {
+    if (scan) { scan.stop(); return; } if (scanBusy) return;
+    UI.modal({ title: '{i:cam} Echtwelt-Scan', body: el('div', { class: 'col' },
+      el('p', { style: 'margin:0' }, 'Die Kamera deines Handys erkennt echte Autos, Menschen, Hunde und Fahrräder und zeigt sie an der geschätzten Stelle in der Karte. Solange der Scan läuft, sind die simulierten Autos und Leute aus.'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.85rem' }, 'So geht’s: Handy aufrecht halten, Rückkamera nach vorn. Dreh dich langsam im Kreis – der Ring links unten füllt sich. Erkanntes bleibt etwa 30 Sekunden stehen.'),
+      el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Ehrlich: Ein Handy hat keine 360°-Kamera, es sieht nur nach vorn (etwa 65°). Entfernung und Richtung sind Schätzungen. Die Bilder bleiben auf dem Gerät; die Erkennung (KI) wird einmalig aus dem Internet geladen (ca. 6 MB).')),
+      actions: [{ label: 'Abbrechen', cls: 'sec' }, { label: '360°-Kamera (testweise)', cls: 'sec', onclick: () => setTimeout(() => startScan(true)) }, { label: '{i:cam} Scan starten', cls: 'gold', onclick: () => setTimeout(() => startScan(false)) }] });
+  }
+  async function startScan(eq) {
+    if (scanBusy || scan || !st) return; scanBusy = true;
+    try { scan = await CamScan.start({ st, parent: ov, getPos: () => pos, fallbackHeading: () => heading, getGraph: () => world && world.life ? world.life.graph : null, toast: (m, k) => UI.toast(m, k), setSim, onStop: () => { scan = null; } }, { eq }); } catch (e) { console.warn('Scan', e); scan = null; setSim(true); }
+    scanBusy = false;
+  }
   function liftBlobs(g, y) { g.traverse(o => { if (o.isMesh && o.renderOrder === 1 && o.geometry === G3.GEO.plane) o.position.y = y; }); }
   function onResize() { if (st) st.size(); }
   function useLure() { if (!Go.use('lure')) return; lureUntil = Date.now() + 5 * 60 * 1000; Audio.sparkle(); UI.toast('{i:sparkle} Glücksköder aktiv! 5 Minuten lang mehr Hunde in deiner Nähe.', 'good'); syncT = 0; }
   function leave() {
+    if (scan) { try { scan.stop(); } catch (e) { } } scan = null; scanBusy = false; simOn = true;
     running = false; clearInterval(thr); fixN = 0; fixT = 0; ph = 'loc'; if (watch != null && navigator.geolocation) navigator.geolocation.clearWatch(watch); watch = null; window.removeEventListener('resize', onResize);
     objs.forEach(e => { if (e.m) e.m.dispose(); }); objs.clear(); blocks.clear(); world = null; if (st) { st.dispose(); st = null; }
     avatar = pet = rangeRing = groundFallback = groundPlain = null; if (ov) ov.remove(); ov = null; geo = null; mode = 'intro'; tgt = null; UI.inCity = false; Audio.setScene('menu'); UI.rerender(); Store.save(true);
@@ -4311,7 +4474,7 @@ const GoMap = (() => {
       el('p', { class: 'dim', style: 'margin:0;font-size:.8rem' }, 'Steuerung: ein Finger wischt = Kamera drehen, zwei Finger = zoomen, Antippen = Hund, Stop oder Arena wählen. Beim Autofahren: bitte nicht selbst spielen – lass jemanden mitspielen.')),
       actions: [{ label: 'Abbrechen', cls: 'sec' }, { label: '{i:pin} Los geht’s', cls: 'gold', onclick: () => setTimeout(() => begin()) }] });
   }
-  return { enter, leave, get running() { return running; }, _dbg: () => ({ x: pos.x, z: pos.z, sp: speedNow, dpr: dprNow, walking, pk: world && [world.pkN, world.nWays, world.nPk], life: world && world.life ? world.life.counts : null }), _agents: () => world && world.life ? world.life.agents : null, _tp: (x, z) => { pos.x = x; pos.z = z; tgt = { x, z }; tgtT = Date.now(); vel = { x: 0, z: 0 }; V.x = V.z = 0; syncT = 0; } };
+  return { enter, leave, get running() { return running; }, _dbg: () => ({ x: pos.x, z: pos.z, sp: speedNow, dpr: dprNow, walking, pk: world && [world.pkN, world.nWays, world.nPk], life: world && world.life ? world.life.counts : null }), _scan: () => scan, _startScan: eq => startScan(eq), _agents: () => world && world.life ? world.life.agents : null, _tp: (x, z) => { pos.x = x; pos.z = z; tgt = { x, z }; tgtT = Date.now(); vel = { x: 0, z: 0 }; V.x = V.z = 0; syncT = 0; } };
 })();
 
 /* ------------------------------ LIVE CITY (Three.js) ------------------------------ */
