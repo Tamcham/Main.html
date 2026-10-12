@@ -142,15 +142,20 @@ def enhance_pack(img, box):
 
     lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
     lum, ca, cb = cv2.split(lab)
-    lum = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12)).apply(lum)
+    lum = cv2.createCLAHE(clipLimit=1.5, tileGridSize=(12, 12)).apply(lum)
     enh = cv2.cvtColor(cv2.merge([lum, ca, cb]), cv2.COLOR_LAB2RGB).astype(np.float32) / 255
-    enh = 0.65 * enh + 0.35 * enh * enh * (3 - 2 * enh)            # S-curve: richer foil
-    hsv = cv2.cvtColor((enh * 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(np.float32)
-    hsv[..., 1] = np.clip(hsv[..., 1] * 1.12, 0, 255)
-    enh = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB).astype(np.float32) / 255
     luma = enh.mean(axis=2, keepdims=True)
-    enh = enh + 0.2 * np.clip((luma - 0.6) / 0.4, 0, 1) ** 2        # gloss on the foil
-    enh = np.clip(enh + 1.0 * (enh - cv2.GaussianBlur(enh, (0, 0), 2.5)), 0, 1)  # crisp label
+    dark = np.clip((0.55 - luma) / 0.35, 0, 1)                    # chocolate foil
+    light = np.clip((luma - 0.55) / 0.3, 0, 1)                    # cream label + splotches
+    foil = 0.6 * enh + 0.4 * enh * enh * (3 - 2 * enh)            # S-curve: deeper foil
+    hsv = cv2.cvtColor((np.clip(foil, 0, 1) * 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(np.float32)
+    hsv[..., 1] = np.clip(hsv[..., 1] * 1.15, 0, 255)
+    foil = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB).astype(np.float32) / 255
+    cream = np.array([0.985, 0.955, 0.9], np.float32)             # clean, bright cream
+    label = enh * 0.8 + cream * 0.2 * luma / 0.85
+    enh = dark * foil + light * label + (1 - dark - light) * enh
+    enh = enh + 0.18 * np.clip((luma - 0.62) / 0.38, 0, 1) ** 2 * dark.max()  # gloss
+    enh = np.clip(enh + 0.7 * (enh - cv2.GaussianBlur(enh, (0, 0), 2.0)), 0, 1)  # crisp edges
     base = img.astype(np.float32) / 255
     return base * (1 - m[..., None]) + enh * m[..., None], m
 
