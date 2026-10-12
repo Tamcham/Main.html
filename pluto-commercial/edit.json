@@ -1,0 +1,43 @@
+{
+ "work_dir": "work",
+ "output": "PLUTO_TasteBeyondEarth_42s_1080p.mp4",
+ "shots": [
+  {"name": "arrival",  "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080142_41d199da-858a-4871-8af8-6ea90fb7048a.mp4", "in": 0.0, "out": 5.0, "fade_in": 1.2},
+  {"name": "crack",    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080918_e5ed0d99-200d-4fdb-b2f3-7d74b82795b3.mp4", "in": 0.2, "out": 3.8},
+  {"name": "cocoa",    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080117_5df222dd-f1fe-4647-8eb4-6d0a95c4de18.mp4", "in": 0.4, "out": 3.8},
+  {"name": "caramel",  "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080141_c0f78951-0ac5-4015-87ff-d853cd53bd76.mp4", "in": 0.6, "out": 4.4},
+  {"name": "milk",     "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080141_d7dd80e1-d1a1-4850-b45a-841279ff7356.mp4", "in": 0.5, "out": 3.8},
+  {"name": "layers",   "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080142_c9c03c28-e1fd-47df-9b0c-89d8c8df1e68.mp4", "in": 0.6, "out": 4.6},
+  {"name": "landing",  "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080142_d2e8aa3e-1e9d-480a-86da-860c5c5f0308.mp4", "in": 0.4, "out": 4.6},
+  {"name": "hero",     "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080142_6526bfd3-3efc-4955-9c75-9963d353ecaa.mp4", "in": 0.0, "out": 5.0, "focus": 0.55}
+ ],
+ "endcard": {
+  "from_shot": "hero", "duration": 10.8, "zoom": 0.04, "focus": 0.55,
+  "title": "PLUTO", "tagline": "Taste beyond earth.",
+  "title_y": 175, "tag_y": 300, "title_size": 100, "tag_size": 34,
+  "title_in": 0.6, "tag_in": 1.6, "fade_out": 1.2,
+  "shade": 0.45, "shade_to": 420
+ },
+ "hits": {"crack": ["crack", 0.8], "land": ["landing", 2.2], "jingle_offset": 0.3},
+ "ingredient_cuts": [
+  [["cocoa", 0.0],   ["cocoa", 3.4],   ["D3", "F3", "A3"]],
+  [["caramel", 0.0], ["caramel", 3.8], ["A#2", "D3", "F3"]],
+  [["milk", 0.0],    ["milk", 3.3],    ["F3", "A3", "C4"]],
+  [["layers", 0.0],  ["layers", 4.0],  ["C3", "E3", "G3"]]
+ ],
+ "vo": [
+  {"name": "vo1_far_beyond", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080208_861eeb00-2484-4b96-a84f-88b238bd2f5b.mp3", "at": ["arrival", 1.0]},
+  {"name": "vo2_cocoa",      "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080208_bfb1f594-5284-4deb-ba01-f07227fc4342.mp3", "at": ["cocoa", 0.4]},
+  {"name": "vo3_caramel",    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080207_a7dca8e4-8e86-4083-aa06-741f8880601a.mp3", "at": ["caramel", 0.2]},
+  {"name": "vo4_milk",       "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080208_ab91f104-def2-449d-a59a-73c7c7cee4e7.mp3", "at": ["milk", 0.4]},
+  {"name": "vo5_forged",     "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_d813fec7-0c2f-43de-b73a-88d8bdd67674.mp3", "at": ["layers", 0.4]},
+  {"name": "vo6_slogan",     "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080541_200f6d77-2680-4fac-9727-a73b93e3b1f2.mp3", "at": ["hero", 1.0]}
+ ],
+ "jingle_vox_len": 7.2,
+ "jingle_vox": [
+  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.8, "pan": -0.35},
+  {"name": "jingle_m", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080238_55da0889-d641-480e-9db5-0fde9ac80327.mp3", "gain": 0.8, "pan": 0.35},
+  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.4, "pan": 0.1, "shift": 4}
+ ],
+ "creaks": [2.5, 9.5, 17.0, 25.0]
+}

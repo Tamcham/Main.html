@@ -160,9 +160,14 @@ def note(name):
     return 440.0 * 2 ** ((names[pitch] + (octave - 4) * 12) / 12)
 
 
-def load_audio(path):
+def load_audio(path, semitones=0):
+    """Decode to float stereo; optional pitch shift that keeps the timing."""
+    af = []
+    if semitones:
+        r = 2 ** (semitones / 12)
+        af = ["-af", f"asetrate={SR}*{r:.6f},aresample={SR},atempo={1 / r:.6f}"]
     raw = subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", path, "-ac", "2", "-ar", str(SR),
+        ["ffmpeg", "-v", "error", "-i", path, *af, "-ac", "2", "-ar", str(SR),
          "-f", "f32le", "-"], capture_output=True, check=True).stdout
     return np.frombuffer(raw, np.float32).reshape(-1, 2).astype(np.float64)
 
@@ -437,10 +442,9 @@ def build(cfg):
     sfx.add(widen(whoosh(1.2, 0.35, 400, 7000)), tada + 0.05, 0.22)
 
     for path, gain, pan, shift in cfg["jingle_vox"]:
-        v = load_audio(path)
-        if shift:  # "kid" layer: formant-ish pitch lift by resampling
-            v = signal.resample(v, int(len(v) / (2 ** (shift / 12))), axis=0)
-        v = v.mean(axis=1)
+        v = load_audio(path, shift).mean(axis=1)   # shift>0: brighter "kids" layer
+        if shift:
+            v = filt(v, "highpass", 220)
         jvox.add(reverb(stereo(v, pan), rt60=0.9, wet=0.15, seed=11), vox_at - 0.05, gain)
 
     # ---------------------------------------------------------------- mix --

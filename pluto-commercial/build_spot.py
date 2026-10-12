@@ -32,7 +32,7 @@ GRADE = ",".join([
     "eq=contrast=1.07:saturation=0.93:gamma=0.97",
     "colorbalance=rs=-0.03:gs=-0.01:bs=0.05:rm=0.01:bm=-0.01:rh=0.05:gh=0.015:bh=-0.04",
     "rgbashift=rh=-1:bh=1",
-    "vignette=angle=PI/5:mode=forward",
+    "vignette=angle=PI/7:mode=forward",
 ])
 HALATION = ("split[a][b];[b]curves=all='0/0 0.6/0 1/1',gblur=sigma=14,"
             "colorchannelmixer=rr=1:gg=0.55:bb=0.35[h];[a][h]blend=all_mode=screen:all_opacity=0.22")
@@ -131,7 +131,7 @@ def render_endcard(src, dur, dst, cfg, work):
     fc = (
         f"[0:v]zoompan=z='1+{zoom}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
         f":d={frames}:s={W}x{zh}:fps={FPS},"
-        f"crop={W}:{SCOPE_H}:0:{cy},{GRADE},vignette=angle=PI/4,{HALATION},{GRAIN},"
+        f"crop={W}:{SCOPE_H}:0:{cy},{GRADE},{HALATION},{GRAIN},"
         f"pad={W}:{H}:0:{BAR}:black[bg];"
         f"[1:v]format=rgba,fade=t=in:st={t_title}:d=1.2:alpha=1[t1];"
         f"[2:v]format=rgba,fade=t=in:st={t_tag}:d=1.0:alpha=1[t2];"
