@@ -22,7 +22,7 @@ ending on the slogan "Taste beyond earth."
 | 0:19.1–0:23.1 | **Layers** | Broken half rotates: chocolate shell, caramel core, hazelnut, cocoa wafer, a caramel drip. | VO: *"Forged in the cold. Made to melt."* — C pad, riser + brass build. |
 | 0:23.1–0:27.3 | **Landing** | Bar descends onto Pluto's regolith; low-gravity dust cloud, chocolate splash. | Impact boom, dust swell, low brass hit. |
 | 0:27.3–0:32.3 | **Hero** | 45° orbit, light sweep across the label, settles on a clean centred packshot. | D-major lift, music swells (no VO). |
-| 0:32.3–0:38.3 | **End card** | Freeze of the packshot, slow push-in; "Taste beyond earth." fades in on the word "Taste", fade to black. | Sub-boom, warm D-major resolve. VO: *"Pluto… Taste beyond earth."* Soft sting as the line appears. |
+| 0:32.3–0:38.3 | **End card** | Freeze of the (beauty-retouched) packshot, slow push-in, a warm light sweep across the wrapper; "Taste beyond earth." fades in on the word "Taste", fade to black. | Sub-boom, warm D-major resolve. VO: *"Pluto… Taste beyond earth."* Soft sting as the line appears. |
 
 The jingle from the first cut was removed. `sound_design.py` still supports it: add
 `jingle_vox` / `jingle_vox_len` back to `edit.json` to bring it back.
@@ -46,6 +46,10 @@ The jingle from the first cut was removed. `sound_design.py` still supports it: 
   generation, hard-cuts on whooshes, crops to 2.39:1 and applies one grade over all shots
   (warm highlights / cool shadows, halation, 1 px lens fringing, soft vignette, temporal
   film grain) so the shots read as one camera package.
+- **Pack beauty pass (no re-generation, no credits):** every shot gets contrast-adaptive
+  sharpening; on the end card the bar is isolated with GrabCut and gets richer foil,
+  a clean cream label, crisper lettering, stronger gloss and a warm light sweep that
+  crosses the wrapper as "Taste beyond earth." appears.
 
 ## Rebuild
 
