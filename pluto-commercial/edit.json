@@ -35,9 +35,9 @@
  ],
  "jingle_vox_len": 7.2,
  "jingle_vox": [
-  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.7, "pan": -0.3},
+  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.45, "pan": -0.3},
   {"name": "jingle_m", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080238_55da0889-d641-480e-9db5-0fde9ac80327.mp3", "gain": 1.0, "pan": 0.3},
-  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.25, "pan": 0.0, "shift": 4}
+  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.18, "pan": 0.0, "shift": 4}
  ],
  "creaks": [2.5, 9.5, 17.0, 25.0]
 }
