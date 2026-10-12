@@ -52,19 +52,22 @@ def fetch(src, dst):
     return dst
 
 
-def scope_chain(extra=""):
-    pre = f"scale={W}:-2:flags=lanczos,crop={W}:{SCOPE_H},fps={FPS},setsar=1"
+def scope_chain(extra="", focus=0.5):
+    """focus = vertical centre of the 2.39 crop as a fraction of frame height."""
+    pre = (f"scale={W}:-2:flags=lanczos,"
+           f"crop={W}:{SCOPE_H}:0:'max(0,min(ih-{SCOPE_H},ih*{focus}-{SCOPE_H}/2))',"
+           f"fps={FPS},setsar=1")
     chain = f"{pre},{GRADE}"
     if extra:
         chain += "," + extra
     return f"{chain},{HALATION},{GRAIN},pad={W}:{H}:0:{BAR}:black,format=yuv420p"
 
 
-def render_shot(src, t_in, t_out, dst, fade_in=0.0):
+def render_shot(src, t_in, t_out, dst, fade_in=0.0, focus=0.5):
     dur = t_out - t_in
     extra = f"fade=t=in:st=0:d={fade_in}" if fade_in else ""
     run(["ffmpeg", "-v", "error", "-y", "-ss", f"{t_in}", "-t", f"{dur}", "-i", src,
-         "-filter_complex", f"[0:v]{scope_chain(extra)}[v]", "-map", "[v]", "-an",
+         "-filter_complex", f"[0:v]{scope_chain(extra, focus)}[v]", "-map", "[v]", "-an",
          "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-r", str(FPS), dst])
     return dur
 
@@ -95,6 +98,16 @@ def title_layers(cfg, out_dir):
         glow = layer.filter(ImageFilter.GaussianBlur(6))
         comp = Image.alpha_composite(shadow, glow)
         comp = Image.alpha_composite(comp, layer)
+        if name == "title" and cfg.get("shade", 0):
+            # soft dark band behind the titles so they read over the planet
+            shade = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+            top, bottom = BAR, cfg["shade_to"]
+            px = shade.load()
+            for yy in range(top, bottom):
+                a = int(255 * cfg["shade"] * (1 - (yy - top) / (bottom - top)) ** 1.4)
+                for xx in range(0, W, 1):
+                    px[xx, yy] = (0, 0, 0, a)
+            comp = Image.alpha_composite(shade, comp)
         p = os.path.join(out_dir, f"{name}.png")
         comp.save(p)
         paths.append(p)
@@ -109,19 +122,23 @@ def render_endcard(src, dur, dst, cfg, work):
     title, tag = title_layers(cfg, work)
     frames = int(round(dur * FPS))
     zoom = cfg.get("zoom", 0.07)
+    sw, sh = Image.open(still).size
+    zh = int(round(W * sh / sw / 2)) * 2
+    focus = cfg.get("focus", 0.5)
+    cy = int(max(0, min(zh - SCOPE_H, zh * focus - SCOPE_H / 2)))
     t_title, t_tag = cfg["title_in"], cfg["tag_in"]
     fade_out = cfg["fade_out"]
     fc = (
         f"[0:v]zoompan=z='1+{zoom}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-        f":d={frames}:s={W}x{int(W / (16 / 9))}:fps={FPS},"
-        f"crop={W}:{SCOPE_H},{GRADE},vignette=angle=PI/4,{HALATION},{GRAIN},"
+        f":d={frames}:s={W}x{zh}:fps={FPS},"
+        f"crop={W}:{SCOPE_H}:0:{cy},{GRADE},vignette=angle=PI/4,{HALATION},{GRAIN},"
         f"pad={W}:{H}:0:{BAR}:black[bg];"
         f"[1:v]format=rgba,fade=t=in:st={t_title}:d=1.2:alpha=1[t1];"
         f"[2:v]format=rgba,fade=t=in:st={t_tag}:d=1.0:alpha=1[t2];"
         f"[bg][t1]overlay=0:0:shortest=1[o1];[o1][t2]overlay=0:0:shortest=1,"
         f"fade=t=out:st={dur - fade_out}:d={fade_out},format=yuv420p[v]"
     )
-    run(["ffmpeg", "-v", "error", "-y", "-loop", "1", "-i", still,
+    run(["ffmpeg", "-v", "error", "-y", "-i", still,
          "-loop", "1", "-t", f"{dur}", "-i", title, "-loop", "1", "-t", f"{dur}", "-i", tag,
          "-filter_complex", fc, "-map", "[v]", "-frames:v", str(frames),
          "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-r", str(FPS), dst])
@@ -136,7 +153,8 @@ def main():
     for i, shot in enumerate(cfg["shots"]):
         src = fetch(shot["src"], os.path.join(work, f"src_{shot['name']}.mp4"))
         dst = os.path.join(work, f"shot_{i:02d}_{shot['name']}.mp4")
-        dur = render_shot(src, shot["in"], shot["out"], dst, shot.get("fade_in", 0))
+        dur = render_shot(src, shot["in"], shot["out"], dst, shot.get("fade_in", 0),
+                          shot.get("focus", 0.5))
         starts[shot["name"]] = t
         parts.append(dst)
         t += dur

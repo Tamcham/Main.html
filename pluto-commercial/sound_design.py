@@ -366,7 +366,7 @@ def build(cfg):
     music.add(widen(brass_swell(["D2", "A2", "D3"], 3.4, 90, 900, a=3.0)), land - 3.4, 0.3)
 
     # 4. Landing: boom, dust swell, low brass hit.
-    sfx.add(widen(sub_boom(3.0, 90, 26, 0.9)), land, 1.0)
+    sfx.add(widen(sub_boom(3.0, 90, 26, 0.7)), land, 0.55)
     sfx.add(reverb(filt(noise(1.8), "lowpass", 900) * env_adsr(secs(1.8), 0.05, 0.4, 0.4, 1.2),
                    rt60=2.0, wet=0.4), land, 0.22)
     sfx.add(reverb(choc_snap() * 0.5, rt60=2.8, predelay=0.04, wet=0.5), land + 0.05, 0.4)
