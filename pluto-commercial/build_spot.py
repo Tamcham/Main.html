@@ -154,7 +154,7 @@ def enhance_pack(img, box):
     cream = np.array([0.985, 0.955, 0.9], np.float32)             # clean, bright cream
     label = enh * 0.8 + cream * 0.2 * luma / 0.85
     enh = dark * foil + light * label + (1 - dark - light) * enh
-    enh = enh + 0.18 * np.clip((luma - 0.62) / 0.38, 0, 1) ** 2 * dark.max()  # gloss
+    enh = enh + 0.12 * np.clip((luma - 0.7) / 0.3, 0, 1) ** 2     # gloss on highlights
     enh = np.clip(enh + 0.7 * (enh - cv2.GaussianBlur(enh, (0, 0), 2.0)), 0, 1)  # crisp edges
     base = img.astype(np.float32) / 255
     return base * (1 - m[..., None]) + enh * m[..., None], m
