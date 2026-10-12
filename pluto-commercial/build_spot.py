@@ -65,6 +65,8 @@ def scope_chain(extra="", focus=0.5):
 
 def render_shot(src, t_in, t_out, dst, fade_in=0.0, focus=0.5):
     dur = t_out - t_in
+    if os.environ.get("REUSE") and os.path.exists(dst):
+        return dur
     extra = f"fade=t=in:st=0:d={fade_in}" if fade_in else ""
     run(["ffmpeg", "-v", "error", "-y", "-ss", f"{t_in}", "-t", f"{dur}", "-i", src,
          "-filter_complex", f"[0:v]{scope_chain(extra, focus)}[v]", "-map", "[v]", "-an",
@@ -116,6 +118,8 @@ def title_layers(cfg, out_dir):
 
 def render_endcard(src, dur, dst, cfg, work):
     """Freeze the hero's last frame, slow push-in, vignette, titles, fade out."""
+    if os.environ.get("REUSE") and os.path.exists(dst):
+        return
     still = os.path.join(work, "endcard_still.png")
     run(["ffmpeg", "-v", "error", "-y", "-sseof", "-0.08", "-i", src, "-frames:v", "1",
          "-vf", f"scale={W * 2}:-2:flags=lanczos", still])

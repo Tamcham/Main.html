@@ -1,6 +1,6 @@
 {
  "work_dir": "work",
- "output": "PLUTO_TasteBeyondEarth_42s_1080p.mp4",
+ "output": "PLUTO_TasteBeyondEarth_44s_1080p.mp4",
  "shots": [
   {"name": "arrival",  "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080142_41d199da-858a-4871-8af8-6ea90fb7048a.mp4", "in": 0.0, "out": 5.0, "fade_in": 1.2},
   {"name": "crack",    "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080918_e5ed0d99-200d-4fdb-b2f3-7d74b82795b3.mp4", "in": 0.2, "out": 3.8},
@@ -12,9 +12,9 @@
   {"name": "hero",     "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080142_6526bfd3-3efc-4955-9c75-9963d353ecaa.mp4", "in": 0.0, "out": 5.0, "focus": 0.55}
  ],
  "endcard": {
-  "from_shot": "hero", "duration": 10.8, "zoom": 0.04, "focus": 0.55,
+  "from_shot": "hero", "duration": 11.4, "zoom": 0.04, "focus": 0.55,
   "title": "PLUTO", "tagline": "Taste beyond earth.",
-  "title_y": 175, "tag_y": 300, "title_size": 100, "tag_size": 34,
+  "title_y": 175, "tag_y": 300, "title_size": 100, "tag_size": 40,
   "title_in": 0.6, "tag_in": 1.6, "fade_out": 1.2,
   "shade": 0.45, "shade_to": 420
  },
@@ -35,9 +35,9 @@
  ],
  "jingle_vox_len": 7.2,
  "jingle_vox": [
-  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.8, "pan": -0.35},
-  {"name": "jingle_m", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080238_55da0889-d641-480e-9db5-0fde9ac80327.mp3", "gain": 0.8, "pan": 0.35},
-  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.4, "pan": 0.1, "shift": 4}
+  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.7, "pan": -0.3},
+  {"name": "jingle_m", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080238_55da0889-d641-480e-9db5-0fde9ac80327.mp3", "gain": 1.0, "pan": 0.3},
+  {"name": "jingle_f", "src": "https://d8j0ntlcm91z4.cloudfront.net/user_3KSMpdLMcvoHVzgJppYnhiP1jLr/hf_20261012_080237_90262165-1033-48cd-8882-a9ec41ea2786.mp3", "gain": 0.25, "pan": 0.0, "shift": 4}
  ],
  "creaks": [2.5, 9.5, 17.0, 25.0]
 }

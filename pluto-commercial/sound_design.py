@@ -422,7 +422,7 @@ def build(cfg):
            (8, "E5", 0.5), (8.5, "F#5", 0.5), (9, "G5", 0.5), (9.5, "A5", 0.5),
            (10, "B5", 0.5), (10.5, "A5", 0.5), (11, "G5", 0.5), (11.5, "F#5", 0.5),
            (12, "E5", 1), (13, "A4", 0.5), (13.5, "C#5", 0.5), (14, "D5", 0.5), (14.5, "F#5", 0.5),
-           (15, "A5", 1), (16, "D6", 2)]  # rising "ta-daa"
+           (15, "A5", 1)]
     for b in range(intro_beats):  # count-in: claps + glock pickup
         sfx.add(widen(clap()), t0 + b * jb, 0.25)
     for off, n, ln in mel:
@@ -436,7 +436,10 @@ def build(cfg):
         if bar < 4:
             for bt in (1, 3):
                 music.add(widen(clap()), bs + bt * jb, 0.28)
-    tada = vox_at + 16 * jb
+    # land the "ta-daa" on the next beat after the last sung/spoken word
+    tada = vox_at + max(16, np.ceil((jv_len + 0.2) / jb)) * jb
+    music.add(widen(glock(note("D6"), 2.5)), tada, 0.4)          # rising "ta-daa"
+    music.add(widen(pad(["D3", "F#3", "A3", "D4"], 2.0, 3000, 0.01, 1.5)), tada, 0.25)
     sfx.add(widen(bling()), tada, 0.5)
     sfx.add(widen(sub_boom(2.5, 80, 30, 0.6)), tada, 0.55)
     sfx.add(widen(whoosh(1.2, 0.35, 400, 7000)), tada + 0.05, 0.22)
@@ -462,7 +465,7 @@ def build(cfg):
         return e / (e.max() + 1e-9)
 
     duck_vo = 1 - 0.55 * np.clip(envelope(vox.buf) * 3, 0, 1)        # ~ -7 dB under VO
-    duck_j = 1 - 0.35 * np.clip(envelope(jvox.buf) * 3, 0, 1)        # ~ -4 dB under jingle
+    duck_j = 1 - 0.5 * np.clip(envelope(jvox.buf) * 3, 0, 1)         # ~ -6 dB under jingle
     duck = (duck_vo * duck_j)[:, None]
     mix = (music.buf * duck * 0.9 + amb.buf * duck * 0.8 + sfx.buf * 0.85
            + vox.buf * 1.0 + jvox.buf * 0.95)
