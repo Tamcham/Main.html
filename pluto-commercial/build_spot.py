@@ -57,7 +57,7 @@ def scope_chain(extra="", focus=0.5):
     pre = (f"scale={W}:-2:flags=lanczos,"
            f"crop={W}:{SCOPE_H}:0:'max(0,min(ih-{SCOPE_H},ih*{focus}-{SCOPE_H}/2))',"
            f"fps={FPS},setsar=1")
-    chain = f"{pre},{GRADE}"
+    chain = f"{pre},cas=strength=0.55,{GRADE}"
     if extra:
         chain += "," + extra
     return f"{chain},{HALATION},{GRAIN},pad={W}:{H}:0:{BAR}:black,format=yuv420p"
@@ -116,37 +116,109 @@ def title_layers(cfg, out_dir):
     return paths
 
 
+def enhance_pack(img, box):
+    """Make the wrapper read more premium, without any re-generation.
+
+    GrabCut isolates the bar inside `box` (fractions x0, y0, x1, y1), then only the
+    pack gets: local contrast (CLAHE), a gentle S-curve for deeper chocolate foil,
+    a little more colour, boosted specular highlights (gloss) and crisper lettering.
+    Returns the enhanced float RGB image and the soft pack mask.
+    """
+    import cv2
+    import numpy as np
+    h, w = img.shape[:2]
+    x0, y0, x1, y1 = (int(v * s) for v, s in zip(box, (w, h, w, h)))
+    k = 4
+    small = cv2.resize(img, (w // k, h // k), interpolation=cv2.INTER_AREA)
+    gc = np.zeros(small.shape[:2], np.uint8)
+    bgd, fgd = np.zeros((1, 65)), np.zeros((1, 65))
+    cv2.grabCut(cv2.cvtColor(small, cv2.COLOR_RGB2BGR), gc,
+                (x0 // k, y0 // k, (x1 - x0) // k, (y1 - y0) // k), bgd, fgd, 6,
+                cv2.GC_INIT_WITH_RECT)
+    m = np.where((gc == 1) | (gc == 3), 1.0, 0.0).astype(np.float32)
+    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((15, 15), np.uint8))
+    m = cv2.resize(m, (w, h), interpolation=cv2.INTER_LINEAR)
+    m = np.clip(cv2.GaussianBlur(m, (0, 0), 5), 0, 1)
+
+    lab = cv2.cvtColor(img, cv2.COLOR_RGB2LAB)
+    lum, ca, cb = cv2.split(lab)
+    lum = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12)).apply(lum)
+    enh = cv2.cvtColor(cv2.merge([lum, ca, cb]), cv2.COLOR_LAB2RGB).astype(np.float32) / 255
+    enh = 0.65 * enh + 0.35 * enh * enh * (3 - 2 * enh)            # S-curve: richer foil
+    hsv = cv2.cvtColor((enh * 255).astype(np.uint8), cv2.COLOR_RGB2HSV).astype(np.float32)
+    hsv[..., 1] = np.clip(hsv[..., 1] * 1.12, 0, 255)
+    enh = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2RGB).astype(np.float32) / 255
+    luma = enh.mean(axis=2, keepdims=True)
+    enh = enh + 0.2 * np.clip((luma - 0.6) / 0.4, 0, 1) ** 2        # gloss on the foil
+    enh = np.clip(enh + 1.0 * (enh - cv2.GaussianBlur(enh, (0, 0), 2.5)), 0, 1)  # crisp label
+    base = img.astype(np.float32) / 255
+    return base * (1 - m[..., None]) + enh * m[..., None], m
+
+
 def render_endcard(src, dur, dst, cfg, work):
-    """Freeze the hero's last frame, slow push-in, vignette, titles, fade out."""
+    """Freeze the hero's last frame, enhance the pack, slow push-in with a light
+    sweep across the wrapper, titles, fade out."""
     if os.environ.get("REUSE") and os.path.exists(dst):
         return
+    import cv2
+    import numpy as np
     still = os.path.join(work, "endcard_still.png")
     run(["ffmpeg", "-v", "error", "-y", "-sseof", "-0.08", "-i", src, "-frames:v", "1",
          "-vf", f"scale={W * 2}:-2:flags=lanczos", still])
-    layers = title_layers(cfg, work)
+    img = np.array(Image.open(still).convert("RGB"))
+    mask = np.ones(img.shape[:2], np.float32)
+    if cfg.get("pack_box"):
+        img, mask = enhance_pack(img, cfg["pack_box"])
+    else:
+        img = img.astype(np.float32) / 255
+    sh, sw = img.shape[:2]
+    pre = (int(W * 1.2), int(round(W * 1.2 * sh / sw)))   # area-downscale once, warp mildly
+    img = cv2.resize(img, pre, interpolation=cv2.INTER_AREA)
+    mask = cv2.resize(mask, pre, interpolation=cv2.INTER_AREA)
+    zh = int(round(W * sh / sw / 2)) * 2
+    sw, sh = pre
     frames = int(round(dur * FPS))
     zoom = cfg.get("zoom", 0.07)
-    sw, sh = Image.open(still).size
-    zh = int(round(W * sh / sw / 2)) * 2
     focus = cfg.get("focus", 0.5)
     cy = int(max(0, min(zh - SCOPE_H, zh * focus - SCOPE_H / 2)))
+    sweep = cfg.get("sweep")           # {"start": s, "dur": s, "strength": 0..1}
+    yy, xx = np.mgrid[0:zh, 0:W].astype(np.float32)
+
+    layers = title_layers(cfg, work)
     fade_out = cfg["fade_out"]
     starts = {"title": cfg.get("title_in", 0.6), "tag": cfg["tag_in"]}
-    fc = (
-        f"[0:v]zoompan=z='1+{zoom}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
-        f":d={frames}:s={W}x{zh}:fps={FPS},"
-        f"crop={W}:{SCOPE_H}:0:{cy},{GRADE},{HALATION},{GRAIN},"
-        f"pad={W}:{H}:0:{BAR}:black[o0];"
-    )
+    fc = (f"[0:v]crop={W}:{SCOPE_H}:0:{cy},{GRADE},{HALATION},{GRAIN},"
+          f"pad={W}:{H}:0:{BAR}:black[o0];")
     inputs = []
     for i, (name, path) in enumerate(layers, start=1):
         fc += (f"[{i}:v]format=rgba,fade=t=in:st={starts[name]}:d=1.2:alpha=1[t{i}];"
                f"[o{i - 1}][t{i}]overlay=0:0:shortest=1[o{i}];")
         inputs += ["-loop", "1", "-t", f"{dur}", "-i", path]
     fc += f"[o{len(layers)}]fade=t=out:st={dur - fade_out}:d={fade_out},format=yuv420p[v]"
-    run(["ffmpeg", "-v", "error", "-y", "-i", still, *inputs,
+    proc = subprocess.Popen(
+        ["ffmpeg", "-v", "error", "-y", "-f", "rawvideo", "-pix_fmt", "rgb24",
+         "-s", f"{W}x{zh}", "-r", str(FPS), "-i", "-", *inputs,
          "-filter_complex", fc, "-map", "[v]", "-frames:v", str(frames),
-         "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-r", str(FPS), dst])
+         "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-r", str(FPS), dst],
+        stdin=subprocess.PIPE)
+    for f in range(frames):
+        z = 1 + zoom * f / frames                       # smooth sub-pixel push-in
+        cw, ch = sw / z, sh / z
+        M = np.float32([[W / cw, 0, -(sw - cw) / 2 * W / cw],
+                        [0, zh / ch, -(sh - ch) / 2 * zh / ch]])
+        frame = cv2.warpAffine(img, M, (W, zh), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REFLECT)
+        if sweep:
+            p = (f / FPS - sweep["start"]) / sweep["dur"]
+            if -0.2 < p < 1.2:
+                m = cv2.warpAffine(mask, M, (W, zh), flags=cv2.INTER_LINEAR)
+                cx = -0.25 * W + p * 1.5 * W
+                band = np.exp(-(((xx - cx) + 0.45 * (yy - zh / 2)) / (0.06 * W)) ** 2)
+                warm = np.array([1.0, 0.93, 0.8], np.float32)
+                frame = 1 - (1 - frame) * (1 - (band * m * sweep["strength"])[..., None] * warm)
+        proc.stdin.write((np.clip(frame, 0, 1) * 255).astype(np.uint8).tobytes())
+    proc.stdin.close()
+    if proc.wait():
+        raise RuntimeError("end card encode failed")
 
 
 def main():

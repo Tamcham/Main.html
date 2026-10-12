@@ -1,11 +1,11 @@
-# PLUTO – "Taste beyond earth." (44 s cinema / online spot)
+# PLUTO – "Taste beyond earth." (38 s cinema / online spot)
 
 Epic movie-trailer meets premium chocolate ad: dark, glossy, space-grade luxury,
-ending in a bright German singalong jingle.
+ending on the slogan "Taste beyond earth."
 
 | | |
 |---|---|
-| Length | 43.7 s (8 shots + 11.4 s end card) |
+| Length | 38.3 s (8 shots + 6 s end card) |
 | Picture | 1920×1080, 24 fps, 2.39:1 scope letterbox, filmic grade |
 | Sound | Stereo, 48 kHz, −14 LUFS integrated, −1 dBTP |
 | Product | `assets/pluto_bar_reference.jpg` (start frame / product reference) |
@@ -21,12 +21,11 @@ ending in a bright German singalong jingle.
 | 0:15.8–0:19.1 | **Milk** | Milk wave and molten chocolate collide, forming the wrapper's cream cloud splotches. | VO: *"…and creamy Alpine milk."* — F pad. |
 | 0:19.1–0:23.1 | **Layers** | Broken half rotates: chocolate shell, caramel core, hazelnut, cocoa wafer, a caramel drip. | VO: *"Forged in the cold. Made to melt."* — C pad, riser + brass build. |
 | 0:23.1–0:27.3 | **Landing** | Bar descends onto Pluto's regolith; low-gravity dust cloud, chocolate splash. | Impact boom, dust swell, low brass hit. |
-| 0:27.3–0:32.3 | **Hero** | 45° orbit, light sweep across the label, settles on a clean centred packshot. | D-major lift. VO: *"Pluto… Taste beyond earth."* |
-| 0:32.3–0:43.7 | **End card + Jingle** | Freeze of the packshot, slow push-in, "PLUTO" + "Taste beyond earth." fade in, fade to black. | Bling, 2-beat clap count-in, then the jingle (glockenspiel melody, plucked bass, claps, pad), rising "ta-daa" + sub-boom + whoosh. |
+| 0:27.3–0:32.3 | **Hero** | 45° orbit, light sweep across the label, settles on a clean centred packshot. | D-major lift, music swells (no VO). |
+| 0:32.3–0:38.3 | **End card** | Freeze of the packshot, slow push-in; "Taste beyond earth." fades in on the word "Taste", fade to black. | Sub-boom, warm D-major resolve. VO: *"Pluto… Taste beyond earth."* Soft sting as the line appears. |
 
-**Jingle (spoken in rhythm; male lead, female double and a pitched-up "kids" layer):**
-> Pluto, Pluto – Schoko-Riegel, kosmisch gut,
-> macht die Kleinen und die Großen froh und voller Mut!
+The jingle from the first cut was removed. `sound_design.py` still supports it: add
+`jingle_vox` / `jingle_vox_len` back to `edit.json` to bring it back.
 
 ## How it was made
 
@@ -37,12 +36,12 @@ ending in a bright German singalong jingle.
   "real ARRI / Phantom footage, practical effects, real physics, no morphing"; the first
   crack take morphed the label, so it was re-shot between two fixed keyframes.
 - **Voices:** ElevenLabs v4 via Higgsfield, stability 0.35. Trailer VO = deep preset
-  voice (median F0 ≈ 68 Hz); the jingle uses a bright female and a bright male voice. The
+  voice (median F0 ≈ 68 Hz). The
   reference spot (`assets/PLUTO_Kinospot_15s_ref.mp4`) has no spoken voice to clone.
 - **Everything else is local and procedural:** `sound_design.py` synthesises the drone,
   brass, risers, chocolate snap/crunch, sub-booms, reverbs, ping-pong echo, space
-  ambience, whooshes and the whole jingle music bed, then mixes with VO side-chain
-  ducking (≈ −7 dB under VO, −4 dB under the jingle).
+  ambience, whooshes and the outro, then mixes with VO side-chain ducking (≈ −7 dB
+  under VO).
 - **Edit / "not AI" finishing:** `build_spot.py` keeps only the cleanest 3–5 s of each
   generation, hard-cuts on whooshes, crops to 2.39:1 and applies one grade over all shots
   (warm highlights / cool shadows, halation, 1 px lens fringing, soft vignette, temporal
