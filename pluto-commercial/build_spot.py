@@ -90,9 +90,9 @@ def title_layers(cfg, out_dir):
             x += w + tracking
 
     paths = []
-    for name, text, font, y, tracking in (
-            ("title", cfg.get("title", "PLUTO"), big, cfg["title_y"], 38),
-            ("tag", cfg.get("tagline", "Taste beyond earth."), small, cfg["tag_y"], 9)):
+    layers = [("title", cfg.get("title", "PLUTO"), big, cfg.get("title_y", 0), 38),
+              ("tag", cfg.get("tagline", "Taste beyond earth."), small, cfg["tag_y"], cfg.get("tag_tracking", 9))]
+    for k, (name, text, font, y, tracking) in enumerate([l for l in layers if l[1]]):
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         spaced(ImageDraw.Draw(layer), y, text, font, tracking)
         shadow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
@@ -100,7 +100,7 @@ def title_layers(cfg, out_dir):
         glow = layer.filter(ImageFilter.GaussianBlur(6))
         comp = Image.alpha_composite(shadow, glow)
         comp = Image.alpha_composite(comp, layer)
-        if name == "title" and cfg.get("shade", 0):
+        if k == 0 and cfg.get("shade", 0):
             # soft dark band behind the titles so they read over the planet
             shade = Image.new("RGBA", (W, H), (0, 0, 0, 0))
             top, bottom = BAR, cfg["shade_to"]
@@ -112,7 +112,7 @@ def title_layers(cfg, out_dir):
             comp = Image.alpha_composite(shade, comp)
         p = os.path.join(out_dir, f"{name}.png")
         comp.save(p)
-        paths.append(p)
+        paths.append((name, p))
     return paths
 
 
@@ -123,27 +123,28 @@ def render_endcard(src, dur, dst, cfg, work):
     still = os.path.join(work, "endcard_still.png")
     run(["ffmpeg", "-v", "error", "-y", "-sseof", "-0.08", "-i", src, "-frames:v", "1",
          "-vf", f"scale={W * 2}:-2:flags=lanczos", still])
-    title, tag = title_layers(cfg, work)
+    layers = title_layers(cfg, work)
     frames = int(round(dur * FPS))
     zoom = cfg.get("zoom", 0.07)
     sw, sh = Image.open(still).size
     zh = int(round(W * sh / sw / 2)) * 2
     focus = cfg.get("focus", 0.5)
     cy = int(max(0, min(zh - SCOPE_H, zh * focus - SCOPE_H / 2)))
-    t_title, t_tag = cfg["title_in"], cfg["tag_in"]
     fade_out = cfg["fade_out"]
+    starts = {"title": cfg.get("title_in", 0.6), "tag": cfg["tag_in"]}
     fc = (
         f"[0:v]zoompan=z='1+{zoom}*on/{frames}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
         f":d={frames}:s={W}x{zh}:fps={FPS},"
         f"crop={W}:{SCOPE_H}:0:{cy},{GRADE},{HALATION},{GRAIN},"
-        f"pad={W}:{H}:0:{BAR}:black[bg];"
-        f"[1:v]format=rgba,fade=t=in:st={t_title}:d=1.2:alpha=1[t1];"
-        f"[2:v]format=rgba,fade=t=in:st={t_tag}:d=1.0:alpha=1[t2];"
-        f"[bg][t1]overlay=0:0:shortest=1[o1];[o1][t2]overlay=0:0:shortest=1,"
-        f"fade=t=out:st={dur - fade_out}:d={fade_out},format=yuv420p[v]"
+        f"pad={W}:{H}:0:{BAR}:black[o0];"
     )
-    run(["ffmpeg", "-v", "error", "-y", "-i", still,
-         "-loop", "1", "-t", f"{dur}", "-i", title, "-loop", "1", "-t", f"{dur}", "-i", tag,
+    inputs = []
+    for i, (name, path) in enumerate(layers, start=1):
+        fc += (f"[{i}:v]format=rgba,fade=t=in:st={starts[name]}:d=1.2:alpha=1[t{i}];"
+               f"[o{i - 1}][t{i}]overlay=0:0:shortest=1[o{i}];")
+        inputs += ["-loop", "1", "-t", f"{dur}", "-i", path]
+    fc += f"[o{len(layers)}]fade=t=out:st={dur - fade_out}:d={fade_out},format=yuv420p[v]"
+    run(["ffmpeg", "-v", "error", "-y", "-i", still, *inputs,
          "-filter_complex", fc, "-map", "[v]", "-frames:v", str(frames),
          "-c:v", "libx264", "-preset", "slow", "-crf", "14", "-r", str(FPS), dst])
 
@@ -187,13 +188,14 @@ def main():
     vo = [[fetch(v["src"], os.path.join(vo_dir, v["name"] + ".mp3")), at(v["at"]), v.get("gain", 1.0)]
           for v in cfg["vo"]]
     jv = [[fetch(v["src"], os.path.join(vo_dir, v["name"] + ".mp3")), v["gain"], v["pan"], v.get("shift", 0)]
-          for v in cfg["jingle_vox"]]
+          for v in cfg.get("jingle_vox", [])]
     timeline = {
         "duration": total,
         "crack_t": at(cfg["hits"]["crack"]),
         "land_t": at(cfg["hits"]["land"]),
         "jingle_t": starts["endcard"] + cfg["hits"].get("jingle_offset", 0.0),
-        "jingle_vox_len": cfg["jingle_vox_len"],
+        "jingle_vox_len": cfg.get("jingle_vox_len", 0),
+        "sting_offset": ec["tag_in"] - cfg["hits"].get("jingle_offset", 0.0),
         "cuts": [starts[s["name"]] for s in cfg["shots"][1:]] + [starts["endcard"]],
         "ingredient_cuts": [[at(a), at(b), c] for a, b, c in cfg["ingredient_cuts"]],
         "creaks": cfg.get("creaks", [2.5, 9.0, 17.0, 24.0]),

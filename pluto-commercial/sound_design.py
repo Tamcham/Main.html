@@ -404,51 +404,64 @@ def build(cfg):
         v = filt(v, "highpass", 50)
         vox.add(reverb(v, rt60=1.1, predelay=0.015, wet=0.12, seed=9), at, gain)
 
-    # 8. Jingle: bright, bouncy, D major, glock + plucked bass + claps + pad.
-    jv_len = cfg["jingle_vox_len"]
-    intro_beats = 2
-    jbpm = float(np.clip(16 * 60 / jv_len, 112, 150))
-    jb = 60 / jbpm
-    t0 = jingle_t
-    vox_at = t0 + intro_beats * jb
-    sfx.add(widen(bling()), t0 - 0.02, 0.35)
-    sfx.add(widen(whoosh(0.9, 0.8, 300, 5000)), t0 - 0.7, 0.3)
-    chords = [["D3", "F#3", "A3"], ["G3", "B3", "D4"], ["E3", "G3", "B3"], ["A3", "C#4", "E4"],
-              ["D3", "F#3", "A3"]]
-    roots = ["D2", "G2", "E2", "A2", "D2"]
-    # melody: (beat offset within 4 bars, note, length in beats)
-    mel = [(0, "D5", 1), (1, "D5", 1), (2, "F#5", 1), (3, "A5", 1),
-           (4, "B5", 1), (5, "A5", 0.5), (5.5, "F#5", 0.5), (6, "D5", 1), (7, "A4", 1),
-           (8, "E5", 0.5), (8.5, "F#5", 0.5), (9, "G5", 0.5), (9.5, "A5", 0.5),
-           (10, "B5", 0.5), (10.5, "A5", 0.5), (11, "G5", 0.5), (11.5, "F#5", 0.5),
-           (12, "E5", 1), (13, "A4", 0.5), (13.5, "C#5", 0.5), (14, "D5", 0.5), (14.5, "F#5", 0.5),
-           (15, "A5", 1)]
-    for b in range(intro_beats):  # count-in: claps + glock pickup
-        sfx.add(widen(clap()), t0 + b * jb, 0.25)
-    for off, n, ln in mel:
-        music.add(widen(glock(note(n), max(ln * jb * 2.5, 0.8))), vox_at + off * jb, 0.32)
-    for bar in range(5):
-        bs = vox_at + bar * 4 * jb
-        music.add(widen(pad(chords[bar], 4 * jb + (1.5 if bar == 4 else 0.2), 2600, 0.05, 0.6)), bs, 0.16)
-        for e8 in range(8 if bar < 4 else 2):
-            r = roots[bar] if e8 % 4 != 2 else roots[bar][:-1] + str(int(roots[bar][-1]) + 1)
-            music.add(widen(pluck_bass(note(r), jb * 0.48)), bs + e8 * jb / 2, 0.42)
-        if bar < 4:
-            for bt in (1, 3):
-                music.add(widen(clap()), bs + bt * jb, 0.28)
-    # land the "ta-daa" on the next beat after the last sung/spoken word
-    tada = vox_at + max(16, np.ceil((jv_len + 0.2) / jb)) * jb
-    music.add(widen(glock(note("D6"), 2.5)), tada, 0.4)          # rising "ta-daa"
-    music.add(widen(pad(["D3", "F#3", "A3", "D4"], 2.0, 3000, 0.01, 1.5)), tada, 0.25)
-    sfx.add(widen(bling()), tada, 0.5)
-    sfx.add(widen(sub_boom(2.5, 80, 30, 0.6)), tada, 0.55)
-    sfx.add(widen(whoosh(1.2, 0.35, 400, 7000)), tada + 0.05, 0.22)
+    # 8. Ending. With jingle voices: bright, bouncy D-major jingle (glock, plucked
+    #    bass, claps, pad). Without: a warm D-major resolve under the slogan + sting.
+    if cfg.get("jingle_vox"):
+        jv_len = cfg["jingle_vox_len"]
+        intro_beats = 2
+        jbpm = float(np.clip(16 * 60 / jv_len, 112, 150))
+        jb = 60 / jbpm
+        t0 = jingle_t
+        vox_at = t0 + intro_beats * jb
+        sfx.add(widen(bling()), t0 - 0.02, 0.35)
+        sfx.add(widen(whoosh(0.9, 0.8, 300, 5000)), t0 - 0.7, 0.3)
+        chords = [["D3", "F#3", "A3"], ["G3", "B3", "D4"], ["E3", "G3", "B3"], ["A3", "C#4", "E4"],
+                  ["D3", "F#3", "A3"]]
+        roots = ["D2", "G2", "E2", "A2", "D2"]
+        # melody: (beat offset within 4 bars, note, length in beats)
+        mel = [(0, "D5", 1), (1, "D5", 1), (2, "F#5", 1), (3, "A5", 1),
+               (4, "B5", 1), (5, "A5", 0.5), (5.5, "F#5", 0.5), (6, "D5", 1), (7, "A4", 1),
+               (8, "E5", 0.5), (8.5, "F#5", 0.5), (9, "G5", 0.5), (9.5, "A5", 0.5),
+               (10, "B5", 0.5), (10.5, "A5", 0.5), (11, "G5", 0.5), (11.5, "F#5", 0.5),
+               (12, "E5", 1), (13, "A4", 0.5), (13.5, "C#5", 0.5), (14, "D5", 0.5), (14.5, "F#5", 0.5),
+               (15, "A5", 1)]
+        for b in range(intro_beats):  # count-in: claps + glock pickup
+            sfx.add(widen(clap()), t0 + b * jb, 0.25)
+        for off, n, ln in mel:
+            music.add(widen(glock(note(n), max(ln * jb * 2.5, 0.8))), vox_at + off * jb, 0.32)
+        for bar in range(5):
+            bs = vox_at + bar * 4 * jb
+            music.add(widen(pad(chords[bar], 4 * jb + (1.5 if bar == 4 else 0.2), 2600, 0.05, 0.6)), bs, 0.16)
+            for e8 in range(8 if bar < 4 else 2):
+                r = roots[bar] if e8 % 4 != 2 else roots[bar][:-1] + str(int(roots[bar][-1]) + 1)
+                music.add(widen(pluck_bass(note(r), jb * 0.48)), bs + e8 * jb / 2, 0.42)
+            if bar < 4:
+                for bt in (1, 3):
+                    music.add(widen(clap()), bs + bt * jb, 0.28)
+        # land the "ta-daa" on the next beat after the last sung/spoken word
+        tada = vox_at + max(16, np.ceil((jv_len + 0.2) / jb)) * jb
+        music.add(widen(glock(note("D6"), 2.5)), tada, 0.4)          # rising "ta-daa"
+        music.add(widen(pad(["D3", "F#3", "A3", "D4"], 2.0, 3000, 0.01, 1.5)), tada, 0.25)
+        sfx.add(widen(bling()), tada, 0.5)
+        sfx.add(widen(sub_boom(2.5, 80, 30, 0.6)), tada, 0.55)
+        sfx.add(widen(whoosh(1.2, 0.35, 400, 7000)), tada + 0.05, 0.22)
 
-    for path, gain, pan, shift in cfg["jingle_vox"]:
-        v = load_audio(path, shift).mean(axis=1)   # shift>0: brighter "kids" layer
-        if shift:
-            v = filt(v, "highpass", 220)
-        jvox.add(reverb(stereo(v, pan), rt60=0.9, wet=0.15, seed=11), vox_at - 0.05, gain)
+        for path, gain, pan, shift in cfg["jingle_vox"]:
+            v = load_audio(path, shift).mean(axis=1)   # shift>0: brighter "kids" layer
+            if shift:
+                v = filt(v, "highpass", 220)
+            jvox.add(reverb(stereo(v, pan), rt60=0.9, wet=0.15, seed=11), vox_at - 0.05, gain)
+    else:
+        t0 = jingle_t
+        rest = T - t0
+        sfx.add(widen(whoosh(0.9, 0.8, 300, 5000)), t0 - 0.7, 0.25)
+        sfx.add(widen(sub_boom(3.0, 85, 28, 0.8)), t0, 0.6)
+        music.add(reverb(pad(["D3", "F#3", "A3", "D4", "F#4"], rest, 2200, 0.3, rest * 0.5),
+                         rt60=3.0, wet=0.35), t0, 0.32)
+        music.add(widen(brass_swell(["D2", "A2", "D3", "F#3"], rest * 0.7, 200, 1400, a=rest * 0.3)),
+                  t0, 0.2)
+        music.add(widen(sub_drone(rest) * env_adsr(secs(rest), 0.5, 0.1, 1, rest * 0.6)), t0, 0.22)
+        sfx.add(reverb(bling(), rt60=3.5, wet=0.5), t0 + cfg.get("sting_offset", 1.6), 0.3)
 
     # ---------------------------------------------------------------- mix --
     def envelope(x, att=0.01, rel=0.35):
