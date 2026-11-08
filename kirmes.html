@@ -72,10 +72,13 @@ const CONFIG = {
    KARTENDATEN je Jahrgang. Koordinaten in Metern, Mitte = (0,0),
    x = Ost, y = Süd. Ein Fahrgeschäft ist ein Rechteck (x,y = Mitte).
    ACHTUNG: Das sind ERFUNDENE Beispieldaten, nicht die offizielle Karte.
+   plan: optionales Bild des offiziellen Kirmesplans, unter die Karte gelegt, z.B.
+   plan: { src: 'plan-2026.jpg', x: 0, y: 0, w: 260, h: 220 }
+   (x/y = Bildmitte, w/h = Breite/Höhe in Metern; so lassen sich Fahrgeschäfte daran ausrichten)
    ========================================================= */
 const YEARS = {
   2018: {
-    year: 2018, updated: '2018-07-20T12:00:00Z', ground: { w: 260, h: 220 },
+    year: 2018, updated: '2018-07-20T12:00:00Z', ground: { w: 260, h: 220 }, plan: null,
     paths: [
       { w: 4, pts: [[-110, 0], [110, 0]] },
       { w: 4, pts: [[0, -95], [0, 95]] },
@@ -95,7 +98,7 @@ const YEARS = {
     ]
   },
   2026: {
-    year: 2026, updated: '2026-07-18T12:00:00Z', ground: { w: 260, h: 220 },
+    year: 2026, updated: '2026-07-18T12:00:00Z', ground: { w: 260, h: 220 }, plan: null,
     paths: [
       { w: 4, pts: [[-110, 0], [110, 0]] },
       { w: 4, pts: [[0, -95], [0, 95]] },
@@ -197,6 +200,17 @@ function rr(x, y, w, h, r) {
   ctx.closePath();
 }
 
+const planCache = {};
+function planImage(src) {
+  if (!planCache[src]) {
+    const img = new Image();
+    img.onload = () => { dirty = true; };
+    img.src = src;
+    planCache[src] = img;
+  }
+  return planCache[src];
+}
+
 function draw2D() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = '#7db656';
@@ -208,6 +222,18 @@ function draw2D() {
   const [gx, gy] = w2s(-g.w / 2, -g.h / 2);
   ctx.fillStyle = '#e8d9a6';
   ctx.fillRect(gx, gy, g.w * p, g.h * p);
+
+  // Offizieller Plan als Bild (falls hinterlegt)
+  if (data.plan) {
+    const img = planImage(data.plan.src);
+    if (img.complete && img.naturalWidth) {
+      const pl = data.plan;
+      const [ix, iy] = w2s(pl.x - pl.w / 2, pl.y - pl.h / 2);
+      ctx.globalAlpha = 0.85;
+      ctx.drawImage(img, ix, iy, pl.w * p, pl.h * p);
+      ctx.globalAlpha = 1;
+    }
+  }
 
   // Wege
   ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#bfa978';
