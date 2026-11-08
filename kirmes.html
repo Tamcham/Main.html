@@ -1,0 +1,864 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1b1f2a">
+<title>Kirmes-Karte</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;background:#1b1f2a;color:#eef2ff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+  #map,#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+  #gl{pointer-events:none;visibility:hidden;opacity:0}
+  #gl.on{pointer-events:auto}
+  header{position:absolute;top:0;left:0;right:0;z-index:5;display:flex;gap:8px;align-items:center;padding:calc(env(safe-area-inset-top,0px) + 10px) 12px 12px;background:linear-gradient(#1b1f2af5,#1b1f2a00)}
+  header h1{font-size:16px;font-weight:700;white-space:nowrap}
+  select,button{font:inherit;color:#eef2ff;background:#232a38;border:1px solid #3a4358;border-radius:12px;padding:8px 10px}
+  button{cursor:pointer}
+  button:disabled{opacity:.4;cursor:default}
+  #status{position:absolute;left:14px;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:5;font-size:11px;color:#c5cce0;text-shadow:0 1px 3px #000;pointer-events:none;white-space:nowrap}
+  button{white-space:nowrap}
+  #back{display:none}
+  #hint{position:absolute;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);z-index:4;font-size:12px;color:#c5cce0;text-align:center;pointer-events:none;transition:opacity .6s;text-shadow:0 1px 3px #000}
+  #sheet{position:absolute;left:0;right:0;bottom:0;z-index:6;background:#232a38f5;border-radius:18px 18px 0 0;padding:14px 16px calc(env(safe-area-inset-bottom,0px) + 16px);transform:translateY(110%);transition:transform .3s ease;box-shadow:0 -6px 24px #0006}
+  #sheet.open{transform:none}
+  #sheet h2{font-size:20px;margin-bottom:4px}
+  #sheet p{color:#9aa4bf;font-size:14px;line-height:1.4;margin-bottom:12px}
+  #sheet .row{display:flex;gap:8px;flex-wrap:wrap}
+  #sheet .primary{background:#ffb020;color:#1b1f2a;font-weight:700;border:none}
+  @media (max-width:420px){ header h1{display:none} }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="map"></canvas>
+  <canvas id="gl"></canvas>
+  <header>
+    <h1>Kirmes</h1>
+    <select id="year" aria-label="Jahrgang"></select>
+    <button id="gps" aria-label="Mein Standort">📍</button>
+    <button id="back">← Karte</button>
+  </header>
+  <div id="status"></div>
+  <div id="hint">Tippe ein Fahrgeschäft an. Zoome nah heran, dann wird es in 3D sichtbar.</div>
+  <div id="sheet">
+    <h2 id="sName"></h2>
+    <p id="sInfo"></p>
+    <div class="row">
+      <button class="primary" id="s3d">3D ansehen</button>
+      <button id="sZoom">Heranzoomen</button>
+      <button id="sClose">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js (nur für die 3D-Ansicht). Fällt die Verbindung aus, bleibt die 2D-Karte nutzbar. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+
+/* =========================================================
+   KONFIGURATION – bitte anpassen
+   ========================================================= */
+const CONFIG = {
+  // PLATZHALTER: Position des Kirmesmittelpunkts (Breite/Länge) und Drehung der Karte
+  // in Grad (positiv = im Uhrzeigersinn). Nötig, damit der GPS-Punkt richtig liegt.
+  geo: { lat: 50.1109, lon: 8.6821, rotDeg: 0 },
+  fairRadiusM: 200,      // ab diesem Abstand zum Mittelpunkt gilt man als "auf der Kirmes"
+  liveUrl: null,         // z.B. 'https://deine-domain.de/kirmes/{year}.json' – null = nur Beispieldaten
+  refreshSec: 60,        // Aktualisierungsintervall für Live-Daten
+  currentYear: 2026,     // der laufende Jahrgang (wird live aktualisiert)
+  ppm3D: 7               // Zoomstufe (Pixel pro Meter), ab der ein Fahrgeschäft in 3D übergeht
+};
+
+/* =========================================================
+   KARTENDATEN je Jahrgang. Koordinaten in Metern, Mitte = (0,0),
+   x = Ost, y = Süd. Ein Fahrgeschäft ist ein Rechteck (x,y = Mitte).
+   ACHTUNG: Das sind ERFUNDENE Beispieldaten, nicht die offizielle Karte.
+   ========================================================= */
+const YEARS = {
+  2018: {
+    year: 2018, updated: '2018-07-20T12:00:00Z', ground: { w: 260, h: 220 },
+    paths: [
+      { w: 4, pts: [[-110, 0], [110, 0]] },
+      { w: 4, pts: [[0, -95], [0, 95]] },
+      { w: 3, pts: [[-110, -90], [110, -90]] },
+      { w: 3, pts: [[-110, 90], [110, 90]] },
+      { w: 3, pts: [[-100, -90], [-100, 90]] },
+      { w: 3, pts: [[100, -90], [100, 90]] }
+    ],
+    rides: [
+      { id: 'karussell', name: 'Pferdekarussell', type: 'carousel', x: -60, y: -55, w: 24, h: 24, color: '#e53935', info: 'Klassisches Karussell.' },
+      { id: 'riesenrad', name: 'Riesenrad', type: 'wheel', x: 70, y: -55, w: 28, h: 32, color: '#1e88e5', info: 'Panoramablick über den Platz.' },
+      { id: 'olympia', name: 'Olympia-Looping', type: 'swing', x: -10, y: -5, w: 24, h: 20, color: '#8e24aa', info: 'Schnelle Schaukelfahrt.' },
+      { id: 'auto', name: 'Autoscooter', type: 'dodgem', x: 50, y: 35, w: 34, h: 26, color: '#43a047', info: 'Rempeln erlaubt.' },
+      { id: 'kinder', name: 'Kinderkarussell', type: 'carousel', x: -70, y: 40, w: 16, h: 16, color: '#fdd835', info: 'Für die Kleinen.' },
+      { id: 'zucker', name: 'Zuckerwatte', type: 'stand', x: 20, y: -25, w: 8, h: 6, color: '#f48fb1', info: 'Süßes zum Mitnehmen.' },
+      { id: 'imbiss', name: 'Imbiss', type: 'stand', x: -25, y: 70, w: 10, h: 6, color: '#ff7043', info: 'Bratwurst und Pommes.' }
+    ]
+  },
+  2026: {
+    year: 2026, updated: '2026-07-18T12:00:00Z', ground: { w: 260, h: 220 },
+    paths: [
+      { w: 4, pts: [[-110, 0], [110, 0]] },
+      { w: 4, pts: [[0, -95], [0, 95]] },
+      { w: 3, pts: [[-110, -90], [110, -90]] },
+      { w: 3, pts: [[-110, 90], [110, 90]] },
+      { w: 3, pts: [[-100, -90], [-100, 90]] },
+      { w: 3, pts: [[100, -90], [100, 90]] }
+    ],
+    rides: [
+      { id: 'karussell', name: 'Pferdekarussell', type: 'carousel', x: -60, y: -55, w: 24, h: 24, color: '#e53935', info: 'Klassisches Karussell.' },
+      { id: 'riesenrad', name: 'Riesenrad', type: 'wheel', x: 70, y: -55, w: 30, h: 34, color: '#1e88e5', info: 'Panoramablick über den Platz.' },
+      { id: 'kette', name: 'Kettenkarussell', type: 'chain', x: -70, y: 20, w: 24, h: 24, color: '#fb8c00', info: 'Schwingt hoch hinaus.' },
+      { id: 'schiff', name: 'Schiffschaukel', type: 'swing', x: -10, y: -5, w: 22, h: 18, color: '#8e24aa', info: 'Schaukelt die ganze Kirmes durch.' },
+      { id: 'auto', name: 'Autoscooter', type: 'dodgem', x: 50, y: 35, w: 34, h: 26, color: '#43a047', info: 'Rempeln erlaubt.' },
+      { id: 'geister', name: 'Geisterbahn', type: 'house', x: -30, y: 65, w: 22, h: 18, color: '#5e35b1', info: 'Nur für Mutige.' },
+      { id: 'zucker', name: 'Zuckerwatte', type: 'stand', x: 20, y: -25, w: 8, h: 6, color: '#f48fb1', info: 'Süßes zum Mitnehmen.' },
+      { id: 'imbiss', name: 'Imbiss', type: 'stand', x: 30, y: 75, w: 10, h: 6, color: '#ff7043', info: 'Bratwurst und Pommes.' }
+    ]
+  }
+};
+
+const TYPE_INFO = {
+  carousel: { label: 'Karussell', icon: '🎠' },
+  wheel:    { label: 'Riesenrad', icon: '🎡' },
+  chain:    { label: 'Kettenkarussell', icon: '🔗' },
+  swing:    { label: 'Schaukelfahrt', icon: '⛵' },
+  dodgem:   { label: 'Fahrgeschäft', icon: '🚗' },
+  house:    { label: 'Geisterbahn', icon: '👻' },
+  stand:    { label: 'Imbiss / Stand', icon: '🍬' }
+};
+
+/* =========================================================
+   HILFSFUNKTIONEN & ZUSTAND
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = t => t * t * (3 - 2 * t);
+
+let year = initialYear();
+let data = YEARS[year];
+let selectedId = null;
+let player = null;          // {x, y, acc} – GPS-Position in Kartenmetern
+let gpsId = null, gpsNote = '';
+let lastSync = null;
+let want3D = false;         // Ziel: 3D-Ansicht an/aus
+let morph = 0;              // 0 = Karte, 1 = 3D (animiert)
+let dirty = true;
+let threeOK = false;
+let three = null;           // Three.js-Laufzeitobjekte
+
+function initialYear() {
+  const years = Object.keys(YEARS).map(Number).sort((a, b) => b - a);
+  let saved = null;
+  try { saved = Number(localStorage.getItem('kirmes-year')); } catch (e) {}
+  if (YEARS[saved]) return saved;
+  return YEARS[CONFIG.currentYear] ? CONFIG.currentYear : years[0];
+}
+
+function currentRide() {
+  return selectedId ? (data.rides.find(r => r.id === selectedId) || null) : null;
+}
+
+/* Geo → lokale Kartenkoordinaten (Meter) */
+function geoToLocal(lat, lon) {
+  const R = 6371000, toRad = Math.PI / 180;
+  const north = (lat - CONFIG.geo.lat) * toRad * R;
+  const east = (lon - CONFIG.geo.lon) * toRad * R * Math.cos(CONFIG.geo.lat * toRad);
+  const south = -north;
+  const a = CONFIG.geo.rotDeg * toRad;
+  return { x: east * Math.cos(a) - south * Math.sin(a), y: east * Math.sin(a) + south * Math.cos(a) };
+}
+
+/* Fahrgeschäft an einer Weltposition finden (Rechteck-Test, pad = Toleranz in Metern) */
+function rideAt(x, y, pad = 0) {
+  return data.rides.find(r => Math.abs(x - r.x) <= r.w / 2 + pad && Math.abs(y - r.y) <= r.h / 2 + pad) || null;
+}
+
+/* =========================================================
+   2D-KARTE
+   ========================================================= */
+const mapCv = $('map');
+const ctx = mapCv.getContext('2d');
+const view = { cx: 0, cy: 0, ppm: 1.4 };   // Mitte der Ansicht (Meter) und Pixel pro Meter
+let dpr = 1, cssW = 0, cssH = 0, fitted = false;
+
+function w2s(x, y) { return [cssW / 2 + (x - view.cx) * view.ppm, cssH / 2 + (y - view.cy) * view.ppm]; }
+function s2w(sx, sy) { return [view.cx + (sx - cssW / 2) / view.ppm, view.cy + (sy - cssH / 2) / view.ppm]; }
+
+function fitView() {
+  const g = data.ground;
+  view.ppm = Math.min(cssW / (g.w + 30), cssH / (g.h + 30));
+  view.cx = 0; view.cy = 0;
+}
+
+function clampView() {
+  const g = data.ground;
+  view.cx = clamp(view.cx, -g.w / 2 - 30, g.w / 2 + 30);
+  view.cy = clamp(view.cy, -g.h / 2 - 30, g.h / 2 + 30);
+  view.ppm = clamp(view.ppm, 0.6, 40);
+}
+
+function rr(x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function draw2D() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = '#7db656';
+  ctx.fillRect(0, 0, cssW, cssH);
+
+  const g = data.ground, p = view.ppm;
+
+  // Platzboden
+  const [gx, gy] = w2s(-g.w / 2, -g.h / 2);
+  ctx.fillStyle = '#e8d9a6';
+  ctx.fillRect(gx, gy, g.w * p, g.h * p);
+
+  // Wege
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#bfa978';
+  for (const path of data.paths) {
+    ctx.lineWidth = Math.max(1, path.w * p);
+    ctx.beginPath();
+    path.pts.forEach((pt, i) => {
+      const [sx, sy] = w2s(pt[0], pt[1]);
+      if (i) ctx.lineTo(sx, sy); else ctx.moveTo(sx, sy);
+    });
+    ctx.stroke();
+  }
+
+  // Fahrgeschäfte
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const r of data.rides) {
+    const [sx, sy] = w2s(r.x - r.w / 2, r.y - r.h / 2);
+    const W = r.w * p, H = r.h * p;
+    ctx.globalAlpha = 0.92;
+    ctx.fillStyle = r.color;
+    rr(sx, sy, W, H, Math.min(W, H) * 0.2); ctx.fill();
+    ctx.globalAlpha = 1;
+    if (r.id === selectedId) {
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      rr(sx, sy, W, H, Math.min(W, H) * 0.2); ctx.stroke();
+    }
+    const [cx, cy] = w2s(r.x, r.y);
+    ctx.font = `${Math.max(9, Math.min(W, H) * 0.55)}px system-ui,"Apple Color Emoji","Segoe UI Emoji",sans-serif`;
+    ctx.fillStyle = '#fff';
+    ctx.fillText((TYPE_INFO[r.type] || TYPE_INFO.stand).icon, cx, cy);
+    if (p > 3.5) {
+      ctx.font = '600 12px system-ui,sans-serif';
+      ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.6)';
+      const ty = sy + H + 10;
+      ctx.strokeText(r.name, cx, ty);
+      ctx.fillStyle = '#fff'; ctx.fillText(r.name, cx, ty);
+    }
+  }
+
+  // Eigene Position
+  if (player) {
+    const [px, py] = w2s(player.x, player.y);
+    ctx.fillStyle = 'rgba(47,123,255,.18)';
+    ctx.beginPath(); ctx.arc(px, py, Math.max(8, player.acc * p), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2f7bff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  }
+}
+
+/* ---- Gesten: ziehen, pinchen, Mausrad, tippen ---- */
+const pointers = new Map();
+let gest = null, pinch = null, wheelTimer = null;
+
+mapCv.addEventListener('pointerdown', e => {
+  mapCv.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pointers.size === 1) {
+    gest = { t: performance.now(), moved: 0, multi: false };
+  } else if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()];
+    pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), ppm: view.ppm };
+    if (gest) gest.multi = true;
+  }
+});
+
+mapCv.addEventListener('pointermove', e => {
+  const prev = pointers.get(e.pointerId);
+  if (!prev) return;
+  const cur = { x: e.clientX, y: e.clientY };
+  pointers.set(e.pointerId, cur);
+  if (pointers.size === 1) {
+    const dx = cur.x - prev.x, dy = cur.y - prev.y;
+    view.cx -= dx / view.ppm; view.cy -= dy / view.ppm;
+    if (gest) gest.moved += Math.abs(dx) + Math.abs(dy);
+  } else if (pointers.size >= 2 && pinch) {
+    const [a, b] = [...pointers.values()];
+    const mid = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    const d = Math.hypot(a.x - b.x, a.y - b.y);
+    const [wx, wy] = s2w(mid.x, mid.y);            // Punkt unter der Fingermitte festhalten
+    view.ppm = pinch.ppm * d / pinch.d;
+    view.cx = wx - (mid.x - cssW / 2) / view.ppm;
+    view.cy = wy - (mid.y - cssH / 2) / view.ppm;
+  }
+  clampView(); dirty = true;
+});
+
+function mapPointerUp(e) {
+  if (!pointers.has(e.pointerId)) return;
+  pointers.delete(e.pointerId);
+  if (pointers.size === 0 && gest) {
+    if (!gest.multi && gest.moved < 10) {
+      const [wx, wy] = s2w(e.clientX, e.clientY);
+      selectRide(rideAt(wx, wy, 1));
+    } else {
+      maybeAutoEnter();
+    }
+    gest = null; pinch = null;
+  }
+}
+mapCv.addEventListener('pointerup', mapPointerUp);
+mapCv.addEventListener('pointercancel', mapPointerUp);
+
+mapCv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  const [wx, wy] = s2w(e.clientX, e.clientY);
+  view.ppm *= f;
+  view.cx = wx - (e.clientX - cssW / 2) / view.ppm;
+  view.cy = wy - (e.clientY - cssH / 2) / view.ppm;
+  clampView(); dirty = true;
+  clearTimeout(wheelTimer);
+  wheelTimer = setTimeout(maybeAutoEnter, 250);
+}, { passive: false });
+
+/* Ist man nah genug an einem Fahrgeschäft, geht es in die 3D-Ansicht über */
+function maybeAutoEnter() {
+  if (!threeOK || want3D || view.ppm < CONFIG.ppm3D) return;
+  const [wx, wy] = s2w(cssW / 2, cssH / 2);
+  const r = rideAt(wx, wy, 2);
+  if (r) { selectRide(r); enter3D(); }
+}
+
+/* =========================================================
+   AUSWAHL, BLATT, MODUS
+   ========================================================= */
+function selectRide(r) {
+  selectedId = r ? r.id : null;
+  if (r) {
+    $('sName').textContent = r.name;
+    $('sInfo').textContent = (TYPE_INFO[r.type] || TYPE_INFO.stand).label + (r.info ? ' · ' + r.info : '');
+    $('sheet').classList.add('open');
+  } else {
+    $('sheet').classList.remove('open');
+  }
+  dirty = true;
+}
+
+function enter3D() {
+  if (!threeOK) { $('status').textContent = '3D nicht verfügbar'; return; }
+  want3D = true;
+  $('back').style.display = 'block';
+  $('gl').classList.add('on');
+  $('hint').style.opacity = 0;
+}
+
+function exit3D() {
+  want3D = false;
+  $('back').style.display = 'none';
+  $('gl').classList.remove('on');
+  const r = currentRide();
+  if (r) { view.cx = r.x; view.cy = r.y; view.ppm = Math.max(view.ppm, 6); }
+  dirty = true;
+}
+
+$('s3d').onclick = enter3D;
+$('back').onclick = exit3D;
+$('sClose').onclick = () => selectRide(null);
+$('sZoom').onclick = () => {
+  const r = currentRide();
+  if (r) { view.cx = r.x; view.cy = r.y; view.ppm = Math.max(view.ppm, CONFIG.ppm3D + 1); dirty = true; }
+};
+
+/* =========================================================
+   JAHRGANG, STATUS, LIVE-DATEN, GPS
+   ========================================================= */
+function rebuildYearSelect() {
+  const sel = $('year');
+  sel.innerHTML = '';
+  Object.keys(YEARS).map(Number).sort((a, b) => b - a).forEach(y => {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y + (y === CONFIG.currentYear ? ' (heute)' : '');
+    sel.appendChild(o);
+  });
+  sel.value = year;
+}
+$('year').onchange = e => setYear(Number(e.target.value));
+
+function setYear(y) {
+  if (!YEARS[y]) return;
+  year = y; data = YEARS[y];
+  try { localStorage.setItem('kirmes-year', String(y)); } catch (e) {}
+  want3D = false;
+  $('back').style.display = 'none';
+  $('gl').classList.remove('on');
+  selectRide(null);
+  fitView();
+  if (three) buildWorld();
+  updateStatus(); dirty = true;
+}
+
+function updateStatus() {
+  const isCur = year === CONFIG.currentYear;
+  let s = !isCur ? 'Archiv' : (CONFIG.liveUrl ? 'Live' : 'Beispieldaten');
+  if (isCur && lastSync) s += ' · ' + lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  if (!threeOK) s += ' · 3D aus';
+  if (gpsNote) s += ' · ' + gpsNote;
+  $('status').textContent = s;
+}
+
+async function refreshLive() {
+  if (!CONFIG.liveUrl) return;
+  try {
+    const sep = CONFIG.liveUrl.includes('?') ? '&' : '?';
+    const url = CONFIG.liveUrl.replace('{year}', CONFIG.currentYear) + sep + 't=' + Date.now();
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const j = await res.json();
+    if (!j || !j.year || !j.ground || !Array.isArray(j.rides) || !Array.isArray(j.paths)) throw new Error('Ungültiges Format');
+    YEARS[j.year] = j;
+    lastSync = new Date();
+    rebuildYearSelect();
+    if (j.year === year) {
+      data = j;
+      if (three) buildWorld();
+      if (selectedId) selectRide(currentRide());
+      dirty = true;
+    }
+  } catch (err) {
+    console.warn('Live-Update fehlgeschlagen:', err);
+  }
+  updateStatus();
+}
+
+function startGPS() {
+  if (!navigator.geolocation) { gpsNote = 'GPS nicht verfügbar'; updateStatus(); return; }
+  if (gpsId !== null) return;
+  gpsNote = 'GPS suche…'; updateStatus();
+  gpsId = navigator.geolocation.watchPosition(p => {
+    const l = geoToLocal(p.coords.latitude, p.coords.longitude);
+    player = { x: l.x, y: l.y, acc: p.coords.accuracy || 10 };
+    const d = Math.hypot(l.x, l.y);
+    gpsNote = d < CONFIG.fairRadiusM ? 'Du bist auf der Kirmes' : Math.round(d) + ' m vom Platz';
+    dirty = true; updateStatus();
+  }, err => {
+    gpsNote = 'GPS-Fehler: ' + err.message; updateStatus();
+  }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+}
+
+$('gps').onclick = () => {
+  if (player) {               // schon bekannt: auf die eigene Position zentrieren
+    view.cx = player.x; view.cy = player.y; dirty = true;
+  } else {
+    startGPS();
+  }
+};
+
+/* =========================================================
+   3D-ANSICHT (Three.js r128)
+   ========================================================= */
+function initThree() {
+  if (!window.THREE) return false;
+  const renderer = new THREE.WebGLRenderer({ canvas: $('gl'), antialias: true });
+  renderer.setPixelRatio(Math.min(dpr, 2));
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0xbfe6ff);
+  scene.fog = new THREE.Fog(0xbfe6ff, 260, 700);
+  const camera = new THREE.PerspectiveCamera(50, cssW / cssH, 0.5, 1200);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x3f6b2a, 0.6));
+  const sun = new THREE.DirectionalLight(0xffffff, 0.4);
+  sun.position.set(60, 140, 40);
+  scene.add(sun);
+  three = { renderer, scene, camera, world: null, rides: [], people: [], marker: null };
+  return true;
+}
+
+// Kamera-Zustand im 3D-Modus (Kugelkoordinaten um einen Fokuspunkt)
+const orbit = { theta: 0, phi: 0.85, r: 95, tx: 0, tz: 0 };
+
+function buildWorld() {
+  const T = three, S = T.scene;
+  if (T.world) S.remove(T.world);
+  const w = new THREE.Group();
+  S.add(w);
+  T.world = w; T.rides = []; T.people = [];
+  const g = data.ground;
+  const M = c => new THREE.MeshLambertMaterial({ color: c });
+
+  // Boden
+  const grass = new THREE.Mesh(new THREE.PlaneGeometry(g.w + 200, g.h + 200), M(0x7db656));
+  grass.rotation.x = -Math.PI / 2; w.add(grass);
+  const sand = new THREE.Mesh(new THREE.PlaneGeometry(g.w, g.h), M(0xe8d9a6));
+  sand.rotation.x = -Math.PI / 2; sand.position.y = 0.02; w.add(sand);
+
+  // Wege als flache Balken
+  const pathMat = M(0xbfa978);
+  for (const path of data.paths) {
+    for (let i = 1; i < path.pts.length; i++) {
+      const [ax, ay] = path.pts[i - 1], [bx, by] = path.pts[i];
+      const dx = bx - ax, dz = by - ay, L = Math.hypot(dx, dz);
+      const seg = new THREE.Mesh(new THREE.BoxGeometry(L, 0.06, path.w), pathMat);
+      seg.position.set((ax + bx) / 2, 0.03, (ay + by) / 2);
+      seg.rotation.y = -Math.atan2(dz, dx);
+      w.add(seg);
+    }
+  }
+
+  // Fahrgeschäfte (wachsen beim Übergang vom Plan in die 3D-Form)
+  for (const r of data.rides) {
+    const b = buildRide(r);
+    b.group.position.set(r.x, 0, r.y);
+    b.group.scale.y = 0.03;
+    w.add(b.group);
+    T.rides.push({ ride: r, group: b.group, spin: b.spin });
+  }
+
+  // Simulierte Besucher
+  for (let i = 0; i < 70; i++) T.people.push(makePerson(w));
+
+  // Eigene Position
+  const marker = new THREE.Group();
+  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16), M(0x2f7bff));
+  pin.position.y = 0.15;
+  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6, 8), M(0x2f7bff));
+  pillar.position.y = 3;
+  marker.add(pin, pillar);
+  marker.visible = false;
+  w.add(marker);
+  T.marker = marker;
+}
+
+function buildRide(r) {
+  const g = new THREE.Group();
+  const spin = [];
+  const M = c => new THREE.MeshLambertMaterial({ color: c });
+  const colM = M(r.color), white = M(0xf4f4f4), dark = M(0x2b2f3a);
+  const mesh = (geo, mat, parent, x, y, z) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  };
+  const link = (parent, A, B, rad, mat) => {       // Verbindung zwischen zwei Punkten
+    const dir = new THREE.Vector3().subVectors(B, A);
+    const L = dir.length();
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(rad, rad, L, 5), mat);
+    m.position.copy(A).add(B).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+    parent.add(m);
+  };
+  const R = Math.max(2.5, Math.min(r.w, r.h) / 2 * 0.9);
+
+  switch (r.type) {
+    case 'carousel': {
+      mesh(new THREE.CylinderGeometry(R * 1.05, R * 1.1, 1.2, 24), white, g, 0, 0.6, 0);
+      const plat = new THREE.Group();
+      plat.position.y = 1.4;
+      g.add(plat);
+      mesh(new THREE.CylinderGeometry(R * 0.95, R * 0.95, 0.3, 24), M(0xf5c542), plat, 0, 0.15, 0);
+      for (let i = 0; i < 8; i++) {
+        const a = i / 8 * Math.PI * 2;
+        const horse = mesh(new THREE.BoxGeometry(0.7, 1.8, 0.3), colM, plat, Math.cos(a) * R * 0.7, 1.2, Math.sin(a) * R * 0.7);
+        horse.rotation.y = -a;
+      }
+      mesh(new THREE.CylinderGeometry(0.2, 0.2, 5, 8), M(0xdddddd), g, 0, 3, 0);
+      mesh(new THREE.CylinderGeometry(0, R * 1.2, 3, 16), colM, g, 0, 5.8, 0);
+      spin.push({ obj: plat, axis: 'y', speed: 0.6 });
+      break;
+    }
+    case 'wheel': {
+      const Rw = Math.max(4, Math.min(r.w, r.h) / 2 * 0.85);
+      const hubY = Rw + 2.5;
+      const hub = new THREE.Group();
+      hub.position.y = hubY;
+      g.add(hub);
+      mesh(new THREE.TorusGeometry(Rw, 0.45, 8, 40), white, hub, 0, 0, 0);
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * Math.PI * 2;
+        mesh(new THREE.BoxGeometry(1.6, 1.2, 1.4), colM, hub, Math.cos(a) * Rw, Math.sin(a) * Rw, 0);
+      }
+      mesh(new THREE.BoxGeometry(0.6, hubY, 0.6), dark, g, -Rw * 0.5, hubY / 2, 0);
+      mesh(new THREE.BoxGeometry(0.6, hubY, 0.6), dark, g, Rw * 0.5, hubY / 2, 0);
+      spin.push({ obj: hub, axis: 'z', speed: 0.25 });
+      break;
+    }
+    case 'chain':
+    case 'swing': {
+      const isChain = r.type === 'chain';
+      const H = isChain ? 9 : 7.5, len = isChain ? 6 : 4.2, n = isChain ? 8 : 6, rr2 = R * 0.8;
+      mesh(new THREE.CylinderGeometry(0.35, 0.35, H, 8), dark, g, 0, H / 2, 0);
+      const top = new THREE.Group();
+      top.position.y = H;
+      g.add(top);
+      spin.push({ obj: top, axis: 'y', speed: isChain ? 1.2 : 1.6 });
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2;
+        const end = new THREE.Vector3(Math.cos(a) * rr2, -len, Math.sin(a) * rr2);
+        link(top, new THREE.Vector3(0, 0, 0), end, 0.06, dark);
+        mesh(new THREE.BoxGeometry(1.4, 1.0, 1.4), colM, top, end.x, end.y, end.z);
+      }
+      break;
+    }
+    case 'dodgem': {
+      mesh(new THREE.BoxGeometry(r.w, 0.4, r.h), dark, g, 0, 0.2, 0);
+      mesh(new THREE.BoxGeometry(r.w, 1.0, 0.4), white, g, 0, 0.7, -r.h / 2);
+      mesh(new THREE.BoxGeometry(r.w, 1.0, 0.4), white, g, 0, 0.7, r.h / 2);
+      mesh(new THREE.BoxGeometry(0.4, 1.0, r.h), white, g, -r.w / 2, 0.7, 0);
+      mesh(new THREE.BoxGeometry(0.4, 1.0, r.h), white, g, r.w / 2, 0.7, 0);
+      const cars = new THREE.Group();
+      g.add(cars);
+      const carCols = [0xe53935, 0x1e88e5, 0xfdd835, 0x43a047, 0xffffff, 0xff7043];
+      for (let i = 0; i < 6; i++) {
+        const a = i / 6 * Math.PI * 2;
+        const car = mesh(new THREE.BoxGeometry(1.6, 0.9, 2.4), M(carCols[i]), cars, Math.cos(a) * r.w * 0.25, 1.0, Math.sin(a) * r.h * 0.25);
+        car.rotation.y = -a;
+      }
+      spin.push({ obj: cars, axis: 'y', speed: 0.5 });
+      break;
+    }
+    case 'house': {
+      mesh(new THREE.BoxGeometry(r.w * 0.9, 6, r.h * 0.9), colM, g, 0, 3, 0);
+      const roof = mesh(new THREE.CylinderGeometry(0, Math.min(r.w, r.h) * 0.75, 3.5, 4), dark, g, 0, 7.75, 0);
+      roof.rotation.y = Math.PI / 4;
+      mesh(new THREE.BoxGeometry(r.w * 0.35, 3, 0.4), M(0x111111), g, 0, 1.5, r.h * 0.45);
+      break;
+    }
+    default: { // Imbiss / Stand
+      mesh(new THREE.BoxGeometry(r.w * 0.8, 3, r.h * 0.8), colM, g, 0, 1.5, 0);
+      mesh(new THREE.BoxGeometry(r.w * 0.95, 0.3, r.h * 0.4), white, g, 0, 3.2, r.h * 0.3);
+    }
+  }
+  return { group: g, spin };
+}
+
+const SHIRTS = [0xe53935, 0x1e88e5, 0x43a047, 0xfdd835, 0x8e24aa, 0xff7043, 0xf5f5f5, 0x26c6da, 0x3949ab];
+
+function makePerson(parent) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.3, 1.0, 6),
+    new THREE.MeshLambertMaterial({ color: SHIRTS[Math.floor(Math.random() * SHIRTS.length)] }));
+  body.position.y = 0.9;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 6), new THREE.MeshLambertMaterial({ color: 0xf1c27d }));
+  head.position.y = 1.65;
+  g.add(body, head);
+  parent.add(g);
+  const p0 = randomWalkable();
+  return { g, body, x: p0.x, z: p0.z, tx: p0.x, tz: p0.z, timer: 0, speed: 1.0 + Math.random() * 0.8, phase: Math.random() * 6.28 };
+}
+
+function randomWalkable() {
+  const g = data.ground;
+  for (let i = 0; i < 30; i++) {
+    const x = (Math.random() - 0.5) * (g.w - 16), z = (Math.random() - 0.5) * (g.h - 16);
+    if (!rideAt(x, z, 3)) return { x, z };
+  }
+  return { x: 0, z: 0 };
+}
+
+function updatePeople(dt, t) {
+  for (const p of three.people) {
+    p.timer -= dt;
+    let dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz);
+    if (d < 0.6 || p.timer <= 0) {
+      const q = randomWalkable();
+      p.tx = q.x; p.tz = q.z; p.timer = 6 + Math.random() * 10;
+      dx = p.tx - p.x; dz = p.tz - p.z; d = Math.hypot(dx, dz);
+    }
+    if (d > 1e-4) {
+      const s = Math.min(d, p.speed * dt);
+      p.x += dx / d * s; p.z += dz / d * s;
+      p.g.rotation.y = Math.atan2(dx, dz);
+    }
+    // Nicht durch Fahrgeschäfte laufen: an die nächstgelegene Kante schieben
+    const hit = rideAt(p.x, p.z, 1.5);
+    if (hit) {
+      const m = 1.5;
+      const x0 = hit.x - hit.w / 2 - m, x1 = hit.x + hit.w / 2 + m;
+      const y0 = hit.y - hit.h / 2 - m, y1 = hit.y + hit.h / 2 + m;
+      const dl = p.x - x0, dr = x1 - p.x, du = p.z - y0, dd = y1 - p.z;
+      const mn = Math.min(dl, dr, du, dd);
+      if (mn === dl) p.x = x0; else if (mn === dr) p.x = x1;
+      else if (mn === du) p.z = y0; else p.z = y1;
+      p.timer = 0;
+    }
+    p.g.position.set(p.x, 0, p.z);
+    p.body.position.y = 0.9 + Math.abs(Math.sin(t * 0.004 * p.speed + p.phase)) * 0.08;
+  }
+}
+
+function pickGround(clientX, clientY) {
+  const ray = new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2((clientX / cssW) * 2 - 1, -(clientY / cssH) * 2 + 1), three.camera);
+  const hit = new THREE.Vector3();
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  return ray.ray.intersectPlane(plane, hit) ? hit : null;
+}
+
+function render3D(dt, t) {
+  const T = three;
+  const e = smooth(morph);
+  const focus = currentRide() || { x: 0, y: 0 };
+  const k = Math.min(1, dt * 4);
+  orbit.tx = lerp(orbit.tx, focus.x, k);
+  orbit.tz = lerp(orbit.tz, focus.y, k);
+
+  // Übergang: von oben (Plan) schwenkt die Kamera in die Schräge
+  const phi = lerp(0.03, orbit.phi, e);
+  const rad = lerp(230, orbit.r, e);
+  const th = orbit.theta * e;
+  const tx = orbit.tx * e, tz = orbit.tz * e;
+  T.camera.position.set(tx + rad * Math.sin(phi) * Math.sin(th), rad * Math.cos(phi), tz + rad * Math.sin(phi) * Math.cos(th));
+  T.camera.lookAt(tx, 1.5 * e, tz);
+
+  for (const rd of T.rides) {
+    rd.group.scale.y = lerp(0.03, 1, e);
+    for (const s of rd.spin) s.obj.rotation[s.axis] += s.speed * dt;
+  }
+  updatePeople(dt, t);
+
+  T.marker.visible = !!player;
+  if (player) T.marker.position.set(player.x, 0, player.y);
+
+  T.renderer.render(T.scene, T.camera);
+}
+
+/* 3D-Ansicht: ziehen dreht/neigt, zwei Finger zoomen, Tippen wählt aus */
+const glPtrs = new Map();
+let glGest = null, glPinch = null;
+const glCv = $('gl');
+
+glCv.addEventListener('pointerdown', e => {
+  glCv.setPointerCapture(e.pointerId);
+  glPtrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!glGest) glGest = { moved: 0, multi: false };
+  if (glPtrs.size === 2) {
+    const [a, b] = [...glPtrs.values()];
+    glPinch = { d: Math.hypot(a.x - b.x, a.y - b.y), r: orbit.r };
+    glGest.multi = true;
+  }
+});
+
+glCv.addEventListener('pointermove', e => {
+  const prev = glPtrs.get(e.pointerId);
+  if (!prev) return;
+  const cur = { x: e.clientX, y: e.clientY };
+  glPtrs.set(e.pointerId, cur);
+  if (glPtrs.size === 1) {
+    const dx = cur.x - prev.x, dy = cur.y - prev.y;
+    orbit.theta -= dx * 0.006;
+    orbit.phi = clamp(orbit.phi + dy * 0.005, 0.12, 1.45);
+    if (glGest) glGest.moved += Math.abs(dx) + Math.abs(dy);
+  } else if (glPtrs.size >= 2 && glPinch) {
+    const [a, b] = [...glPtrs.values()];
+    orbit.r = clamp(glPinch.r * glPinch.d / Math.hypot(a.x - b.x, a.y - b.y), 14, 220);
+  }
+});
+
+function glPointerUp(e) {
+  if (!glPtrs.delete(e.pointerId)) return;
+  if (glPtrs.size === 0 && glGest) {
+    if (!glGest.multi && glGest.moved < 10 && three) {
+      const hit = pickGround(e.clientX, e.clientY);
+      selectRide(hit ? rideAt(hit.x, hit.z, 1) : null);
+    }
+    glGest = null; glPinch = null;
+  }
+}
+glCv.addEventListener('pointerup', glPointerUp);
+glCv.addEventListener('pointercancel', glPointerUp);
+
+glCv.addEventListener('wheel', e => {
+  e.preventDefault();
+  orbit.r = clamp(orbit.r * (e.deltaY < 0 ? 0.9 : 1.1), 14, 220);
+}, { passive: false });
+
+/* =========================================================
+   SCHLEIFE, GRÖSSE, START
+   ========================================================= */
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  cssW = window.innerWidth; cssH = window.innerHeight;
+  mapCv.width = Math.round(cssW * dpr);
+  mapCv.height = Math.round(cssH * dpr);
+  if (!fitted) { fitView(); fitted = true; }
+  if (three) {
+    three.renderer.setPixelRatio(Math.min(dpr, 2));
+    three.renderer.setSize(cssW, cssH, false);
+    three.camera.aspect = cssW / cssH;
+    three.camera.updateProjectionMatrix();
+  }
+  dirty = true;
+}
+window.addEventListener('resize', resize);
+
+let lastT = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastT) / 1000);
+  lastT = now;
+
+  const target = want3D ? 1 : 0;
+  if (morph !== target) {
+    morph = clamp(morph + Math.sign(target - morph) * dt / 1.2, 0, 1);
+    dirty = true;
+  }
+  const e = smooth(morph);
+  mapCv.style.opacity = String(1 - e);
+  mapCv.style.visibility = morph >= 1 ? 'hidden' : 'visible';
+
+  if (morph > 0 && three) {
+    glCv.style.visibility = 'visible';
+    glCv.style.opacity = String(Math.min(1, e * 1.4));
+    render3D(dt, now);
+  } else if (three) {
+    glCv.style.visibility = 'hidden';
+  }
+
+  if (dirty && morph < 1) { draw2D(); dirty = false; }
+  requestAnimationFrame(frame);
+}
+
+function init() {
+  rebuildYearSelect();
+  resize();
+  try {
+    threeOK = initThree();
+  } catch (err) {
+    console.warn('3D nicht verfügbar:', err);
+    threeOK = false;
+  }
+  if (threeOK) { buildWorld(); resize(); }
+  if (!threeOK) {
+    $('s3d').disabled = true;
+    $('gl').style.display = 'none';
+  }
+  selectRide(null);
+  updateStatus();
+  setTimeout(() => { $('hint').style.opacity = 0; }, 9000);
+  if (CONFIG.liveUrl) {
+    refreshLive();
+    setInterval(refreshLive, CONFIG.refreshSec * 1000);
+  }
+  requestAnimationFrame(frame);
+}
+
+init();
+</script>
+</body>
+</html>
