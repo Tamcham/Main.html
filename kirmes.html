@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#1b1f2a">
-<title>Kirmes-Karte</title>
+<title>Soester Allerheiligenkirmes – Karte</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden;background:#1b1f2a;color:#eef2ff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
@@ -38,7 +38,6 @@
   <header>
     <h1>Kirmes</h1>
     <select id="year" aria-label="Jahrgang"></select>
-    <button id="gps" aria-label="Mein Standort">📍</button>
     <button id="back">← Karte</button>
   </header>
   <div id="status"></div>
@@ -63,10 +62,6 @@
    KONFIGURATION – bitte anpassen
    ========================================================= */
 const CONFIG = {
-  // PLATZHALTER: Position des Kirmesmittelpunkts (Breite/Länge) und Drehung der Karte
-  // in Grad (positiv = im Uhrzeigersinn). Nötig, damit der GPS-Punkt richtig liegt.
-  geo: { lat: 50.1109, lon: 8.6821, rotDeg: 0 },
-  fairRadiusM: 200,      // ab diesem Abstand zum Mittelpunkt gilt man als "auf der Kirmes"
   liveUrl: null,         // z.B. 'https://deine-domain.de/kirmes/{year}.json' – null = nur Beispieldaten
   refreshSec: 60,        // Aktualisierungsintervall für Live-Daten
   currentYear: 2026,     // der laufende Jahrgang (wird live aktualisiert)
@@ -143,8 +138,6 @@ const smooth = t => t * t * (3 - 2 * t);
 let year = initialYear();
 let data = YEARS[year];
 let selectedId = null;
-let player = null;          // {x, y, acc} – GPS-Position in Kartenmetern
-let gpsId = null, gpsNote = '';
 let lastSync = null;
 let want3D = false;         // Ziel: 3D-Ansicht an/aus
 let morph = 0;              // 0 = Karte, 1 = 3D (animiert)
@@ -162,16 +155,6 @@ function initialYear() {
 
 function currentRide() {
   return selectedId ? (data.rides.find(r => r.id === selectedId) || null) : null;
-}
-
-/* Geo → lokale Kartenkoordinaten (Meter) */
-function geoToLocal(lat, lon) {
-  const R = 6371000, toRad = Math.PI / 180;
-  const north = (lat - CONFIG.geo.lat) * toRad * R;
-  const east = (lon - CONFIG.geo.lon) * toRad * R * Math.cos(CONFIG.geo.lat * toRad);
-  const south = -north;
-  const a = CONFIG.geo.rotDeg * toRad;
-  return { x: east * Math.cos(a) - south * Math.sin(a), y: east * Math.sin(a) + south * Math.cos(a) };
 }
 
 /* Fahrgeschäft an einer Weltposition finden (Rechteck-Test, pad = Toleranz in Metern) */
@@ -262,15 +245,6 @@ function draw2D() {
       ctx.strokeText(r.name, cx, ty);
       ctx.fillStyle = '#fff'; ctx.fillText(r.name, cx, ty);
     }
-  }
-
-  // Eigene Position
-  if (player) {
-    const [px, py] = w2s(player.x, player.y);
-    ctx.fillStyle = 'rgba(47,123,255,.18)';
-    ctx.beginPath(); ctx.arc(px, py, Math.max(8, player.acc * p), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#2f7bff'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(px, py, 7, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
   }
 }
 
@@ -388,7 +362,7 @@ $('sZoom').onclick = () => {
 };
 
 /* =========================================================
-   JAHRGANG, STATUS, LIVE-DATEN, GPS
+   JAHRGANG, STATUS, LIVE-DATEN
    ========================================================= */
 function rebuildYearSelect() {
   const sel = $('year');
@@ -420,7 +394,6 @@ function updateStatus() {
   let s = !isCur ? 'Archiv' : (CONFIG.liveUrl ? 'Live' : 'Beispieldaten');
   if (isCur && lastSync) s += ' · ' + lastSync.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   if (!threeOK) s += ' · 3D aus';
-  if (gpsNote) s += ' · ' + gpsNote;
   $('status').textContent = s;
 }
 
@@ -448,29 +421,6 @@ async function refreshLive() {
   updateStatus();
 }
 
-function startGPS() {
-  if (!navigator.geolocation) { gpsNote = 'GPS nicht verfügbar'; updateStatus(); return; }
-  if (gpsId !== null) return;
-  gpsNote = 'GPS suche…'; updateStatus();
-  gpsId = navigator.geolocation.watchPosition(p => {
-    const l = geoToLocal(p.coords.latitude, p.coords.longitude);
-    player = { x: l.x, y: l.y, acc: p.coords.accuracy || 10 };
-    const d = Math.hypot(l.x, l.y);
-    gpsNote = d < CONFIG.fairRadiusM ? 'Du bist auf der Kirmes' : Math.round(d) + ' m vom Platz';
-    dirty = true; updateStatus();
-  }, err => {
-    gpsNote = 'GPS-Fehler: ' + err.message; updateStatus();
-  }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
-}
-
-$('gps').onclick = () => {
-  if (player) {               // schon bekannt: auf die eigene Position zentrieren
-    view.cx = player.x; view.cy = player.y; dirty = true;
-  } else {
-    startGPS();
-  }
-};
-
 /* =========================================================
    3D-ANSICHT (Three.js r128)
    ========================================================= */
@@ -486,7 +436,7 @@ function initThree() {
   const sun = new THREE.DirectionalLight(0xffffff, 0.4);
   sun.position.set(60, 140, 40);
   scene.add(sun);
-  three = { renderer, scene, camera, world: null, rides: [], people: [], marker: null };
+  three = { renderer, scene, camera, world: null, rides: [], people: [] };
   return true;
 }
 
@@ -533,16 +483,6 @@ function buildWorld() {
   // Simulierte Besucher
   for (let i = 0; i < 70; i++) T.people.push(makePerson(w));
 
-  // Eigene Position
-  const marker = new THREE.Group();
-  const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16), M(0x2f7bff));
-  pin.position.y = 0.15;
-  const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 6, 8), M(0x2f7bff));
-  pillar.position.y = 3;
-  marker.add(pin, pillar);
-  marker.visible = false;
-  w.add(marker);
-  T.marker = marker;
 }
 
 function buildRide(r) {
@@ -732,9 +672,6 @@ function render3D(dt, t) {
     for (const s of rd.spin) s.obj.rotation[s.axis] += s.speed * dt;
   }
   updatePeople(dt, t);
-
-  T.marker.visible = !!player;
-  if (player) T.marker.position.set(player.x, 0, player.y);
 
   T.renderer.render(T.scene, T.camera);
 }
